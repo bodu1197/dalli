@@ -26,42 +26,44 @@ export default function HomePage() {
     <div className="min-h-screen bg-[var(--color-neutral-50)] pb-20">
       {/* 헤더 */}
       <header className="sticky top-0 z-30 bg-white">
-        {/* 상단 바 */}
-        <div className="flex items-center justify-between px-4 h-14">
-          {/* 위치 선택 */}
-          <Link
-            href="/address/select"
-            className="flex items-center gap-1 max-w-[200px]"
-          >
-            <MapPin className="w-5 h-5 text-[var(--color-primary-500)] flex-shrink-0" />
-            <span className="font-medium truncate">{shortAddress}</span>
-            <ChevronDown className="w-4 h-4 text-[var(--color-neutral-400)] flex-shrink-0" />
-          </Link>
+        <div className="max-w-[700px] mx-auto">
+          {/* 상단 바 */}
+          <div className="flex items-center justify-between px-4 h-14">
+            {/* 위치 선택 */}
+            <Link
+              href="/address/select"
+              className="flex items-center gap-1 max-w-[200px]"
+            >
+              <MapPin className="w-5 h-5 text-[var(--color-primary-500)] flex-shrink-0" />
+              <span className="font-medium truncate">{shortAddress}</span>
+              <ChevronDown className="w-4 h-4 text-[var(--color-neutral-400)] flex-shrink-0" />
+            </Link>
 
-          {/* 알림 */}
-          <Link
-            href="/notifications"
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)]"
-          >
-            <Bell className="w-6 h-6 text-[var(--color-neutral-700)]" />
-          </Link>
-        </div>
+            {/* 알림 */}
+            <Link
+              href="/notifications"
+              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)]"
+            >
+              <Bell className="w-6 h-6 text-[var(--color-neutral-700)]" />
+            </Link>
+          </div>
 
-        {/* 검색 바 */}
-        <div className="px-4 pb-3">
-          <Link
-            href="/search"
-            className="flex items-center gap-3 h-12 px-4 bg-[var(--color-neutral-100)] rounded-xl"
-          >
-            <Search className="w-5 h-5 text-[var(--color-neutral-400)]" />
-            <span className="text-[var(--color-neutral-400)]">
-              맛집, 메뉴를 검색해보세요
-            </span>
-          </Link>
+          {/* 검색 바 */}
+          <div className="px-4 pb-3">
+            <Link
+              href="/search"
+              className="flex items-center gap-3 h-12 px-4 bg-[var(--color-neutral-100)] rounded-xl"
+            >
+              <Search className="w-5 h-5 text-[var(--color-neutral-400)]" />
+              <span className="text-[var(--color-neutral-400)]">
+                맛집, 메뉴를 검색해보세요
+              </span>
+            </Link>
+          </div>
         </div>
       </header>
 
-      <main>
+      <main className="max-w-[700px] mx-auto">
         {/* 이벤트 배너 */}
         <section className="px-4 py-4">
           <div className="relative h-32 rounded-2xl bg-gradient-to-r from-[var(--color-primary-500)] to-[var(--color-primary-400)] overflow-hidden">
