@@ -2,16 +2,18 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Search, MapPin, Bell, ChevronDown } from 'lucide-react'
+import { Search, MapPin, Bell, ShoppingCart, ChevronDown } from 'lucide-react'
 
 import { CategoryGrid } from '@/components/features/category'
 import { RestaurantList } from '@/components/features/restaurant'
 import { BottomNavBar } from '@/components/layouts/BottomNavBar'
 import { useLocationStore } from '@/stores/location.store'
+import { useCartStore } from '@/stores/cart.store'
 import { getRecommendedRestaurants, getPopularRestaurants } from '@/lib/mock/restaurants'
 
 export default function HomePage() {
   const { selectedAddress } = useLocationStore()
+  const cartItemCount = useCartStore((state) => state.getItemCount())
   const [activeTab, setActiveTab] = useState<'recommend' | 'popular'>('recommend')
 
   const recommendedRestaurants = getRecommendedRestaurants()
@@ -39,13 +41,29 @@ export default function HomePage() {
               <ChevronDown className="w-4 h-4 text-[var(--color-neutral-400)] flex-shrink-0" />
             </Link>
 
-            {/* 알림 */}
-            <Link
-              href="/notifications"
-              className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)]"
-            >
-              <Bell className="w-6 h-6 text-[var(--color-neutral-700)]" />
-            </Link>
+            {/* 알림 & 장바구니 */}
+            <div className="flex items-center">
+              {/* 장바구니 */}
+              <Link
+                href="/cart"
+                className="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)]"
+              >
+                <ShoppingCart className="w-6 h-6 text-[var(--color-neutral-700)]" />
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-[var(--color-primary-500)] text-white text-xs font-bold rounded-full px-1">
+                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                  </span>
+                )}
+              </Link>
+
+              {/* 알림 */}
+              <Link
+                href="/notifications"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)]"
+              >
+                <Bell className="w-6 h-6 text-[var(--color-neutral-700)]" />
+              </Link>
+            </div>
           </div>
 
           {/* 검색 바 */}
