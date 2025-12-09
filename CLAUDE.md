@@ -628,6 +628,1087 @@ export function useCreateAdvertisement() {
 
 ---
 
+## 🎨 UI 디자인 시스템 (배달의민족 참조)
+
+> **참조**: ui참조 폴더의 배달의민족 스크린샷을 기반으로 고급스럽고 세련된 UI 구현
+
+### 브랜드 컬러 팔레트
+
+```typescript
+// 📁 src/lib/constants/colors.ts
+export const COLORS = {
+  // Primary - 민트/시안 계열 (배민 스타일)
+  primary: {
+    50: '#E6FFFA',
+    100: '#B2F5EA',
+    200: '#81E6D9',
+    300: '#4FD1C5',
+    400: '#38B2AC',
+    500: '#00C4B4',  // 메인 컬러 (배달팁 0원, 주문하기 버튼)
+    600: '#00A99D',
+    700: '#008F85',
+    800: '#00756D',
+    900: '#005B55',
+  },
+
+  // Secondary - 노란색 계열 (별점, 강조)
+  secondary: {
+    400: '#FBBF24',
+    500: '#F59E0B',  // 별점 색상
+    600: '#D97706',
+  },
+
+  // Accent - 보라색 계열 (프로모션 배너)
+  accent: {
+    400: '#A78BFA',
+    500: '#8B5CF6',  // 프로모션 배너
+    600: '#7C3AED',
+  },
+
+  // Neutral - 그레이 계열
+  neutral: {
+    50: '#FAFAFA',   // 배경색
+    100: '#F5F5F5',  // 카드 배경
+    200: '#E5E5E5',  // 구분선
+    300: '#D4D4D4',  // 비활성 테두리
+    400: '#A3A3A3',  // 플레이스홀더
+    500: '#737373',  // 보조 텍스트
+    600: '#525252',  // 일반 텍스트
+    700: '#404040',  // 강조 텍스트
+    800: '#262626',  // 제목
+    900: '#171717',  // 최고 강조
+  },
+
+  // Semantic
+  success: '#22C55E',  // 성공, 영업중
+  warning: '#F59E0B',  // 경고
+  error: '#EF4444',    // 에러, 품절
+  info: '#3B82F6',     // 정보
+
+  // Status Badge
+  badge: {
+    delivery: '#00C4B4',      // 배달팁 0원
+    discount: '#EF4444',      // 할인
+    new: '#8B5CF6',           // 신규
+    pickup: '#6B7280',        // 픽업가능
+    club: '#3B82F6',          // 배민클럽
+  }
+} as const
+```
+
+### Tailwind 테마 확장
+
+```typescript
+// 📁 tailwind.config.ts
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          DEFAULT: '#00C4B4',
+          light: '#4FD1C5',
+          dark: '#008F85',
+        },
+        secondary: '#F59E0B',
+        accent: '#8B5CF6',
+      },
+      fontFamily: {
+        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+      },
+      fontSize: {
+        '2xs': ['0.625rem', { lineHeight: '0.75rem' }],  // 10px
+      },
+      borderRadius: {
+        '4xl': '2rem',
+      },
+      boxShadow: {
+        'card': '0 2px 8px rgba(0, 0, 0, 0.08)',
+        'card-hover': '0 4px 16px rgba(0, 0, 0, 0.12)',
+        'bottom-sheet': '0 -4px 20px rgba(0, 0, 0, 0.15)',
+        'float': '0 4px 12px rgba(0, 0, 0, 0.15)',
+      },
+      animation: {
+        'slide-up': 'slideUp 0.3s ease-out',
+        'fade-in': 'fadeIn 0.2s ease-out',
+        'bounce-soft': 'bounceSoft 0.5s ease-out',
+      },
+      keyframes: {
+        slideUp: {
+          '0%': { transform: 'translateY(100%)' },
+          '100%': { transform: 'translateY(0)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        bounceSoft: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-4px)' },
+        },
+      },
+    },
+  },
+  plugins: [],
+}
+
+export default config
+```
+
+### 타이포그래피 시스템
+
+```typescript
+// 📁 src/components/ui/Typography.tsx
+import { cn } from '@/lib/utils'
+
+// 제목 스타일
+export const headingStyles = {
+  h1: 'text-2xl font-bold text-neutral-900',        // 페이지 타이틀
+  h2: 'text-xl font-bold text-neutral-900',         // 섹션 타이틀
+  h3: 'text-lg font-semibold text-neutral-800',     // 카드 타이틀
+  h4: 'text-base font-semibold text-neutral-800',   // 서브 타이틀
+}
+
+// 본문 스타일
+export const textStyles = {
+  body: 'text-base text-neutral-700',               // 일반 본문
+  bodySmall: 'text-sm text-neutral-600',            // 작은 본문
+  caption: 'text-xs text-neutral-500',              // 캡션, 설명
+  label: 'text-sm font-medium text-neutral-700',    // 폼 레이블
+}
+
+// 강조 스타일
+export const accentStyles = {
+  price: 'text-lg font-bold text-neutral-900',      // 가격
+  priceOriginal: 'text-sm text-neutral-400 line-through', // 원가
+  discount: 'text-sm font-bold text-red-500',       // 할인율
+  point: 'text-primary font-semibold',              // 포인트
+}
+```
+
+### 핵심 UI 컴포넌트 스타일
+
+#### 1. 식당 카드 (RestaurantCard)
+
+```typescript
+// 📁 src/components/features/restaurant/RestaurantCard.tsx
+'use client'
+
+import Image from 'next/image'
+import Link from 'next/link'
+import { Star, Clock, MapPin } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/Badge'
+import type { Restaurant } from '@/types'
+
+interface RestaurantCardProps {
+  restaurant: Restaurant
+  isAd?: boolean
+}
+
+export function RestaurantCard({ restaurant, isAd }: RestaurantCardProps) {
+  return (
+    <Link
+      href={`/restaurant/${restaurant.id}`}
+      className={cn(
+        'block bg-white rounded-2xl overflow-hidden',
+        'shadow-card hover:shadow-card-hover',
+        'transition-shadow duration-200',
+        'active:scale-[0.98]' // 터치 피드백
+      )}
+    >
+      {/* 이미지 영역 - 3:2 비율 */}
+      <div className="relative aspect-[3/2] overflow-hidden">
+        <Image
+          src={restaurant.thumbnail}
+          alt={restaurant.name}
+          fill
+          className="object-cover"
+        />
+
+        {/* 배달팁 배지 - 좌측 하단 */}
+        {restaurant.deliveryFee === 0 && (
+          <Badge
+            variant="delivery"
+            className="absolute left-3 bottom-3"
+          >
+            배달팁 0원
+          </Badge>
+        )}
+
+        {/* 광고 표시 */}
+        {isAd && (
+          <span className="absolute right-3 bottom-3 text-2xs text-white/80 bg-black/30 px-1.5 py-0.5 rounded">
+            광고
+          </span>
+        )}
+      </div>
+
+      {/* 정보 영역 */}
+      <div className="p-4">
+        {/* 상호명 + 평점 */}
+        <div className="flex items-center justify-between mb-1">
+          <h3 className="font-semibold text-neutral-900 truncate flex-1">
+            {restaurant.name}
+          </h3>
+          <div className="flex items-center gap-0.5 ml-2">
+            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            <span className="text-sm font-medium">{restaurant.rating}</span>
+          </div>
+        </div>
+
+        {/* 무료배달 적용 중 + 원가 */}
+        {restaurant.originalDeliveryFee && (
+          <p className="text-sm">
+            <span className="text-primary font-medium">무료배달 적용 중</span>
+            <span className="text-neutral-400 line-through ml-2">
+              {restaurant.originalDeliveryFee.toLocaleString()}원
+            </span>
+          </p>
+        )}
+
+        {/* 배달 시간 */}
+        <div className="flex items-center gap-1 mt-2 text-sm text-neutral-500">
+          <Clock className="w-3.5 h-3.5" />
+          <span>약 {restaurant.deliveryTime}분</span>
+        </div>
+
+        {/* 배지들 */}
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {restaurant.isClubMember && (
+            <Badge variant="club" size="sm">배민클럽</Badge>
+          )}
+          {restaurant.canPickup && (
+            <Badge variant="outline" size="sm">픽업가능</Badge>
+          )}
+          {restaurant.isNew && (
+            <Badge variant="new" size="sm">신규</Badge>
+          )}
+          {restaurant.hasDiscount && (
+            <Badge variant="discount" size="sm">
+              ⚡ {restaurant.discountAmount?.toLocaleString()}원 즉시할인
+            </Badge>
+          )}
+        </div>
+      </div>
+    </Link>
+  )
+}
+```
+
+#### 2. 배지 컴포넌트 (Badge)
+
+```typescript
+// 📁 src/components/ui/Badge.tsx
+import { cn } from '@/lib/utils'
+import { cva, type VariantProps } from 'class-variance-authority'
+
+const badgeVariants = cva(
+  'inline-flex items-center font-medium rounded-full',
+  {
+    variants: {
+      variant: {
+        default: 'bg-neutral-100 text-neutral-700',
+        primary: 'bg-primary text-white',
+        delivery: 'bg-primary text-white',          // 배달팁 0원
+        discount: 'bg-red-500 text-white',          // 할인
+        club: 'bg-blue-500 text-white',             // 배민클럽
+        new: 'bg-purple-500 text-white',            // 신규
+        outline: 'border border-neutral-300 text-neutral-600',
+        hygiene: 'bg-emerald-100 text-emerald-700', // 위생인증
+      },
+      size: {
+        sm: 'px-2 py-0.5 text-2xs',
+        md: 'px-2.5 py-1 text-xs',
+        lg: 'px-3 py-1.5 text-sm',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+      size: 'md',
+    },
+  }
+)
+
+interface BadgeProps
+  extends React.HTMLAttributes<HTMLSpanElement>,
+    VariantProps<typeof badgeVariants> {}
+
+export function Badge({ className, variant, size, ...props }: BadgeProps) {
+  return (
+    <span className={cn(badgeVariants({ variant, size }), className)} {...props} />
+  )
+}
+```
+
+#### 3. 메뉴 아이템 카드 (MenuCard)
+
+```typescript
+// 📁 src/components/features/menu/MenuCard.tsx
+'use client'
+
+import Image from 'next/image'
+import { Plus } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import type { Menu } from '@/types'
+
+interface MenuCardProps {
+  menu: Menu
+  onAddToCart: (menu: Menu) => void
+}
+
+export function MenuCard({ menu, onAddToCart }: MenuCardProps) {
+  return (
+    <div className={cn(
+      'flex gap-4 p-4 bg-white',
+      'border-b border-neutral-100 last:border-b-0',
+      menu.isSoldOut && 'opacity-50'
+    )}>
+      {/* 메뉴 정보 */}
+      <div className="flex-1 min-w-0">
+        {/* 인기 순위 배지 */}
+        {menu.rank && (
+          <span className="inline-block bg-neutral-800 text-white text-2xs font-medium px-1.5 py-0.5 rounded mb-2">
+            인기 {menu.rank}위
+          </span>
+        )}
+
+        <h4 className="font-semibold text-neutral-900 mb-1">{menu.name}</h4>
+
+        {menu.description && (
+          <p className="text-sm text-neutral-500 line-clamp-2 mb-2">
+            {menu.description}
+          </p>
+        )}
+
+        <p className="font-bold text-neutral-900">
+          {menu.price.toLocaleString()}원
+        </p>
+
+        {menu.reviewCount && (
+          <p className="text-sm text-neutral-400 mt-1">
+            리뷰 {menu.reviewCount}
+          </p>
+        )}
+      </div>
+
+      {/* 메뉴 이미지 + 담기 버튼 */}
+      <div className="relative flex-shrink-0">
+        <div className="relative w-28 h-28 rounded-xl overflow-hidden bg-neutral-100">
+          {menu.image ? (
+            <Image
+              src={menu.image}
+              alt={menu.name}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-neutral-300">
+              No Image
+            </div>
+          )}
+        </div>
+
+        {/* 담기 버튼 */}
+        {!menu.isSoldOut && (
+          <button
+            onClick={() => onAddToCart(menu)}
+            className={cn(
+              'absolute -bottom-2 -right-2',
+              'w-8 h-8 rounded-full',
+              'bg-white border border-neutral-200',
+              'flex items-center justify-center',
+              'shadow-sm hover:shadow-md',
+              'transition-shadow',
+              'active:scale-95'
+            )}
+          >
+            <Plus className="w-5 h-5 text-neutral-700" />
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+```
+
+#### 4. 장바구니 아이템 (CartItem)
+
+```typescript
+// 📁 src/components/features/cart/CartItem.tsx
+'use client'
+
+import Image from 'next/image'
+import { Minus, Plus, Trash2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import type { CartItem as CartItemType } from '@/types'
+
+interface CartItemProps {
+  item: CartItemType
+  onUpdateQuantity: (id: string, quantity: number) => void
+  onRemove: (id: string) => void
+  onChangeOptions: (id: string) => void
+}
+
+export function CartItem({
+  item,
+  onUpdateQuantity,
+  onRemove,
+  onChangeOptions,
+}: CartItemProps) {
+  const totalPrice = item.price * item.quantity
+
+  return (
+    <div className="p-4 bg-white rounded-2xl border border-neutral-100">
+      <div className="flex gap-4">
+        {/* 메뉴 이미지 */}
+        <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-neutral-100 flex-shrink-0">
+          <Image
+            src={item.image}
+            alt={item.name}
+            fill
+            className="object-cover"
+          />
+        </div>
+
+        {/* 메뉴 정보 */}
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-neutral-900 mb-1">{item.name}</h4>
+
+          <p className="text-sm text-neutral-500 mb-2">
+            가격 : {item.basePrice.toLocaleString()}원
+          </p>
+
+          <p className="font-bold text-neutral-900">
+            {totalPrice.toLocaleString()}원
+          </p>
+        </div>
+      </div>
+
+      {/* 옵션 변경 + 수량 조절 */}
+      <div className="flex items-center justify-between mt-4">
+        <button
+          onClick={() => onChangeOptions(item.id)}
+          className={cn(
+            'px-4 py-2 rounded-lg',
+            'border border-neutral-200',
+            'text-sm text-neutral-700',
+            'hover:bg-neutral-50',
+            'transition-colors'
+          )}
+        >
+          옵션 변경
+        </button>
+
+        {/* 수량 조절 */}
+        <div className="flex items-center gap-1 border border-neutral-200 rounded-lg">
+          <button
+            onClick={() => {
+              if (item.quantity === 1) {
+                onRemove(item.id)
+              } else {
+                onUpdateQuantity(item.id, item.quantity - 1)
+              }
+            }}
+            className="w-10 h-10 flex items-center justify-center hover:bg-neutral-50"
+          >
+            {item.quantity === 1 ? (
+              <Trash2 className="w-4 h-4 text-neutral-500" />
+            ) : (
+              <Minus className="w-4 h-4 text-neutral-700" />
+            )}
+          </button>
+
+          <span className="w-8 text-center font-medium">{item.quantity}</span>
+
+          <button
+            onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+            className="w-10 h-10 flex items-center justify-center hover:bg-neutral-50"
+          >
+            <Plus className="w-4 h-4 text-neutral-700" />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+#### 5. 하단 주문 버튼 (BottomOrderButton)
+
+```typescript
+// 📁 src/components/features/order/BottomOrderButton.tsx
+'use client'
+
+import { cn } from '@/lib/utils'
+import { Zap } from 'lucide-react'
+
+interface BottomOrderButtonProps {
+  totalPrice: number
+  originalPrice?: number
+  discountAmount?: number
+  onOrder: () => void
+  disabled?: boolean
+  label?: string
+}
+
+export function BottomOrderButton({
+  totalPrice,
+  originalPrice,
+  discountAmount,
+  onOrder,
+  disabled,
+  label = '주문하기',
+}: BottomOrderButtonProps) {
+  return (
+    <div className={cn(
+      'fixed bottom-0 left-0 right-0',
+      'bg-white border-t border-neutral-100',
+      'px-4 py-3',
+      'safe-area-bottom' // iOS 홈 인디케이터 대응
+    )}>
+      {/* 할인 정보 배너 */}
+      {discountAmount && discountAmount > 0 && (
+        <div className="bg-primary/10 text-primary text-sm font-medium text-center py-2 rounded-lg mb-3">
+          <Zap className="w-4 h-4 inline mr-1" />
+          이것저것 담아도 알뜰 배달팁 0원
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        {/* 가격 정보 */}
+        <div>
+          {discountAmount && discountAmount > 0 && (
+            <p className="text-sm text-primary font-medium">
+              <Zap className="w-3.5 h-3.5 inline mr-0.5" />
+              {discountAmount.toLocaleString()}원 할인이 적용됐어요
+            </p>
+          )}
+          <div className="flex items-baseline gap-2">
+            <span className="text-xl font-bold text-neutral-900">
+              {totalPrice.toLocaleString()}원
+            </span>
+            {originalPrice && originalPrice > totalPrice && (
+              <span className="text-sm text-neutral-400 line-through">
+                {originalPrice.toLocaleString()}원
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* 주문 버튼 */}
+        <button
+          onClick={onOrder}
+          disabled={disabled}
+          className={cn(
+            'px-8 py-3.5 rounded-xl',
+            'bg-primary text-white font-bold',
+            'hover:bg-primary-dark',
+            'transition-colors',
+            'disabled:bg-neutral-300 disabled:cursor-not-allowed',
+            'active:scale-[0.98]'
+          )}
+        >
+          {label}
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+#### 6. 탭 네비게이션 (TabNavigation)
+
+```typescript
+// 📁 src/components/ui/TabNavigation.tsx
+'use client'
+
+import { cn } from '@/lib/utils'
+
+interface Tab {
+  id: string
+  label: string
+  count?: number
+}
+
+interface TabNavigationProps {
+  tabs: Tab[]
+  activeTab: string
+  onChange: (tabId: string) => void
+}
+
+export function TabNavigation({ tabs, activeTab, onChange }: TabNavigationProps) {
+  return (
+    <div className="flex border-b border-neutral-200">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          onClick={() => onChange(tab.id)}
+          className={cn(
+            'flex-1 py-4 text-center font-medium',
+            'border-b-2 transition-colors',
+            activeTab === tab.id
+              ? 'text-neutral-900 border-neutral-900'
+              : 'text-neutral-400 border-transparent hover:text-neutral-600'
+          )}
+        >
+          {tab.label}
+          {tab.count !== undefined && (
+            <span className="ml-1 text-primary">{tab.count}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  )
+}
+```
+
+#### 7. 필터 칩 (FilterChip)
+
+```typescript
+// 📁 src/components/ui/FilterChip.tsx
+'use client'
+
+import { cn } from '@/lib/utils'
+import { ChevronDown, Zap, Star } from 'lucide-react'
+
+interface FilterChipProps {
+  label: string
+  isActive?: boolean
+  hasDropdown?: boolean
+  icon?: 'discount' | 'rating'
+  onClick: () => void
+}
+
+export function FilterChip({
+  label,
+  isActive,
+  hasDropdown,
+  icon,
+  onClick,
+}: FilterChipProps) {
+  const Icon = icon === 'discount' ? Zap : icon === 'rating' ? Star : null
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'inline-flex items-center gap-1.5',
+        'px-3 py-2 rounded-full',
+        'text-sm font-medium',
+        'border transition-colors',
+        isActive
+          ? 'bg-neutral-900 text-white border-neutral-900'
+          : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-400'
+      )}
+    >
+      {Icon && <Icon className="w-4 h-4" />}
+      {label}
+      {hasDropdown && <ChevronDown className="w-4 h-4" />}
+    </button>
+  )
+}
+```
+
+#### 8. 바텀 시트 (BottomSheet)
+
+```typescript
+// 📁 src/components/ui/BottomSheet.tsx
+'use client'
+
+import { useEffect, useRef } from 'react'
+import { X } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { createPortal } from 'react-dom'
+
+interface BottomSheetProps {
+  isOpen: boolean
+  onClose: () => void
+  title: string
+  children: React.ReactNode
+  footer?: React.ReactNode
+}
+
+export function BottomSheet({
+  isOpen,
+  onClose,
+  title,
+  children,
+  footer,
+}: BottomSheetProps) {
+  const sheetRef = useRef<HTMLDivElement>(null)
+
+  // ESC 키로 닫기
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) document.addEventListener('keydown', handleEsc)
+    return () => document.removeEventListener('keydown', handleEsc)
+  }, [isOpen, onClose])
+
+  // 스크롤 잠금
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isOpen])
+
+  if (!isOpen) return null
+
+  return createPortal(
+    <>
+      {/* 오버레이 */}
+      <div
+        className="fixed inset-0 bg-black/50 z-40 animate-fade-in"
+        onClick={onClose}
+      />
+
+      {/* 시트 */}
+      <div
+        ref={sheetRef}
+        className={cn(
+          'fixed bottom-0 left-0 right-0 z-50',
+          'bg-white rounded-t-3xl',
+          'shadow-bottom-sheet',
+          'animate-slide-up',
+          'max-h-[90vh] flex flex-col'
+        )}
+      >
+        {/* 헤더 */}
+        <div className="flex items-center justify-between p-4 border-b border-neutral-100">
+          <h3 className="text-lg font-bold text-neutral-900">{title}</h3>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-neutral-100"
+          >
+            <X className="w-6 h-6 text-neutral-500" />
+          </button>
+        </div>
+
+        {/* 콘텐츠 */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {children}
+        </div>
+
+        {/* 푸터 (버튼 영역) */}
+        {footer && (
+          <div className="p-4 border-t border-neutral-100 safe-area-bottom">
+            {footer}
+          </div>
+        )}
+      </div>
+    </>,
+    document.body
+  )
+}
+```
+
+#### 9. 리뷰 카드 (ReviewCard)
+
+```typescript
+// 📁 src/components/features/review/ReviewCard.tsx
+'use client'
+
+import Image from 'next/image'
+import { Star, ThumbsUp } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { formatRelativeTime } from '@/lib/utils/date'
+import type { Review } from '@/types'
+
+interface ReviewCardProps {
+  review: Review
+  showOwnerReply?: boolean
+}
+
+export function ReviewCard({ review, showOwnerReply = true }: ReviewCardProps) {
+  return (
+    <div className="py-4 border-b border-neutral-100 last:border-b-0">
+      {/* 리뷰어 정보 */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-full bg-neutral-200 overflow-hidden">
+          {review.userAvatar && (
+            <Image
+              src={review.userAvatar}
+              alt={review.userName}
+              width={40}
+              height={40}
+              className="object-cover"
+            />
+          )}
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-neutral-900">{review.userName}</span>
+            {review.reviewCount && (
+              <span className="text-xs text-neutral-400">
+                리뷰 {review.reviewCount} · 평균별점 {review.avgRating}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            {/* 별점 */}
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={cn(
+                    'w-4 h-4',
+                    star <= review.rating
+                      ? 'fill-yellow-400 text-yellow-400'
+                      : 'text-neutral-200'
+                  )}
+                />
+              ))}
+            </div>
+            <span className="text-neutral-400">
+              {formatRelativeTime(review.createdAt)}, {review.deliveryType}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 리뷰 내용 */}
+      <p className="text-neutral-700 whitespace-pre-line mb-3">
+        {review.content}
+      </p>
+
+      {/* 리뷰 이미지 */}
+      {review.images && review.images.length > 0 && (
+        <div className="flex gap-2 mb-3 overflow-x-auto">
+          {review.images.map((image, index) => (
+            <div
+              key={index}
+              className="relative w-24 h-24 rounded-xl overflow-hidden flex-shrink-0"
+            >
+              <Image
+                src={image}
+                alt={`리뷰 이미지 ${index + 1}`}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 주문 메뉴 태그 */}
+      {review.orderedMenus && review.orderedMenus.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {review.orderedMenus.map((menu, index) => (
+            <span
+              key={index}
+              className="px-2 py-1 bg-neutral-100 text-neutral-600 text-xs rounded-full flex items-center gap-1"
+            >
+              {menu}
+              <ThumbsUp className="w-3 h-3" />
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* 사장님 답글 */}
+      {showOwnerReply && review.ownerReply && (
+        <div className="mt-3 p-4 bg-neutral-50 rounded-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="font-medium text-neutral-700">사장님</span>
+            <span className="text-xs text-neutral-400">
+              {formatRelativeTime(review.ownerReplyAt)}
+            </span>
+          </div>
+          <p className="text-sm text-neutral-600">{review.ownerReply}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+#### 10. 하단 네비게이션 바 (BottomNavBar)
+
+```typescript
+// 📁 src/components/layouts/BottomNavBar.tsx
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { Home, ShoppingBag, Heart, ClipboardList, User } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+const navItems = [
+  { href: '/', icon: Home, label: '홈' },
+  { href: '/shopping', icon: ShoppingBag, label: '장보기·쇼핑' },
+  { href: '/favorites', icon: Heart, label: '찜' },
+  { href: '/orders', icon: ClipboardList, label: '주문내역' },
+  { href: '/my', icon: User, label: '마이배민' },
+]
+
+export function BottomNavBar() {
+  const pathname = usePathname()
+
+  return (
+    <nav className={cn(
+      'fixed bottom-0 left-0 right-0',
+      'bg-white border-t border-neutral-100',
+      'safe-area-bottom',
+      'md:hidden' // 모바일에서만 표시
+    )}>
+      <div className="flex items-center justify-around h-16">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href ||
+            (item.href !== '/' && pathname.startsWith(item.href))
+
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'flex flex-col items-center justify-center',
+                'w-full h-full',
+                'transition-colors'
+              )}
+            >
+              <item.icon
+                className={cn(
+                  'w-6 h-6 mb-1',
+                  isActive ? 'text-neutral-900' : 'text-neutral-400'
+                )}
+                fill={isActive && item.icon === Heart ? 'currentColor' : 'none'}
+              />
+              <span
+                className={cn(
+                  'text-2xs',
+                  isActive ? 'text-neutral-900 font-medium' : 'text-neutral-400'
+                )}
+              >
+                {item.label}
+              </span>
+            </Link>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}
+```
+
+### 공통 유틸리티 클래스
+
+```css
+/* 📁 src/styles/globals.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Pretendard 폰트 */
+  @font-face {
+    font-family: 'Pretendard';
+    src: url('/fonts/PretendardVariable.woff2') format('woff2');
+    font-weight: 100 900;
+    font-display: swap;
+  }
+
+  html {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-neutral-50 text-neutral-900;
+  }
+}
+
+@layer utilities {
+  /* iOS Safe Area */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+
+  /* Hide scrollbar */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Text truncate */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+```
+
+### UI 디자인 체크리스트
+
+```markdown
+## 개발 시 UI 체크리스트
+
+### 카드 컴포넌트
+- [ ] 둥근 모서리 (rounded-2xl 또는 rounded-xl)
+- [ ] 그림자 효과 (shadow-card, hover시 shadow-card-hover)
+- [ ] 터치 피드백 (active:scale-[0.98])
+- [ ] 적절한 패딩 (p-4)
+
+### 이미지
+- [ ] aspect-ratio 설정 (3:2, 1:1 등)
+- [ ] rounded-xl 또는 rounded-2xl
+- [ ] object-cover로 비율 유지
+- [ ] placeholder blur 효과
+
+### 버튼
+- [ ] 충분한 터치 영역 (최소 44x44px)
+- [ ] 명확한 호버/액티브 상태
+- [ ] disabled 상태 스타일링
+- [ ] 적절한 로딩 상태
+
+### 배지
+- [ ] 목적에 맞는 variant 사용
+- [ ] 일관된 크기 (sm, md)
+- [ ] 적절한 아이콘 사용
+
+### 텍스트
+- [ ] 계층 구조 명확 (h1 > h2 > body)
+- [ ] truncate 또는 line-clamp 적용
+- [ ] 적절한 색상 대비
+
+### 간격
+- [ ] 섹션 간: space-y-6 또는 gap-6
+- [ ] 요소 간: space-y-4 또는 gap-4
+- [ ] 내부 패딩: p-4
+- [ ] 인라인 간격: gap-2
+
+### 애니메이션
+- [ ] 부드러운 전환 (transition-colors, transition-shadow)
+- [ ] 적절한 duration (200ms, 300ms)
+- [ ] 의미있는 인터랙션만 애니메이션
+```
+
+---
+
 ## 📱 반응형 디자인 가이드
 
 ### Mobile First 접근법 (필수)
