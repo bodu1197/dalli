@@ -105,13 +105,13 @@
   --shadow-float: var(--shadow-float);
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
+/* Dark mode 비활성화 - 항상 라이트모드 사용 */
+/* @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
+} */
 
 /* Base Styles */
 html {

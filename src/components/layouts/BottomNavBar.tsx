@@ -19,10 +19,10 @@ export function BottomNavBar() {
   return (
     <nav
       className={cn(
-        'fixed bottom-0 left-0 right-0 z-50',
+        'fixed bottom-0 left-1/2 -translate-x-1/2 z-50',
+        'w-full max-w-[700px]',
         'bg-white border-t border-[var(--color-neutral-100)]',
-        'safe-area-bottom',
-        'md:hidden'
+        'safe-area-bottom'
       )}
     >
       <div className="flex items-center justify-around h-16">
