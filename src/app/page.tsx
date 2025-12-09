@@ -23,10 +23,10 @@ export default function HomePage() {
     : displayAddress
 
   return (
-    <div className="min-h-screen bg-[var(--color-neutral-50)] pb-20">
-      {/* 헤더 */}
-      <header className="sticky top-0 z-30 bg-white">
-        <div className="max-w-[700px] mx-auto">
+    <div className="min-h-screen bg-[var(--color-neutral-100)]">
+      <div className="max-w-[700px] mx-auto min-h-screen bg-white md:shadow-[0_0_20px_rgba(0,0,0,0.1)] pb-20">
+        {/* 헤더 */}
+        <header className="sticky top-0 z-30 bg-white">
           {/* 상단 바 */}
           <div className="flex items-center justify-between px-4 h-14">
             {/* 위치 선택 */}
@@ -60,72 +60,72 @@ export default function HomePage() {
               </span>
             </Link>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="max-w-[700px] mx-auto">
-        {/* 이벤트 배너 */}
-        <section className="px-4 py-4">
-          <div className="relative h-32 rounded-2xl bg-gradient-to-r from-[var(--color-primary-500)] to-[var(--color-primary-400)] overflow-hidden">
-            <div className="absolute inset-0 p-5 text-white">
-              <p className="text-sm opacity-90">달리고 신규 가입 혜택</p>
-              <h2 className="text-xl font-bold mt-1">
-                첫 주문 배달비 무료!
-              </h2>
-              <p className="text-sm mt-2 opacity-80">
-                지금 바로 주문하세요
-              </p>
+        <main>
+          {/* 이벤트 배너 */}
+          <section className="px-4 py-4">
+            <div className="relative h-32 rounded-2xl bg-gradient-to-r from-[var(--color-primary-500)] to-[var(--color-primary-400)] overflow-hidden">
+              <div className="absolute inset-0 p-5 text-white">
+                <p className="text-sm opacity-90">달리고 신규 가입 혜택</p>
+                <h2 className="text-xl font-bold mt-1">
+                  첫 주문 배달비 무료!
+                </h2>
+                <p className="text-sm mt-2 opacity-80">
+                  지금 바로 주문하세요
+                </p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* 카테고리 */}
-        <section className="px-4 py-4 bg-white">
-          <h2 className="text-lg font-bold mb-4">뭐 먹을까?</h2>
-          <CategoryGrid />
-        </section>
+          {/* 카테고리 */}
+          <section className="px-4 py-4 bg-white">
+            <h2 className="text-lg font-bold mb-4">뭐 먹을까?</h2>
+            <CategoryGrid />
+          </section>
 
-        {/* 식당 리스트 */}
-        <section className="mt-2 bg-white">
-          {/* 탭 */}
-          <div className="flex border-b border-[var(--color-neutral-100)]">
-            <button
-              onClick={() => setActiveTab('recommend')}
-              className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
-                activeTab === 'recommend'
-                  ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
-                  : 'text-[var(--color-neutral-400)] border-transparent'
-              }`}
-            >
-              추천 맛집
-            </button>
-            <button
-              onClick={() => setActiveTab('popular')}
-              className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
-                activeTab === 'popular'
-                  ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
-                  : 'text-[var(--color-neutral-400)] border-transparent'
-              }`}
-            >
-              인기 맛집
-            </button>
-          </div>
+          {/* 식당 리스트 */}
+          <section className="mt-2 bg-white">
+            {/* 탭 */}
+            <div className="flex border-b border-[var(--color-neutral-100)]">
+              <button
+                onClick={() => setActiveTab('recommend')}
+                className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
+                  activeTab === 'recommend'
+                    ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
+                    : 'text-[var(--color-neutral-400)] border-transparent'
+                }`}
+              >
+                추천 맛집
+              </button>
+              <button
+                onClick={() => setActiveTab('popular')}
+                className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
+                  activeTab === 'popular'
+                    ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
+                    : 'text-[var(--color-neutral-400)] border-transparent'
+                }`}
+              >
+                인기 맛집
+              </button>
+            </div>
 
-          {/* 리스트 */}
-          <div className="p-4">
-            <RestaurantList
-              restaurants={
-                activeTab === 'recommend'
-                  ? recommendedRestaurants
-                  : popularRestaurants
-              }
-            />
-          </div>
-        </section>
-      </main>
+            {/* 리스트 */}
+            <div className="p-4">
+              <RestaurantList
+                restaurants={
+                  activeTab === 'recommend'
+                    ? recommendedRestaurants
+                    : popularRestaurants
+                }
+              />
+            </div>
+          </section>
+        </main>
 
-      {/* 하단 네비게이션 */}
-      <BottomNavBar />
+        {/* 하단 네비게이션 */}
+        <BottomNavBar />
+      </div>
     </div>
   )
 }

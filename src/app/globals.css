@@ -127,34 +127,7 @@ body {
   line-height: 1.5;
 }
 
-/* App Container - 모바일은 전체폭, PC는 700px */
-#__next,
-main {
-  max-width: 100%;
-  margin: 0 auto;
-  background: var(--background);
-  min-height: 100vh;
-}
-
-/* PC에서 좌우 여백 있는 앱 프레임 (관리자 제외) */
-@media (min-width: 768px) {
-  body {
-    background: linear-gradient(135deg, var(--color-gray-200) 0%, var(--color-gray-100) 100%);
-  }
-
-  #__next,
-  main {
-    max-width: 700px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-  }
-
-  /* 관리자 페이지는 PC에서도 전체 폭 사용 */
-  body:has([data-admin-layout]) #__next,
-  body:has([data-admin-layout]) main {
-    max-width: 100%;
-    box-shadow: none;
-  }
-}
+/* 레이아웃은 각 그룹별 layout.tsx에서 처리 */
 
 /* ===================================
    Utility Classes
