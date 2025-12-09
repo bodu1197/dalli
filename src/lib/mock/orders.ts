@@ -1,0 +1,212 @@
+import type { Order } from '@/types/order.types'
+
+// 목 주문 데이터
+export const MOCK_ORDERS: Order[] = [
+  {
+    id: 'order-1',
+    userId: 'user-1',
+    restaurantId: 'rest-1',
+    restaurantName: '맘스터치 강남점',
+    restaurantImage: null,
+    riderId: 'rider-1',
+    status: 'delivered',
+    totalAmount: 18900,
+    deliveryFee: 0,
+    platformFee: 500,
+    deliveryAddress: '서울시 강남구 테헤란로 123',
+    deliveryDetail: '101동 1001호',
+    deliveryLat: 37.5012,
+    deliveryLng: 127.0396,
+    specialInstructions: '문 앞에 놓아주세요',
+    estimatedDeliveryTime: '2024-12-09T12:30:00Z',
+    actualDeliveryTime: '2024-12-09T12:25:00Z',
+    cancelledReason: null,
+    items: [
+      {
+        id: 'item-1',
+        orderId: 'order-1',
+        menuId: 'menu-1',
+        menuName: '싸이버거 세트',
+        menuImage: null,
+        quantity: 2,
+        price: 7900,
+        options: [
+          { id: 'opt-1', name: '콜라 L', price: 500 },
+        ],
+        specialInstructions: null,
+      },
+    ],
+    createdAt: '2024-12-09T12:00:00Z',
+    updatedAt: '2024-12-09T12:25:00Z',
+  },
+  {
+    id: 'order-2',
+    userId: 'user-1',
+    restaurantId: 'rest-2',
+    restaurantName: 'BBQ치킨 역삼점',
+    restaurantImage: null,
+    riderId: 'rider-2',
+    status: 'delivering',
+    totalAmount: 24000,
+    deliveryFee: 3000,
+    platformFee: 500,
+    deliveryAddress: '서울시 강남구 역삼동 456',
+    deliveryDetail: '2층 사무실',
+    deliveryLat: 37.5001,
+    deliveryLng: 127.0365,
+    specialInstructions: '벨 누르지 말아주세요',
+    estimatedDeliveryTime: '2024-12-09T13:30:00Z',
+    actualDeliveryTime: null,
+    cancelledReason: null,
+    items: [
+      {
+        id: 'item-2',
+        orderId: 'order-2',
+        menuId: 'menu-3',
+        menuName: '황금올리브치킨',
+        menuImage: null,
+        quantity: 1,
+        price: 21000,
+        options: [],
+        specialInstructions: null,
+      },
+    ],
+    createdAt: '2024-12-09T13:00:00Z',
+    updatedAt: '2024-12-09T13:15:00Z',
+  },
+  {
+    id: 'order-3',
+    userId: 'user-1',
+    restaurantId: 'rest-3',
+    restaurantName: '교촌치킨 신논현점',
+    restaurantImage: null,
+    riderId: null,
+    status: 'preparing',
+    totalAmount: 19000,
+    deliveryFee: 2000,
+    platformFee: 500,
+    deliveryAddress: '서울시 강남구 신논현로 789',
+    deliveryDetail: null,
+    deliveryLat: 37.5045,
+    deliveryLng: 127.0245,
+    specialInstructions: null,
+    estimatedDeliveryTime: '2024-12-09T14:00:00Z',
+    actualDeliveryTime: null,
+    cancelledReason: null,
+    items: [
+      {
+        id: 'item-3',
+        orderId: 'order-3',
+        menuId: 'menu-5',
+        menuName: '레드콤보',
+        menuImage: null,
+        quantity: 1,
+        price: 17000,
+        options: [],
+        specialInstructions: null,
+      },
+    ],
+    createdAt: '2024-12-09T13:30:00Z',
+    updatedAt: '2024-12-09T13:35:00Z',
+  },
+  {
+    id: 'order-4',
+    userId: 'user-1',
+    restaurantId: 'rest-4',
+    restaurantName: '피자헛 삼성점',
+    restaurantImage: null,
+    riderId: null,
+    status: 'cancelled',
+    totalAmount: 32000,
+    deliveryFee: 0,
+    platformFee: 0,
+    deliveryAddress: '서울시 강남구 삼성동 111',
+    deliveryDetail: '로비에서 전화주세요',
+    deliveryLat: 37.5089,
+    deliveryLng: 127.0631,
+    specialInstructions: null,
+    estimatedDeliveryTime: null,
+    actualDeliveryTime: null,
+    cancelledReason: '고객 요청으로 취소',
+    items: [
+      {
+        id: 'item-4',
+        orderId: 'order-4',
+        menuId: 'menu-10',
+        menuName: '슈퍼슈프림 L',
+        menuImage: null,
+        quantity: 1,
+        price: 32000,
+        options: [],
+        specialInstructions: null,
+      },
+    ],
+    createdAt: '2024-12-08T18:00:00Z',
+    updatedAt: '2024-12-08T18:10:00Z',
+  },
+  {
+    id: 'order-5',
+    userId: 'user-1',
+    restaurantId: 'rest-1',
+    restaurantName: '맘스터치 강남점',
+    restaurantImage: null,
+    riderId: 'rider-3',
+    status: 'delivered',
+    totalAmount: 12500,
+    deliveryFee: 2500,
+    platformFee: 500,
+    deliveryAddress: '서울시 강남구 테헤란로 123',
+    deliveryDetail: '101동 1001호',
+    deliveryLat: 37.5012,
+    deliveryLng: 127.0396,
+    specialInstructions: null,
+    estimatedDeliveryTime: '2024-12-07T19:30:00Z',
+    actualDeliveryTime: '2024-12-07T19:28:00Z',
+    cancelledReason: null,
+    items: [
+      {
+        id: 'item-5',
+        orderId: 'order-5',
+        menuId: 'menu-2',
+        menuName: '불싸이버거',
+        menuImage: null,
+        quantity: 1,
+        price: 6500,
+        options: [],
+        specialInstructions: null,
+      },
+      {
+        id: 'item-6',
+        orderId: 'order-5',
+        menuId: 'menu-1',
+        menuName: '싸이버거',
+        menuImage: null,
+        quantity: 1,
+        price: 6000,
+        options: [],
+        specialInstructions: null,
+      },
+    ],
+    createdAt: '2024-12-07T19:00:00Z',
+    updatedAt: '2024-12-07T19:28:00Z',
+  },
+]
+
+// 진행 중인 주문만 필터링
+export function getActiveOrders(): Order[] {
+  return MOCK_ORDERS.filter(order =>
+    ['pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'delivering'].includes(order.status)
+  )
+}
+
+// 완료된 주문만 필터링
+export function getCompletedOrders(): Order[] {
+  return MOCK_ORDERS.filter(order =>
+    ['delivered', 'cancelled'].includes(order.status)
+  )
+}
+
+// ID로 주문 찾기
+export function getOrderById(orderId: string): Order | undefined {
+  return MOCK_ORDERS.find(order => order.id === orderId)
+}

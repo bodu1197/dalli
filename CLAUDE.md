@@ -5,6 +5,32 @@
 
 ---
 
+## 🔑 Supabase 자격 증명 (Claude Code 전용)
+
+> **중요: Supabase Management API 접근 시 아래 정보를 사용하세요. 재질문 금지!**
+
+| 항목 | 값 |
+|------|-----|
+| **Project ID** | `julomhqvaasuxtbhgeqx` |
+| **Access Token** | `sbp_f40b15f794e727f0aa9161de38c497174fcac2ee` |
+| **Dashboard URL** | `https://supabase.com/dashboard/project/julomhqvaasuxtbhgeqx` |
+| **API Base URL** | `https://api.supabase.com/v1/projects/julomhqvaasuxtbhgeqx` |
+
+### Supabase Management API 사용 예시
+```bash
+# 프로젝트 정보 조회
+curl -X GET "https://api.supabase.com/v1/projects/julomhqvaasuxtbhgeqx" \
+  -H "Authorization: Bearer sbp_f40b15f794e727f0aa9161de38c497174fcac2ee"
+
+# SQL 쿼리 실행
+curl -X POST "https://api.supabase.com/v1/projects/julomhqvaasuxtbhgeqx/database/query" \
+  -H "Authorization: Bearer sbp_f40b15f794e727f0aa9161de38c497174fcac2ee" \
+  -H "Content-Type: application/json" \
+  -d '{"query": "SELECT * FROM pg_policies LIMIT 5"}'
+```
+
+---
+
 ## 📋 프로젝트 개요
 
 | 항목 | 내용 |

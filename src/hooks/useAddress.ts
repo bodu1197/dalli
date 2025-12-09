@@ -1,10 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { useAuthStore } from '@/stores/auth.store'
 import { useLocationStore } from '@/stores/location.store'
 import type { Address, AddressInput } from '@/types/address.types'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database.types'
 
 interface UseAddressReturn {
   addresses: Address[]
@@ -21,7 +22,16 @@ interface UseAddressReturn {
  * 사용자 주소 관리 훅
  */
 export function useAddress(): UseAddressReturn {
-  const supabase = createClient()
+  const supabaseRef = useRef<SupabaseClient<Database> | null>(null)
+
+  // 클라이언트 사이드에서만 Supabase 클라이언트 초기화
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !supabaseRef.current) {
+      import('@/lib/supabase/client').then(({ createClient }) => {
+        supabaseRef.current = createClient()
+      })
+    }
+  }, [])
   const { user } = useAuthStore()
   const { setSelectedAddress, addRecentAddress } = useLocationStore()
 
@@ -31,7 +41,9 @@ export function useAddress(): UseAddressReturn {
 
   // 주소 목록 조회
   const fetchAddresses = useCallback(async () => {
-    if (!user) return
+    if (!user || !supabaseRef.current) return
+
+    const supabase = supabaseRef.current
 
     setIsLoading(true)
     setError(null)
@@ -65,12 +77,14 @@ export function useAddress(): UseAddressReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [user, supabase])
+  }, [user])
 
   // 주소 추가
   const addAddress = useCallback(
     async (input: AddressInput): Promise<Address | null> => {
-      if (!user) return null
+      if (!user || !supabaseRef.current) return null
+
+      const supabase = supabaseRef.current
 
       setIsLoading(true)
       setError(null)
@@ -134,13 +148,15 @@ export function useAddress(): UseAddressReturn {
         setIsLoading(false)
       }
     },
-    [user, addresses.length, supabase, addRecentAddress, setSelectedAddress]
+    [user, addresses.length, addRecentAddress, setSelectedAddress]
   )
 
   // 주소 수정
   const updateAddress = useCallback(
     async (id: string, input: Partial<AddressInput>): Promise<boolean> => {
-      if (!user) return false
+      if (!user || !supabaseRef.current) return false
+
+      const supabase = supabaseRef.current
 
       setIsLoading(true)
       setError(null)
@@ -170,13 +186,15 @@ export function useAddress(): UseAddressReturn {
         setIsLoading(false)
       }
     },
-    [user, supabase, fetchAddresses]
+    [user, fetchAddresses]
   )
 
   // 주소 삭제
   const deleteAddress = useCallback(
     async (id: string): Promise<boolean> => {
-      if (!user) return false
+      if (!user || !supabaseRef.current) return false
+
+      const supabase = supabaseRef.current
 
       setIsLoading(true)
       setError(null)
@@ -200,13 +218,15 @@ export function useAddress(): UseAddressReturn {
         setIsLoading(false)
       }
     },
-    [user, supabase]
+    [user]
   )
 
   // 기본 주소 설정
   const setDefaultAddress = useCallback(
     async (id: string): Promise<boolean> => {
-      if (!user) return false
+      if (!user || !supabaseRef.current) return false
+
+      const supabase = supabaseRef.current
 
       setIsLoading(true)
       setError(null)
@@ -245,7 +265,7 @@ export function useAddress(): UseAddressReturn {
         setIsLoading(false)
       }
     },
-    [user, supabase, addresses, fetchAddresses, setSelectedAddress]
+    [user, addresses, fetchAddresses, setSelectedAddress]
   )
 
   // 초기 로드
