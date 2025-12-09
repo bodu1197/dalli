@@ -1,65 +1,129 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState } from 'react'
+import Link from 'next/link'
+import { Search, MapPin, Bell, ChevronDown } from 'lucide-react'
+
+import { CategoryGrid } from '@/components/features/category'
+import { RestaurantList } from '@/components/features/restaurant'
+import { BottomNavBar } from '@/components/layouts/BottomNavBar'
+import { useLocationStore } from '@/stores/location.store'
+import { getRecommendedRestaurants, getPopularRestaurants } from '@/lib/mock/restaurants'
+
+export default function HomePage() {
+  const { selectedAddress } = useLocationStore()
+  const [activeTab, setActiveTab] = useState<'recommend' | 'popular'>('recommend')
+
+  const recommendedRestaurants = getRecommendedRestaurants()
+  const popularRestaurants = getPopularRestaurants()
+
+  const displayAddress = selectedAddress?.address || '주소를 설정해주세요'
+  const shortAddress = displayAddress.length > 20
+    ? displayAddress.slice(0, 20) + '...'
+    : displayAddress
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen bg-[var(--color-neutral-50)] pb-20">
+      {/* 헤더 */}
+      <header className="sticky top-0 z-30 bg-white">
+        {/* 상단 바 */}
+        <div className="flex items-center justify-between px-4 h-14">
+          {/* 위치 선택 */}
+          <Link
+            href="/address/select"
+            className="flex items-center gap-1 max-w-[200px]"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            <MapPin className="w-5 h-5 text-[var(--color-primary-500)] flex-shrink-0" />
+            <span className="font-medium truncate">{shortAddress}</span>
+            <ChevronDown className="w-4 h-4 text-[var(--color-neutral-400)] flex-shrink-0" />
+          </Link>
+
+          {/* 알림 */}
+          <Link
+            href="/notifications"
+            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)]"
+          >
+            <Bell className="w-6 h-6 text-[var(--color-neutral-700)]" />
+          </Link>
+        </div>
+
+        {/* 검색 바 */}
+        <div className="px-4 pb-3">
+          <Link
+            href="/search"
+            className="flex items-center gap-3 h-12 px-4 bg-[var(--color-neutral-100)] rounded-xl"
+          >
+            <Search className="w-5 h-5 text-[var(--color-neutral-400)]" />
+            <span className="text-[var(--color-neutral-400)]">
+              맛집, 메뉴를 검색해보세요
+            </span>
+          </Link>
+        </div>
+      </header>
+
+      <main>
+        {/* 이벤트 배너 */}
+        <section className="px-4 py-4">
+          <div className="relative h-32 rounded-2xl bg-gradient-to-r from-[var(--color-primary-500)] to-[var(--color-primary-400)] overflow-hidden">
+            <div className="absolute inset-0 p-5 text-white">
+              <p className="text-sm opacity-90">달리고 신규 가입 혜택</p>
+              <h2 className="text-xl font-bold mt-1">
+                첫 주문 배달비 무료!
+              </h2>
+              <p className="text-sm mt-2 opacity-80">
+                지금 바로 주문하세요
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* 카테고리 */}
+        <section className="px-4 py-4 bg-white">
+          <h2 className="text-lg font-bold mb-4">뭐 먹을까?</h2>
+          <CategoryGrid />
+        </section>
+
+        {/* 식당 리스트 */}
+        <section className="mt-2 bg-white">
+          {/* 탭 */}
+          <div className="flex border-b border-[var(--color-neutral-100)]">
+            <button
+              onClick={() => setActiveTab('recommend')}
+              className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
+                activeTab === 'recommend'
+                  ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
+                  : 'text-[var(--color-neutral-400)] border-transparent'
+              }`}
+            >
+              추천 맛집
+            </button>
+            <button
+              onClick={() => setActiveTab('popular')}
+              className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
+                activeTab === 'popular'
+                  ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
+                  : 'text-[var(--color-neutral-400)] border-transparent'
+              }`}
+            >
+              인기 맛집
+            </button>
+          </div>
+
+          {/* 리스트 */}
+          <div className="p-4">
+            <RestaurantList
+              restaurants={
+                activeTab === 'recommend'
+                  ? recommendedRestaurants
+                  : popularRestaurants
+              }
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+          </div>
+        </section>
       </main>
+
+      {/* 하단 네비게이션 */}
+      <BottomNavBar />
     </div>
-  );
+  )
 }

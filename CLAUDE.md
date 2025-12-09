@@ -1,4 +1,4 @@
-# 🚀 DALLI (달리) - Claude Code 프로젝트 가이드
+# 🚀 DALLIGO (달리고) - Claude Code 프로젝트 가이드
 
 > **⚠️ 중요: Claude Code는 코드 생성 전 반드시 이 문서를 읽고 모든 규칙을 따라야 합니다.**
 > **🧠 필수: 모든 기능 개발 전 Sequential Thinking MCP를 사용하여 기획/설계를 수행해야 합니다.**
@@ -9,11 +9,57 @@
 
 | 항목 | 내용 |
 |------|------|
-| **프로젝트명** | 달리 (DALLI) |
+| **프로젝트명** | 달리고 (DALLIGO) |
+| **슬로건** | "빠르게 달리고, 맛있게 도착하고" |
 | **목표** | 배달의민족, 쿠팡이츠를 뛰어넘는 대한민국 최고의 배달 슈퍼앱 |
-| **배포** | Vercel (https://dalli.vercel.app) |
+| **배포** | Vercel (https://dalligo.vercel.app) |
 | **데이터베이스** | Supabase (PostgreSQL + PostGIS) |
 | **저장소** | GitHub (환경변수 참조) |
+
+### 💰 플랫폼 수수료 정책 (핵심 비즈니스 모델)
+
+> **달리고의 차별점**: 업계 최저 수수료로 점주님 부담 최소화!
+
+```typescript
+// 📁 src/lib/utils/platform-fee.ts
+export const PLATFORM_FEE_POLICY = {
+  THRESHOLD: 10000,      // 기준 금액: 1만원
+  FEE_BELOW: 0,          // 1만원 미만 주문: 수수료 0원
+  FEE_ABOVE: 500,        // 1만원 이상 주문: 수수료 500원 (건당)
+} as const
+
+/**
+ * 플랫폼 수수료 계산 함수 (점주가 플랫폼에 지불하는 판매 수수료)
+ * - 주문금액 1만원 미만: 수수료 0원 (무료)
+ * - 주문금액 1만원 이상: 수수료 500원 (건당 고정)
+ */
+export function calculatePlatformFee(orderAmount: number): number {
+  if (orderAmount < PLATFORM_FEE_POLICY.THRESHOLD) {
+    return PLATFORM_FEE_POLICY.FEE_BELOW  // 0원
+  }
+  return PLATFORM_FEE_POLICY.FEE_ABOVE    // 500원
+}
+
+// 사용 예시
+// calculatePlatformFee(9000)   // 0원 (점주 수수료 없음)
+// calculatePlatformFee(10000)  // 500원
+// calculatePlatformFee(50000)  // 500원 (고정)
+```
+
+| 주문금액 | 플랫폼 수수료 | 설명 |
+|----------|---------------|------|
+| 1만원 미만 | **0원** | 소액 주문은 점주 수수료 면제 |
+| 1만원 이상 | **500원/건** | 건당 고정 수수료 (업계 최저) |
+
+#### 타사 대비 수수료 비교
+| 플랫폼 | 수수료 방식 | 예시 (3만원 주문) |
+|--------|-------------|-------------------|
+| **달리고** | **건당 500원 고정** | **500원** |
+| 배달의민족 | 6.8% ~ 12.5% | 2,040원 ~ 3,750원 |
+| 쿠팡이츠 | 9.8% | 2,940원 |
+| 요기요 | 12.5% | 3,750원 |
+
+> 💡 **점주님 혜택**: 달리고는 주문금액에 상관없이 건당 500원 고정! 매출이 높을수록 더 유리합니다.
 
 ### 핵심 기술 스택
 ```
