@@ -4,15 +4,29 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Star, Clock, MapPin, Tag } from 'lucide-react'
 
+type CategoryFilter = 'all' | 'korean' | 'chinese' | 'japanese' | 'western' | 'cafe' | 'chicken' | 'pizza' | 'burger' | 'dessert'
+
 interface PickupStoreListProps {
   searchQuery: string
   sortBy: 'distance' | 'rating' | 'discount'
-  categoryFilter: string
+  categoryFilter: CategoryFilter
   showDiscountOnly: boolean
 }
 
 // 임시 픽업 가게 데이터
-const MOCK_PICKUP_STORES = [
+const MOCK_PICKUP_STORES: Array<{
+  id: string
+  name: string
+  category: CategoryFilter
+  categoryName: string
+  rating: number
+  reviewCount: number
+  distance: number
+  pickupTime: string
+  discount: number
+  image: string
+  hasPickupDiscount: boolean
+}> = [
   {
     id: '1',
     name: '교촌치킨 강남점',

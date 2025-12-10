@@ -2,13 +2,15 @@
 
 import { X } from 'lucide-react'
 
+type CategoryFilter = 'all' | 'korean' | 'chinese' | 'japanese' | 'western' | 'cafe' | 'chicken' | 'pizza' | 'burger' | 'dessert'
+
 interface PickupFiltersProps {
-  categoryFilter: string
-  onCategoryChange: (category: string) => void
+  categoryFilter: CategoryFilter
+  onCategoryChange: (category: CategoryFilter) => void
   onClose: () => void
 }
 
-const CATEGORIES = [
+const CATEGORIES: Array<{ id: CategoryFilter; name: string; icon: string }> = [
   { id: 'all', name: '전체', icon: '🍽️' },
   { id: 'korean', name: '한식', icon: '🍚' },
   { id: 'chinese', name: '중식', icon: '🥟' },
