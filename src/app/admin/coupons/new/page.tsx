@@ -93,10 +93,11 @@ export default function AdminCouponNewPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+              <label htmlFor="coupon-name" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
                 쿠폰명 <span className="text-[var(--color-error-500)]">*</span>
               </label>
               <input
+                id="coupon-name"
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -106,11 +107,12 @@ export default function AdminCouponNewPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+              <label htmlFor="coupon-code" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
                 쿠폰 코드 <span className="text-[var(--color-error-500)]">*</span>
               </label>
               <div className="flex gap-2">
                 <input
+                  id="coupon-code"
                   type="text"
                   value={form.code}
                   onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
@@ -118,6 +120,7 @@ export default function AdminCouponNewPage() {
                   className="flex-1 px-4 py-3 bg-[var(--color-neutral-100)] rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)]"
                 />
                 <button
+                  type="button"
                   onClick={generateCode}
                   className="px-4 py-3 bg-[var(--color-neutral-200)] text-[var(--color-neutral-700)] rounded-xl text-sm font-medium hover:bg-[var(--color-neutral-300)] transition-colors"
                 >
@@ -127,10 +130,11 @@ export default function AdminCouponNewPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+              <label htmlFor="coupon-description" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
                 쿠폰 설명
               </label>
               <textarea
+                id="coupon-description"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="쿠폰 설명을 입력하세요"
@@ -188,11 +192,12 @@ export default function AdminCouponNewPage() {
 
             {/* 할인 값 */}
             <div>
-              <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+              <label htmlFor="discount-value" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
                 {form.type === 'fixed' ? '할인 금액' : '할인율'} <span className="text-[var(--color-error-500)]">*</span>
               </label>
               <div className="relative">
                 <input
+                  id="discount-value"
                   type="number"
                   value={form.discountValue || ''}
                   onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })}
@@ -207,11 +212,12 @@ export default function AdminCouponNewPage() {
 
             {/* 최소 주문 금액 */}
             <div>
-              <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+              <label htmlFor="min-order-amount" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
                 최소 주문 금액
               </label>
               <div className="relative">
                 <input
+                  id="min-order-amount"
                   type="number"
                   value={form.minOrderAmount || ''}
                   onChange={(e) => setForm({ ...form, minOrderAmount: Number(e.target.value) })}
@@ -225,11 +231,12 @@ export default function AdminCouponNewPage() {
             {/* 최대 할인 금액 (정률 할인 시) */}
             {form.type === 'percentage' && (
               <div>
-                <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+                <label htmlFor="max-discount-amount" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
                   최대 할인 금액
                 </label>
                 <div className="relative">
                   <input
+                    id="max-discount-amount"
                     type="number"
                     value={form.maxDiscountAmount || ''}
                     onChange={(e) => setForm({ ...form, maxDiscountAmount: Number(e.target.value) })}
@@ -253,11 +260,12 @@ export default function AdminCouponNewPage() {
           <div className="space-y-4">
             {/* 발급 수량 */}
             <div>
-              <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+              <label htmlFor="total-count" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
                 발급 수량 <span className="text-[var(--color-error-500)]">*</span>
               </label>
               <div className="relative">
                 <input
+                  id="total-count"
                   type="number"
                   value={form.totalCount || ''}
                   onChange={(e) => setForm({ ...form, totalCount: Number(e.target.value) })}
@@ -270,9 +278,9 @@ export default function AdminCouponNewPage() {
 
             {/* 대상 고객 */}
             <div>
-              <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+              <span className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
                 대상 고객
-              </label>
+              </span>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: 'all', label: '전체 고객' },
@@ -306,10 +314,11 @@ export default function AdminCouponNewPage() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+                <label htmlFor="start-date" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
                   시작일 <span className="text-[var(--color-error-500)]">*</span>
                 </label>
                 <input
+                  id="start-date"
                   type="date"
                   value={form.startDate}
                   onChange={(e) => setForm({ ...form, startDate: e.target.value })}
@@ -317,10 +326,11 @@ export default function AdminCouponNewPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+                <label htmlFor="end-date" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
                   종료일 <span className="text-[var(--color-error-500)]">*</span>
                 </label>
                 <input
+                  id="end-date"
                   type="date"
                   value={form.endDate}
                   onChange={(e) => setForm({ ...form, endDate: e.target.value })}

@@ -485,7 +485,7 @@ export default function SettlementHistoryPage() {
               zIndex: 100
             }}>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{
+                <label htmlFor="filter-type" style={{
                   display: 'block',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -495,6 +495,7 @@ export default function SettlementHistoryPage() {
                   유형
                 </label>
                 <select
+                  id="filter-type"
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                   style={{
@@ -512,7 +513,7 @@ export default function SettlementHistoryPage() {
               </div>
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={{
+                <label htmlFor="filter-status" style={{
                   display: 'block',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -522,6 +523,7 @@ export default function SettlementHistoryPage() {
                   상태
                 </label>
                 <select
+                  id="filter-status"
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
                   style={{
@@ -540,7 +542,7 @@ export default function SettlementHistoryPage() {
               </div>
 
               <div style={{ marginBottom: '16px' }}>
-                <label style={{
+                <label htmlFor="filter-period" style={{
                   display: 'block',
                   fontSize: '12px',
                   fontWeight: 600,
@@ -550,6 +552,7 @@ export default function SettlementHistoryPage() {
                   기간
                 </label>
                 <select
+                  id="filter-period"
                   value={filterPeriod}
                   onChange={(e) => setFilterPeriod(e.target.value)}
                   style={{

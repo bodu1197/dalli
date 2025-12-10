@@ -78,6 +78,7 @@ function Toggle({ checked, onChange }: ToggleProps): React.ReactElement {
 
 // Input with Suffix Component
 interface InputWithSuffixProps {
+  readonly id: string
   readonly label: string
   readonly value: number | string
   readonly suffix: string
@@ -88,6 +89,7 @@ interface InputWithSuffixProps {
 }
 
 function InputWithSuffix({
+  id,
   label,
   value,
   suffix,
@@ -99,6 +101,7 @@ function InputWithSuffix({
   return (
     <div>
       <label
+        htmlFor={id}
         className={cn(
           'mb-2 block text-gray-500',
           labelSize === 'xs' ? 'text-xs' : 'text-sm'
@@ -108,6 +111,7 @@ function InputWithSuffix({
       </label>
       <div className="relative">
         <input
+          id={id}
           type={type}
           value={value}
           step={step}
@@ -361,6 +365,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
 
           <div className="grid grid-cols-2 gap-3">
             <InputWithSuffix
+              id="platform-fee-value"
               label={
                 config.platformFee.type === 'fixed' ? '수수료 금액' : '수수료 비율'
               }
@@ -369,6 +374,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
               onChange={(v) => handleChange('platformFee', 'value', v as number)}
             />
             <InputWithSuffix
+              id="platform-fee-threshold"
               label="무료 기준 금액"
               value={config.platformFee.freeThreshold}
               suffix="원"
@@ -387,12 +393,14 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
       >
         <div className="mb-4 grid grid-cols-2 gap-3">
           <InputWithSuffix
+            id="delivery-fee-base"
             label="기본 배달비"
             value={config.deliveryFee.base}
             suffix="원"
             onChange={(v) => handleChange('deliveryFee', 'base', v as number)}
           />
           <InputWithSuffix
+            id="delivery-fee-per-km"
             label="km당 추가"
             value={config.deliveryFee.perKm}
             suffix="원"
@@ -415,6 +423,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
           >
             <div className="grid grid-cols-3 gap-2">
               <InputWithSuffix
+                id="surge-pricing-start"
                 label="시작"
                 value={config.deliveryFee.surgePricing.peakHours.start}
                 suffix=""
@@ -425,6 +434,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
                 }
               />
               <InputWithSuffix
+                id="surge-pricing-end"
                 label="종료"
                 value={config.deliveryFee.surgePricing.peakHours.end}
                 suffix=""
@@ -435,6 +445,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
                 }
               />
               <InputWithSuffix
+                id="surge-pricing-multiplier"
                 label="할증률"
                 value={config.deliveryFee.surgePricing.multiplier}
                 suffix="x"
@@ -462,6 +473,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
         >
           <div className="grid grid-cols-2 gap-2">
             <InputWithSuffix
+              id="weather-rain-multiplier"
               label="비 할증률"
               value={config.deliveryFee.weatherSurge.rainMultiplier}
               suffix="x"
@@ -472,6 +484,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
               }
             />
             <InputWithSuffix
+              id="weather-snow-multiplier"
               label="눈 할증률"
               value={config.deliveryFee.weatherSurge.snowMultiplier}
               suffix="x"
@@ -492,6 +505,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
       >
         <div className="grid grid-cols-2 gap-3">
           <InputWithSuffix
+            id="rider-base-payment"
             label="기본 배달료"
             value={config.riderPayment.basePayment}
             suffix="원"
@@ -500,12 +514,14 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
             }
           />
           <InputWithSuffix
+            id="rider-per-km"
             label="km당 추가"
             value={config.riderPayment.perKm}
             suffix="원"
             onChange={(v) => handleChange('riderPayment', 'perKm', v as number)}
           />
           <InputWithSuffix
+            id="rider-long-distance-threshold"
             label="장거리 기준"
             value={config.riderPayment.longDistanceBonus.threshold}
             suffix="km"
@@ -514,6 +530,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
             }
           />
           <InputWithSuffix
+            id="rider-long-distance-bonus"
             label="장거리 보너스"
             value={config.riderPayment.longDistanceBonus.bonus}
             suffix="원"
@@ -523,6 +540,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
           />
           <div className="col-span-2">
             <InputWithSuffix
+              id="rider-peak-bonus"
               label="피크타임 보너스"
               value={config.riderPayment.peakBonus}
               suffix="원"
@@ -541,6 +559,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
       >
         <div className="grid grid-cols-2 gap-3">
           <InputWithSuffix
+            id="owner-commission-percentage"
             label="수수료율"
             value={config.ownerCommission.percentage}
             suffix="%"
@@ -549,6 +568,7 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
             }
           />
           <InputWithSuffix
+            id="owner-min-monthly-fee"
             label="최소 월 수수료"
             value={config.ownerCommission.minMonthlyFee}
             suffix="원"

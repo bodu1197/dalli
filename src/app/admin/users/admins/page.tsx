@@ -437,8 +437,10 @@ export default function AdminUsersPage(): React.ReactElement {
       <div className="mb-5 flex flex-wrap items-center gap-3">
         {/* Search */}
         <div className="relative min-w-[300px] flex-1">
+          <label htmlFor="admin-search" className="sr-only">관리자 검색</label>
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <input
+            id="admin-search"
             type="text"
             placeholder="이름, 이메일, 전화번호, 부서 검색"
             value={searchQuery}
@@ -448,7 +450,9 @@ export default function AdminUsersPage(): React.ReactElement {
         </div>
 
         {/* Role Filter */}
+        <label htmlFor="admin-role-filter" className="sr-only">역할 필터</label>
         <select
+          id="admin-role-filter"
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
           className={cn(
@@ -466,7 +470,9 @@ export default function AdminUsersPage(): React.ReactElement {
         </select>
 
         {/* Status Filter */}
+        <label htmlFor="admin-status-filter" className="sr-only">상태 필터</label>
         <select
+          id="admin-status-filter"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           className={cn(

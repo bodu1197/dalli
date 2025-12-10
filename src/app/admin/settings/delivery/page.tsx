@@ -68,6 +68,7 @@ function Toggle({ checked, onChange }: ToggleProps): React.ReactElement {
 
 // Input with Suffix Component
 interface InputWithSuffixProps {
+  readonly id: string
   readonly label: string
   readonly value: number | string
   readonly suffix: string
@@ -76,6 +77,7 @@ interface InputWithSuffixProps {
 }
 
 function InputWithSuffix({
+  id,
   label,
   value,
   suffix,
@@ -84,9 +86,10 @@ function InputWithSuffix({
 }: InputWithSuffixProps): React.ReactElement {
   return (
     <div>
-      <label className="mb-2 block text-xs text-gray-500">{label}</label>
+      <label htmlFor={id} className="mb-2 block text-xs text-gray-500">{label}</label>
       <div className="relative">
         <input
+          id={id}
           type={type}
           value={value}
           onChange={(e) =>
@@ -253,24 +256,28 @@ export default function AdminSettingsDeliveryPage(): React.ReactElement {
       >
         <div className="grid grid-cols-2 gap-3">
           <InputWithSuffix
+            id="max-delivery-radius"
             label="최대 배달 반경"
             value={config.general.maxDeliveryRadius}
             suffix="km"
             onChange={(v) => handleChange('general', 'maxDeliveryRadius', v as number)}
           />
           <InputWithSuffix
+            id="min-order-amount"
             label="최소 주문 금액"
             value={config.general.minOrderAmount}
             suffix="원"
             onChange={(v) => handleChange('general', 'minOrderAmount', v as number)}
           />
           <InputWithSuffix
+            id="default-prep-time"
             label="기본 조리 시간"
             value={config.general.defaultPrepTime}
             suffix="분"
             onChange={(v) => handleChange('general', 'defaultPrepTime', v as number)}
           />
           <InputWithSuffix
+            id="max-prep-time"
             label="최대 조리 시간"
             value={config.general.maxPrepTime}
             suffix="분"
@@ -300,6 +307,7 @@ export default function AdminSettingsDeliveryPage(): React.ReactElement {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <InputWithSuffix
+            id="assignment-radius"
             label="배정 반경"
             value={config.riderAssignment.assignmentRadius}
             suffix="km"
@@ -308,6 +316,7 @@ export default function AdminSettingsDeliveryPage(): React.ReactElement {
             }
           />
           <InputWithSuffix
+            id="max-concurrent-orders"
             label="동시 배달 최대"
             value={config.riderAssignment.maxConcurrentOrders}
             suffix="건"
@@ -317,6 +326,7 @@ export default function AdminSettingsDeliveryPage(): React.ReactElement {
           />
           <div className="col-span-2">
             <InputWithSuffix
+              id="reassign-timeout"
               label="재배정 타임아웃 (미수락 시)"
               value={config.riderAssignment.reassignTimeout}
               suffix="분"
@@ -361,10 +371,11 @@ export default function AdminSettingsDeliveryPage(): React.ReactElement {
           {config.restrictions.lateNightRestriction && (
             <div className="ml-3 grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs text-gray-500">
+                <label htmlFor="late-night-start" className="mb-1 block text-xs text-gray-500">
                   시작 시간
                 </label>
                 <input
+                  id="late-night-start"
                   type="time"
                   value={config.restrictions.lateNightStart}
                   onChange={(e) =>
@@ -374,10 +385,11 @@ export default function AdminSettingsDeliveryPage(): React.ReactElement {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-gray-500">
+                <label htmlFor="late-night-end" className="mb-1 block text-xs text-gray-500">
                   종료 시간
                 </label>
                 <input
+                  id="late-night-end"
                   type="time"
                   value={config.restrictions.lateNightEnd}
                   onChange={(e) =>
