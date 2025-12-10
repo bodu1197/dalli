@@ -125,7 +125,7 @@ export default function HomePage() {
                 }`}>음식배달</span>
               </button>
 
-              {/* 픽업 */}
+              {/* 직접수령 (포장) */}
               <button
                 onClick={() => setActivePlatform('pickup')}
                 className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
@@ -141,14 +141,14 @@ export default function HomePage() {
                       : 'text-gray-600'
                   }`} />
                 </div>
-                <span className={`text-xs whitespace-nowrap ${
+                <span className={`text-[10px] whitespace-nowrap ${
                   activePlatform === 'pickup'
                     ? 'font-bold text-[#df0012] border-b-2 border-[#df0012] pb-0.5'
                     : 'font-medium text-gray-600'
-                }`}>픽업</span>
+                }`}>직접수령 (포장)</span>
               </button>
 
-              {/* 장보기·쇼핑 */}
+              {/* 심부름 */}
               <button
                 onClick={() => setActivePlatform('shopping')}
                 className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
@@ -168,7 +168,7 @@ export default function HomePage() {
                   activePlatform === 'shopping'
                     ? 'font-bold text-[#df0012] border-b-2 border-[#df0012] pb-0.5'
                     : 'font-medium text-gray-600'
-                }`}>장보기·쇼핑</span>
+                }`}>심부름</span>
               </button>
 
               {/* 선물하기 */}
@@ -248,9 +248,9 @@ export default function HomePage() {
             <section className="px-4 py-20 bg-white">
               <div className="text-center">
                 <Store className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <h2 className="text-xl font-bold text-gray-900 mb-2">픽업 서비스</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">직접수령 (포장)</h2>
                 <p className="text-gray-500">곧 만나요! 🏪</p>
-                <p className="text-sm text-gray-400 mt-2">픽업 서비스를 준비 중입니다</p>
+                <p className="text-sm text-gray-400 mt-2">직접수령 서비스를 준비 중입니다</p>
               </div>
             </section>
           )}
@@ -259,9 +259,9 @@ export default function HomePage() {
             <section className="px-4 py-20 bg-white">
               <div className="text-center">
                 <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <h2 className="text-xl font-bold text-gray-900 mb-2">장보기·쇼핑</h2>
-                <p className="text-gray-500">곧 만나요! 🛒</p>
-                <p className="text-sm text-gray-400 mt-2">장보기 서비스를 준비 중입니다</p>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">심부름</h2>
+                <p className="text-gray-500">곧 만나요! 🏃</p>
+                <p className="text-sm text-gray-400 mt-2">심부름 서비스를 준비 중입니다</p>
               </div>
             </section>
           )}
