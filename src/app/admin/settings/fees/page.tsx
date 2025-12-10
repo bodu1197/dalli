@@ -1,60 +1,222 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState, useCallback, useMemo } from 'react'
 import {
-  ArrowLeft,
   Save,
   DollarSign,
   Percent,
   Info,
   History,
-  AlertCircle
+  Bike,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react'
+import { PageHeader, ConfirmModal } from '@/components/features/admin/common'
+import { cn } from '@/lib/utils'
 
+// Types
 interface FeeConfig {
-  platformFee: {
-    type: 'fixed' | 'percentage'
-    value: number
-    minOrderAmount: number
-    freeThreshold: number
+  readonly platformFee: {
+    readonly type: 'fixed' | 'percentage'
+    readonly value: number
+    readonly minOrderAmount: number
+    readonly freeThreshold: number
   }
-  deliveryFee: {
-    base: number
-    perKm: number
-    maxDistance: number
-    surgePricing: {
-      enabled: boolean
-      peakHours: { start: string; end: string }
-      multiplier: number
+  readonly deliveryFee: {
+    readonly base: number
+    readonly perKm: number
+    readonly maxDistance: number
+    readonly surgePricing: {
+      readonly enabled: boolean
+      readonly peakHours: { readonly start: string; readonly end: string }
+      readonly multiplier: number
     }
-    weatherSurge: {
-      enabled: boolean
-      rainMultiplier: number
-      snowMultiplier: number
+    readonly weatherSurge: {
+      readonly enabled: boolean
+      readonly rainMultiplier: number
+      readonly snowMultiplier: number
     }
   }
-  riderPayment: {
-    basePayment: number
-    perKm: number
-    longDistanceBonus: {
-      threshold: number
-      bonus: number
+  readonly riderPayment: {
+    readonly basePayment: number
+    readonly perKm: number
+    readonly longDistanceBonus: {
+      readonly threshold: number
+      readonly bonus: number
     }
-    peakBonus: number
+    readonly peakBonus: number
   }
-  ownerCommission: {
-    percentage: number
-    minMonthlyFee: number
+  readonly ownerCommission: {
+    readonly percentage: number
+    readonly minMonthlyFee: number
   }
 }
 
+interface FeeHistory {
+  readonly date: string
+  readonly change: string
+  readonly admin: string
+}
+
+// Toggle Component
+interface ToggleProps {
+  readonly checked: boolean
+  readonly onChange: () => void
+}
+
+function Toggle({ checked, onChange }: ToggleProps): React.ReactElement {
+  return (
+    <button type="button" onClick={onChange} className="focus:outline-none">
+      {checked ? (
+        <ToggleRight className="h-8 w-8 text-blue-500" />
+      ) : (
+        <ToggleLeft className="h-8 w-8 text-gray-400" />
+      )}
+    </button>
+  )
+}
+
+// Input with Suffix Component
+interface InputWithSuffixProps {
+  readonly label: string
+  readonly value: number | string
+  readonly suffix: string
+  readonly type?: 'number' | 'time'
+  readonly step?: string
+  readonly onChange: (value: number | string) => void
+  readonly labelSize?: 'sm' | 'xs'
+}
+
+function InputWithSuffix({
+  label,
+  value,
+  suffix,
+  type = 'number',
+  step,
+  onChange,
+  labelSize = 'sm',
+}: InputWithSuffixProps): React.ReactElement {
+  return (
+    <div>
+      <label
+        className={cn(
+          'mb-2 block text-gray-500',
+          labelSize === 'xs' ? 'text-xs' : 'text-sm'
+        )}
+      >
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          type={type}
+          value={value}
+          step={step}
+          onChange={(e) =>
+            onChange(type === 'number' ? Number(e.target.value) : e.target.value)
+          }
+          className="w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-12 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        {type === 'number' && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+            {suffix}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Section Card Component
+interface SectionCardProps {
+  readonly icon: React.ReactNode
+  readonly title: string
+  readonly children: React.ReactNode
+  readonly info?: string
+}
+
+function SectionCard({
+  icon,
+  title,
+  children,
+  info,
+}: SectionCardProps): React.ReactElement {
+  return (
+    <div className="mb-4 rounded-xl bg-white p-5">
+      <div className="mb-4 flex items-center gap-2">
+        {icon}
+        <h2 className="text-base font-bold text-gray-900">{title}</h2>
+      </div>
+      {info && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg bg-blue-50 p-3">
+          <Info className="h-4 w-4 text-blue-500" />
+          <span className="text-sm text-blue-500">{info}</span>
+        </div>
+      )}
+      {children}
+    </div>
+  )
+}
+
+// Toggle Section Component
+interface ToggleSectionProps {
+  readonly title: string
+  readonly checked: boolean
+  readonly onChange: () => void
+  readonly children?: React.ReactNode
+}
+
+function ToggleSection({
+  title,
+  checked,
+  onChange,
+  children,
+}: ToggleSectionProps): React.ReactElement {
+  return (
+    <div className="rounded-lg bg-gray-50 p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-sm font-semibold text-gray-900">{title}</span>
+        <Toggle checked={checked} onChange={onChange} />
+      </div>
+      {checked && children}
+    </div>
+  )
+}
+
+// Fee Type Button Component
+interface FeeTypeButtonProps {
+  readonly label: string
+  readonly isActive: boolean
+  readonly onClick: () => void
+}
+
+function FeeTypeButton({
+  label,
+  isActive,
+  onClick,
+}: FeeTypeButtonProps): React.ReactElement {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex-1 rounded-lg border-2 px-3 py-3 text-sm font-semibold transition-colors',
+        isActive
+          ? 'border-blue-500 bg-blue-50 text-blue-500'
+          : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+      )}
+    >
+      {label}
+    </button>
+  )
+}
+
+// Default Config
 const defaultConfig: FeeConfig = {
   platformFee: {
     type: 'fixed',
     value: 500,
     minOrderAmount: 10000,
-    freeThreshold: 10000
+    freeThreshold: 10000,
   },
   deliveryFee: {
     base: 3000,
@@ -63,729 +225,372 @@ const defaultConfig: FeeConfig = {
     surgePricing: {
       enabled: true,
       peakHours: { start: '11:30', end: '13:30' },
-      multiplier: 1.2
+      multiplier: 1.2,
     },
     weatherSurge: {
       enabled: true,
       rainMultiplier: 1.3,
-      snowMultiplier: 1.5
-    }
+      snowMultiplier: 1.5,
+    },
   },
   riderPayment: {
     basePayment: 3500,
     perKm: 400,
     longDistanceBonus: {
       threshold: 5,
-      bonus: 1000
+      bonus: 1000,
     },
-    peakBonus: 500
+    peakBonus: 500,
   },
   ownerCommission: {
     percentage: 12,
-    minMonthlyFee: 0
-  }
+    minMonthlyFee: 0,
+  },
 }
 
-const feeHistory = [
+const feeHistory: ReadonlyArray<FeeHistory> = [
   { date: '2024-01-15', change: '플랫폼 수수료 500원 고정으로 변경', admin: '관리자' },
   { date: '2024-01-01', change: '배달비 기본 3,000원으로 인상', admin: '관리자' },
   { date: '2023-12-20', change: '피크타임 할증 20%로 조정', admin: '관리자' },
-  { date: '2023-12-01', change: '점주 수수료 12%로 인하', admin: '관리자' }
+  { date: '2023-12-01', change: '점주 수수료 12%로 인하', admin: '관리자' },
 ]
 
-export default function AdminSettingsFeesPage() {
+export default function AdminSettingsFeesPage(): React.ReactElement {
   const [config, setConfig] = useState<FeeConfig>(defaultConfig)
   const [hasChanges, setHasChanges] = useState(false)
   const [showSaveModal, setShowSaveModal] = useState(false)
 
-  const handleChange = (section: keyof FeeConfig, field: string, value: number | boolean | string) => {
-    setConfig(prev => {
-      if (field.includes('.')) {
-        const [parent, child] = field.split('.')
-        const sectionData = prev[section] as unknown as Record<string, Record<string, unknown>>
+  const handleChange = useCallback(
+    <K extends keyof FeeConfig>(
+      section: K,
+      field: string,
+      value: number | boolean | string
+    ) => {
+      setConfig((prev) => {
+        if (field.includes('.')) {
+          const [parent, child] = field.split('.')
+          const sectionData = prev[section] as unknown as Record<
+            string,
+            Record<string, unknown>
+          >
+          return {
+            ...prev,
+            [section]: {
+              ...sectionData,
+              [parent]: {
+                ...sectionData[parent],
+                [child]: value,
+              },
+            },
+          }
+        }
         return {
           ...prev,
           [section]: {
-            ...sectionData,
-            [parent]: {
-              ...sectionData[parent],
-              [child]: value
-            }
-          }
+            ...prev[section],
+            [field]: value,
+          },
         }
-      }
-      return {
-        ...prev,
-        [section]: {
-          ...prev[section],
-          [field]: value
-        }
-      }
-    })
-    setHasChanges(true)
-  }
+      })
+      setHasChanges(true)
+    },
+    []
+  )
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     setShowSaveModal(false)
     setHasChanges(false)
     // Save logic here
-  }
+  }, [])
+
+  const currentPolicyText = useMemo(() => {
+    const { freeThreshold, value, type } = config.platformFee
+    const thresholdText = freeThreshold.toLocaleString()
+    const valueText =
+      type === 'fixed' ? `${value.toLocaleString()}원 고정` : `${value}%`
+    return `현재 정책: ${thresholdText}원 미만 0원, ${thresholdText}원 이상 ${valueText}`
+  }, [config.platformFee])
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-background)' }}>
+    <div className="mx-auto max-w-4xl p-6">
       {/* Header */}
-      <header style={{
-        backgroundColor: 'var(--color-white)',
-        borderBottom: '1px solid var(--color-border)',
-        padding: '16px 20px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link href="/admin" style={{ color: 'var(--color-text-secondary)' }}>
-              <ArrowLeft size={24} />
-            </Link>
-            <h1 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              수수료 설정
-            </h1>
-          </div>
-          <button
-            onClick={() => setShowSaveModal(true)}
-            disabled={!hasChanges}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 16px',
-              backgroundColor: hasChanges ? 'var(--color-primary-500)' : 'var(--color-border)',
-              color: hasChanges ? 'white' : 'var(--color-text-tertiary)',
-              borderRadius: '8px',
-              border: 'none',
-              fontSize: '14px',
-              fontWeight: 600,
-              cursor: hasChanges ? 'pointer' : 'not-allowed'
-            }}
-          >
-            <Save size={18} />
-            저장
-          </button>
-        </div>
-      </header>
-
-      <div style={{ padding: '20px' }}>
-        {/* Platform Fee */}
-        <div style={{
-          backgroundColor: 'var(--color-white)',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '16px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <DollarSign size={20} color="var(--color-primary-500)" />
-            <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              플랫폼 수수료 (고객)
-            </h2>
-          </div>
-
-          <div style={{
-            padding: '12px',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            borderRadius: '8px',
-            marginBottom: '16px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Info size={16} color="var(--color-primary-500)" />
-              <span style={{ fontSize: '13px', color: 'var(--color-primary-500)' }}>
-                현재 정책: 10,000원 미만 0원, 10,000원 이상 500원 고정
-              </span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
-                수수료 타입
-              </label>
-              <div style={{ display: 'flex', gap: '12px' }}>
-                <button
-                  onClick={() => handleChange('platformFee', 'type', 'fixed')}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: `2px solid ${config.platformFee.type === 'fixed' ? 'var(--color-primary-500)' : 'var(--color-border)'}`,
-                    backgroundColor: config.platformFee.type === 'fixed' ? 'rgba(59, 130, 246, 0.1)' : 'var(--color-white)',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: config.platformFee.type === 'fixed' ? 'var(--color-primary-500)' : 'var(--color-text-secondary)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  고정 금액
-                </button>
-                <button
-                  onClick={() => handleChange('platformFee', 'type', 'percentage')}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    borderRadius: '8px',
-                    border: `2px solid ${config.platformFee.type === 'percentage' ? 'var(--color-primary-500)' : 'var(--color-border)'}`,
-                    backgroundColor: config.platformFee.type === 'percentage' ? 'rgba(59, 130, 246, 0.1)' : 'var(--color-white)',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: config.platformFee.type === 'percentage' ? 'var(--color-primary-500)' : 'var(--color-text-secondary)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  비율 (%)
-                </button>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              <div>
-                <label htmlFor="platformFeeValue" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
-                  {config.platformFee.type === 'fixed' ? '수수료 금액' : '수수료 비율'}
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    id="platformFeeValue"
-                    type="number"
-                    value={config.platformFee.value}
-                    onChange={(e) => handleChange('platformFee', 'value', Number(e.target.value))}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      paddingRight: '40px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--color-border)',
-                      fontSize: '14px'
-                    }}
-                  />
-                  <span style={{
-                    position: 'absolute',
-                    right: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--color-text-tertiary)',
-                    fontSize: '14px'
-                  }}>
-                    {config.platformFee.type === 'fixed' ? '원' : '%'}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <label htmlFor="platformFeeFreeThreshold" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
-                  무료 기준 금액
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    id="platformFeeFreeThreshold"
-                    type="number"
-                    value={config.platformFee.freeThreshold}
-                    onChange={(e) => handleChange('platformFee', 'freeThreshold', Number(e.target.value))}
-                    style={{
-                      width: '100%',
-                      padding: '12px',
-                      paddingRight: '40px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--color-border)',
-                      fontSize: '14px'
-                    }}
-                  />
-                  <span style={{
-                    position: 'absolute',
-                    right: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--color-text-tertiary)',
-                    fontSize: '14px'
-                  }}>
-                    원
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Delivery Fee */}
-        <div style={{
-          backgroundColor: 'var(--color-white)',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '16px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <DollarSign size={20} color="var(--color-success-500)" />
-            <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              배달비 설정
-            </h2>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-            <div>
-              <label htmlFor="deliveryFeeBase" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
-                기본 배달비
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  id="deliveryFeeBase"
-                  type="number"
-                  value={config.deliveryFee.base}
-                  onChange={(e) => handleChange('deliveryFee', 'base', Number(e.target.value))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    paddingRight: '40px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--color-border)',
-                    fontSize: '14px'
-                  }}
-                />
-                <span style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--color-text-tertiary)',
-                  fontSize: '14px'
-                }}>
-                  원
-                </span>
-              </div>
-            </div>
-            <div>
-              <label htmlFor="deliveryFeePerKm" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
-                km당 추가
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  id="deliveryFeePerKm"
-                  type="number"
-                  value={config.deliveryFee.perKm}
-                  onChange={(e) => handleChange('deliveryFee', 'perKm', Number(e.target.value))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    paddingRight: '40px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--color-border)',
-                    fontSize: '14px'
-                  }}
-                />
-                <span style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--color-text-tertiary)',
-                  fontSize: '14px'
-                }}>
-                  원
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Surge Pricing */}
-          <div style={{
-            padding: '16px',
-            backgroundColor: 'var(--color-background)',
-            borderRadius: '8px',
-            marginBottom: '12px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                피크타임 할증
-              </span>
-              <label htmlFor="surgePricingEnabled" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  id="surgePricingEnabled"
-                  type="checkbox"
-                  checked={config.deliveryFee.surgePricing.enabled}
-                  onChange={(e) => handleChange('deliveryFee', 'surgePricing.enabled', e.target.checked)}
-                  style={{ width: '20px', height: '20px' }}
-                />
-              </label>
-            </div>
-            {config.deliveryFee.surgePricing.enabled && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                <div>
-                  <label htmlFor="surgeStart" style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
-                    시작
-                  </label>
-                  <input
-                    id="surgeStart"
-                    type="time"
-                    value={config.deliveryFee.surgePricing.peakHours.start}
-                    onChange={(e) => handleChange('deliveryFee', 'surgePricing.start', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--color-border)',
-                      fontSize: '13px'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="surgeEnd" style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
-                    종료
-                  </label>
-                  <input
-                    id="surgeEnd"
-                    type="time"
-                    value={config.deliveryFee.surgePricing.peakHours.end}
-                    onChange={(e) => handleChange('deliveryFee', 'surgePricing.end', e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '8px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--color-border)',
-                      fontSize: '13px'
-                    }}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="surgeMultiplier" style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
-                    할증률
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      id="surgeMultiplier"
-                      type="number"
-                      step="0.1"
-                      value={config.deliveryFee.surgePricing.multiplier}
-                      onChange={(e) => handleChange('deliveryFee', 'surgePricing.multiplier', Number(e.target.value))}
-                      style={{
-                        width: '100%',
-                        padding: '8px',
-                        paddingRight: '24px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--color-border)',
-                        fontSize: '13px'
-                      }}
-                    />
-                    <span style={{
-                      position: 'absolute',
-                      right: '8px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'var(--color-text-tertiary)',
-                      fontSize: '12px'
-                    }}>
-                      x
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Weather Surge */}
-          <div style={{
-            padding: '16px',
-            backgroundColor: 'var(--color-background)',
-            borderRadius: '8px'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-                날씨 할증
-              </span>
-              <label htmlFor="weatherSurgeEnabled" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                <input
-                  id="weatherSurgeEnabled"
-                  type="checkbox"
-                  checked={config.deliveryFee.weatherSurge.enabled}
-                  onChange={(e) => handleChange('deliveryFee', 'weatherSurge.enabled', e.target.checked)}
-                  style={{ width: '20px', height: '20px' }}
-                />
-              </label>
-            </div>
-            {config.deliveryFee.weatherSurge.enabled && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <div>
-                  <label htmlFor="rainMultiplier" style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
-                    비 할증률
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      id="rainMultiplier"
-                      type="number"
-                      step="0.1"
-                      value={config.deliveryFee.weatherSurge.rainMultiplier}
-                      onChange={(e) => handleChange('deliveryFee', 'weatherSurge.rainMultiplier', Number(e.target.value))}
-                      style={{
-                        width: '100%',
-                        padding: '8px',
-                        paddingRight: '24px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--color-border)',
-                        fontSize: '13px'
-                      }}
-                    />
-                    <span style={{
-                      position: 'absolute',
-                      right: '8px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'var(--color-text-tertiary)',
-                      fontSize: '12px'
-                    }}>
-                      x
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="snowMultiplier" style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
-                    눈 할증률
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      id="snowMultiplier"
-                      type="number"
-                      step="0.1"
-                      value={config.deliveryFee.weatherSurge.snowMultiplier}
-                      onChange={(e) => handleChange('deliveryFee', 'weatherSurge.snowMultiplier', Number(e.target.value))}
-                      style={{
-                        width: '100%',
-                        padding: '8px',
-                        paddingRight: '24px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--color-border)',
-                        fontSize: '13px'
-                      }}
-                    />
-                    <span style={{
-                      position: 'absolute',
-                      right: '8px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'var(--color-text-tertiary)',
-                      fontSize: '12px'
-                    }}>
-                      x
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Owner Commission */}
-        <div style={{
-          backgroundColor: 'var(--color-white)',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '16px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <Percent size={20} color="#f97316" />
-            <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              점주 수수료
-            </h2>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div>
-              <label htmlFor="commissionPercentage" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
-                수수료율
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  id="commissionPercentage"
-                  type="number"
-                  value={config.ownerCommission.percentage}
-                  onChange={(e) => handleChange('ownerCommission', 'percentage', Number(e.target.value))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    paddingRight: '40px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--color-border)',
-                    fontSize: '14px'
-                  }}
-                />
-                <span style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--color-text-tertiary)',
-                  fontSize: '14px'
-                }}>
-                  %
-                </span>
-              </div>
-            </div>
-            <div>
-              <label htmlFor="minMonthlyFee" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
-                최소 월 수수료
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  id="minMonthlyFee"
-                  type="number"
-                  value={config.ownerCommission.minMonthlyFee}
-                  onChange={(e) => handleChange('ownerCommission', 'minMonthlyFee', Number(e.target.value))}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    paddingRight: '40px',
-                    borderRadius: '8px',
-                    border: '1px solid var(--color-border)',
-                    fontSize: '14px'
-                  }}
-                />
-                <span style={{
-                  position: 'absolute',
-                  right: '12px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'var(--color-text-tertiary)',
-                  fontSize: '14px'
-                }}>
-                  원
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Change History */}
-        <div style={{
-          backgroundColor: 'var(--color-white)',
-          borderRadius: '12px',
-          padding: '20px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <History size={20} color="var(--color-text-tertiary)" />
-            <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              변경 이력
-            </h2>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {feeHistory.map((item) => (
-              <div
-                key={`${item.date}-${item.change}`}
-                style={{
-                  padding: '12px',
-                  backgroundColor: 'var(--color-background)',
-                  borderRadius: '8px'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
-                    {item.date}
-                  </span>
-                  <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
-                    {item.admin}
-                  </span>
-                </div>
-                <p style={{ fontSize: '13px', color: 'var(--color-text-primary)' }}>
-                  {item.change}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="mb-6 flex items-center justify-between">
+        <PageHeader
+          title="수수료 설정"
+          description="플랫폼의 수수료 정책을 관리합니다"
+          backLink="/admin"
+        />
+        <button
+          type="button"
+          onClick={() => setShowSaveModal(true)}
+          disabled={!hasChanges}
+          className={cn(
+            'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors',
+            hasChanges
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'cursor-not-allowed bg-gray-200 text-gray-400'
+          )}
+        >
+          <Save className="h-4 w-4" />
+          저장
+        </button>
       </div>
 
-      {/* Save Modal */}
-      {showSaveModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '16px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '340px'
-          }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              backgroundColor: 'rgba(239, 68, 68, 0.1)',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px'
-            }}>
-              <AlertCircle size={24} color="var(--color-error-500)" />
-            </div>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              marginBottom: '8px',
-              textAlign: 'center'
-            }}>
-              수수료 설정 변경
-            </h3>
-            <p style={{
-              fontSize: '14px',
-              color: 'var(--color-text-secondary)',
-              textAlign: 'center',
-              marginBottom: '24px'
-            }}>
-              수수료 설정을 변경하시겠습니까?
-              <br />
-              변경 사항은 즉시 적용됩니다.
-            </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => setShowSaveModal(false)}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-white)',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'var(--color-text-secondary)',
-                  cursor: 'pointer'
-                }}
-              >
-                취소
-              </button>
-              <button
-                onClick={handleSave}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  backgroundColor: 'var(--color-primary-500)',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'white',
-                  cursor: 'pointer'
-                }}
-              >
-                저장
-              </button>
+      {/* Platform Fee */}
+      <SectionCard
+        icon={<DollarSign className="h-5 w-5 text-blue-500" />}
+        title="플랫폼 수수료 (고객)"
+        info={currentPolicyText}
+      >
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="mb-2 block text-sm text-gray-500">수수료 타입</label>
+            <div className="flex gap-3">
+              <FeeTypeButton
+                label="고정 금액"
+                isActive={config.platformFee.type === 'fixed'}
+                onClick={() => handleChange('platformFee', 'type', 'fixed')}
+              />
+              <FeeTypeButton
+                label="비율 (%)"
+                isActive={config.platformFee.type === 'percentage'}
+                onClick={() => handleChange('platformFee', 'type', 'percentage')}
+              />
             </div>
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <InputWithSuffix
+              label={
+                config.platformFee.type === 'fixed' ? '수수료 금액' : '수수료 비율'
+              }
+              value={config.platformFee.value}
+              suffix={config.platformFee.type === 'fixed' ? '원' : '%'}
+              onChange={(v) => handleChange('platformFee', 'value', v as number)}
+            />
+            <InputWithSuffix
+              label="무료 기준 금액"
+              value={config.platformFee.freeThreshold}
+              suffix="원"
+              onChange={(v) =>
+                handleChange('platformFee', 'freeThreshold', v as number)
+              }
+            />
+          </div>
         </div>
-      )}
+      </SectionCard>
+
+      {/* Delivery Fee */}
+      <SectionCard
+        icon={<DollarSign className="h-5 w-5 text-green-500" />}
+        title="배달비 설정"
+      >
+        <div className="mb-4 grid grid-cols-2 gap-3">
+          <InputWithSuffix
+            label="기본 배달비"
+            value={config.deliveryFee.base}
+            suffix="원"
+            onChange={(v) => handleChange('deliveryFee', 'base', v as number)}
+          />
+          <InputWithSuffix
+            label="km당 추가"
+            value={config.deliveryFee.perKm}
+            suffix="원"
+            onChange={(v) => handleChange('deliveryFee', 'perKm', v as number)}
+          />
+        </div>
+
+        {/* Surge Pricing */}
+        <div className="mb-3">
+          <ToggleSection
+            title="피크타임 할증"
+            checked={config.deliveryFee.surgePricing.enabled}
+            onChange={() =>
+              handleChange(
+                'deliveryFee',
+                'surgePricing.enabled',
+                !config.deliveryFee.surgePricing.enabled
+              )
+            }
+          >
+            <div className="grid grid-cols-3 gap-2">
+              <InputWithSuffix
+                label="시작"
+                value={config.deliveryFee.surgePricing.peakHours.start}
+                suffix=""
+                type="time"
+                labelSize="xs"
+                onChange={(v) =>
+                  handleChange('deliveryFee', 'surgePricing.start', v as string)
+                }
+              />
+              <InputWithSuffix
+                label="종료"
+                value={config.deliveryFee.surgePricing.peakHours.end}
+                suffix=""
+                type="time"
+                labelSize="xs"
+                onChange={(v) =>
+                  handleChange('deliveryFee', 'surgePricing.end', v as string)
+                }
+              />
+              <InputWithSuffix
+                label="할증률"
+                value={config.deliveryFee.surgePricing.multiplier}
+                suffix="x"
+                step="0.1"
+                labelSize="xs"
+                onChange={(v) =>
+                  handleChange('deliveryFee', 'surgePricing.multiplier', v as number)
+                }
+              />
+            </div>
+          </ToggleSection>
+        </div>
+
+        {/* Weather Surge */}
+        <ToggleSection
+          title="날씨 할증"
+          checked={config.deliveryFee.weatherSurge.enabled}
+          onChange={() =>
+            handleChange(
+              'deliveryFee',
+              'weatherSurge.enabled',
+              !config.deliveryFee.weatherSurge.enabled
+            )
+          }
+        >
+          <div className="grid grid-cols-2 gap-2">
+            <InputWithSuffix
+              label="비 할증률"
+              value={config.deliveryFee.weatherSurge.rainMultiplier}
+              suffix="x"
+              step="0.1"
+              labelSize="xs"
+              onChange={(v) =>
+                handleChange('deliveryFee', 'weatherSurge.rainMultiplier', v as number)
+              }
+            />
+            <InputWithSuffix
+              label="눈 할증률"
+              value={config.deliveryFee.weatherSurge.snowMultiplier}
+              suffix="x"
+              step="0.1"
+              labelSize="xs"
+              onChange={(v) =>
+                handleChange('deliveryFee', 'weatherSurge.snowMultiplier', v as number)
+              }
+            />
+          </div>
+        </ToggleSection>
+      </SectionCard>
+
+      {/* Rider Payment */}
+      <SectionCard
+        icon={<Bike className="h-5 w-5 text-purple-500" />}
+        title="라이더 지급금"
+      >
+        <div className="grid grid-cols-2 gap-3">
+          <InputWithSuffix
+            label="기본 배달료"
+            value={config.riderPayment.basePayment}
+            suffix="원"
+            onChange={(v) =>
+              handleChange('riderPayment', 'basePayment', v as number)
+            }
+          />
+          <InputWithSuffix
+            label="km당 추가"
+            value={config.riderPayment.perKm}
+            suffix="원"
+            onChange={(v) => handleChange('riderPayment', 'perKm', v as number)}
+          />
+          <InputWithSuffix
+            label="장거리 기준"
+            value={config.riderPayment.longDistanceBonus.threshold}
+            suffix="km"
+            onChange={(v) =>
+              handleChange('riderPayment', 'longDistanceBonus.threshold', v as number)
+            }
+          />
+          <InputWithSuffix
+            label="장거리 보너스"
+            value={config.riderPayment.longDistanceBonus.bonus}
+            suffix="원"
+            onChange={(v) =>
+              handleChange('riderPayment', 'longDistanceBonus.bonus', v as number)
+            }
+          />
+          <div className="col-span-2">
+            <InputWithSuffix
+              label="피크타임 보너스"
+              value={config.riderPayment.peakBonus}
+              suffix="원"
+              onChange={(v) =>
+                handleChange('riderPayment', 'peakBonus', v as number)
+              }
+            />
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* Owner Commission */}
+      <SectionCard
+        icon={<Percent className="h-5 w-5 text-orange-500" />}
+        title="점주 수수료"
+      >
+        <div className="grid grid-cols-2 gap-3">
+          <InputWithSuffix
+            label="수수료율"
+            value={config.ownerCommission.percentage}
+            suffix="%"
+            onChange={(v) =>
+              handleChange('ownerCommission', 'percentage', v as number)
+            }
+          />
+          <InputWithSuffix
+            label="최소 월 수수료"
+            value={config.ownerCommission.minMonthlyFee}
+            suffix="원"
+            onChange={(v) =>
+              handleChange('ownerCommission', 'minMonthlyFee', v as number)
+            }
+          />
+        </div>
+      </SectionCard>
+
+      {/* Change History */}
+      <SectionCard
+        icon={<History className="h-5 w-5 text-gray-500" />}
+        title="변경 이력"
+      >
+        <div className="flex flex-col gap-3">
+          {feeHistory.map((item) => (
+            <div
+              key={`${item.date}-${item.change}`}
+              className="rounded-lg bg-gray-50 p-3"
+            >
+              <div className="mb-1 flex justify-between">
+                <span className="text-xs text-gray-400">{item.date}</span>
+                <span className="text-xs text-gray-400">{item.admin}</span>
+              </div>
+              <p className="text-sm text-gray-900">{item.change}</p>
+            </div>
+          ))}
+        </div>
+      </SectionCard>
+
+      {/* Save Modal */}
+      <ConfirmModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onConfirm={handleSave}
+        title="수수료 설정 변경"
+        message="수수료 설정을 변경하시겠습니까? 변경 사항은 즉시 적용됩니다."
+        confirmText="저장"
+        cancelText="취소"
+        variant="info"
+      />
     </div>
   )
 }

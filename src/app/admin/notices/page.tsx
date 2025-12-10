@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import {
-  ArrowLeft,
   Plus,
   Search,
   Bell,
@@ -11,31 +10,41 @@ import {
   Trash2,
   Eye,
   Pin,
-  ChevronDown,
   Calendar,
   Users,
   AlertCircle,
   Info,
-  Megaphone
+  Megaphone,
 } from 'lucide-react'
+import {
+  PageHeader,
+  StatsCardGrid,
+  StatusBadge,
+  EmptyState,
+  ConfirmModal,
+} from '@/components/features/admin/common'
+import type { StatusVariant } from '@/components/features/admin/types'
+import { cn } from '@/lib/utils'
 
+// Types
 interface NoticeItem {
-  id: string
-  title: string
-  content: string
-  category: 'general' | 'service' | 'event' | 'maintenance' | 'policy'
-  target: 'all' | 'customer' | 'owner' | 'rider'
-  status: 'published' | 'draft' | 'scheduled'
-  isPinned: boolean
-  isImportant: boolean
-  viewCount: number
-  publishedAt: string | null
-  scheduledAt: string | null
-  createdAt: string
-  author: string
+  readonly id: string
+  readonly title: string
+  readonly content: string
+  readonly category: 'general' | 'service' | 'event' | 'maintenance' | 'policy'
+  readonly target: 'all' | 'customer' | 'owner' | 'rider'
+  readonly status: 'published' | 'draft' | 'scheduled'
+  readonly isPinned: boolean
+  readonly isImportant: boolean
+  readonly viewCount: number
+  readonly publishedAt: string | null
+  readonly scheduledAt: string | null
+  readonly createdAt: string
+  readonly author: string
 }
 
-const mockNotices: NoticeItem[] = [
+// Mock Data
+const mockNotices: ReadonlyArray<NoticeItem> = [
   {
     id: 'NTC001',
     title: '[공지] 설 연휴 배달 안내',
@@ -49,7 +58,7 @@ const mockNotices: NoticeItem[] = [
     publishedAt: '2024-01-20',
     scheduledAt: null,
     createdAt: '2024-01-18',
-    author: '관리자'
+    author: '관리자',
   },
   {
     id: 'NTC002',
@@ -64,12 +73,12 @@ const mockNotices: NoticeItem[] = [
     publishedAt: '2024-01-15',
     scheduledAt: null,
     createdAt: '2024-01-14',
-    author: '마케팅팀'
+    author: '마케팅팀',
   },
   {
     id: 'NTC003',
     title: '[점검] 시스템 정기 점검 안내',
-    content: '서비스 품질 향상을 위한 시스템 정기 점검이 진행됩니다. 점검 시간: 1월 25일 02:00~06:00',
+    content: '서비스 품질 향상을 위한 시스템 정기 점검이 진행됩니다.',
     category: 'maintenance',
     target: 'all',
     status: 'scheduled',
@@ -79,12 +88,12 @@ const mockNotices: NoticeItem[] = [
     publishedAt: null,
     scheduledAt: '2024-01-24',
     createdAt: '2024-01-20',
-    author: '운영팀'
+    author: '운영팀',
   },
   {
     id: 'NTC004',
     title: '[안내] 점주님 정산 일정 안내',
-    content: '매주 화요일에 전주 정산이 진행됩니다. 정산 상세 내역은 사장님 앱에서 확인 가능합니다.',
+    content: '매주 화요일에 전주 정산이 진행됩니다.',
     category: 'general',
     target: 'owner',
     status: 'published',
@@ -94,7 +103,7 @@ const mockNotices: NoticeItem[] = [
     publishedAt: '2024-01-10',
     scheduledAt: null,
     createdAt: '2024-01-08',
-    author: '정산팀'
+    author: '정산팀',
   },
   {
     id: 'NTC005',
@@ -109,7 +118,7 @@ const mockNotices: NoticeItem[] = [
     publishedAt: '2024-01-05',
     scheduledAt: null,
     createdAt: '2024-01-03',
-    author: '법무팀'
+    author: '법무팀',
   },
   {
     id: 'NTC006',
@@ -124,521 +133,279 @@ const mockNotices: NoticeItem[] = [
     publishedAt: null,
     scheduledAt: null,
     createdAt: '2024-01-19',
-    author: '운영팀'
-  }
+    author: '운영팀',
+  },
 ]
 
-export default function AdminNoticesPage() {
-  const [notices, setNotices] = useState<NoticeItem[]>(mockNotices)
+const statusConfig: Record<
+  NoticeItem['status'],
+  { label: string; variant: StatusVariant }
+> = {
+  published: { label: '게시됨', variant: 'success' },
+  scheduled: { label: '예약', variant: 'primary' },
+  draft: { label: '임시저장', variant: 'default' },
+}
+
+const categoryConfig: Record<
+  NoticeItem['category'],
+  { label: string; icon: React.ComponentType<{ className?: string }> }
+> = {
+  general: { label: '일반', icon: Info },
+  service: { label: '서비스', icon: Bell },
+  event: { label: '이벤트', icon: Megaphone },
+  maintenance: { label: '점검', icon: AlertCircle },
+  policy: { label: '정책', icon: Info },
+}
+
+const targetConfig: Record<NoticeItem['target'], string> = {
+  all: '전체',
+  customer: '고객',
+  owner: '점주',
+  rider: '라이더',
+}
+
+export default function AdminNoticesPage(): React.ReactElement {
+  const [notices, setNotices] = useState<ReadonlyArray<NoticeItem>>(mockNotices)
   const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'general' | 'service' | 'event' | 'maintenance' | 'policy'>('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft' | 'scheduled'>('all')
-  const [targetFilter, setTargetFilter] = useState<'all' | 'customer' | 'owner' | 'rider'>('all')
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; notice: NoticeItem | null }>({
-    isOpen: false,
-    notice: null
-  })
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [targetFilter, setTargetFilter] = useState<string>('all')
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean
+    notice: NoticeItem | null
+  }>({ isOpen: false, notice: null })
 
-  const filteredNotices = notices.filter(notice => {
-    const matchesSearch = notice.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         notice.content.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesCategory = categoryFilter === 'all' || notice.category === categoryFilter
-    const matchesStatus = statusFilter === 'all' || notice.status === statusFilter
-    const matchesTarget = targetFilter === 'all' || notice.target === targetFilter || notice.target === 'all'
-    return matchesSearch && matchesCategory && matchesStatus && matchesTarget
-  }).sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1
-    if (!a.isPinned && b.isPinned) return 1
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  })
+  const filteredNotices = useMemo(() => {
+    return notices
+      .filter((notice) => {
+        const matchesSearch =
+          notice.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          notice.content.toLowerCase().includes(searchQuery.toLowerCase())
+        const matchesCategory =
+          categoryFilter === 'all' || notice.category === categoryFilter
+        const matchesStatus =
+          statusFilter === 'all' || notice.status === statusFilter
+        const matchesTarget =
+          targetFilter === 'all' ||
+          notice.target === targetFilter ||
+          notice.target === 'all'
+        return matchesSearch && matchesCategory && matchesStatus && matchesTarget
+      })
+      .sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1
+        if (!a.isPinned && b.isPinned) return 1
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      })
+  }, [notices, searchQuery, categoryFilter, statusFilter, targetFilter])
 
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'published':
-        return { bg: 'rgba(34, 197, 94, 0.1)', color: 'var(--color-success-500)' }
-      case 'scheduled':
-        return { bg: 'rgba(59, 130, 246, 0.1)', color: 'var(--color-primary-500)' }
-      case 'draft':
-        return { bg: 'rgba(107, 114, 128, 0.1)', color: 'var(--color-text-tertiary)' }
-      default:
-        return { bg: 'rgba(107, 114, 128, 0.1)', color: 'var(--color-text-tertiary)' }
+  const stats = useMemo(() => {
+    return {
+      total: notices.length,
+      published: notices.filter((n) => n.status === 'published').length,
+      draft: notices.filter((n) => n.status === 'draft').length,
+      pinned: notices.filter((n) => n.isPinned).length,
     }
-  }
+  }, [notices])
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'published': return '게시됨'
-      case 'scheduled': return '예약'
-      case 'draft': return '임시저장'
-      default: return status
-    }
-  }
+  const statsCards = useMemo(
+    () => [
+      { icon: Bell, iconColor: 'primary' as const, label: '전체', value: stats.total, suffix: '건' },
+      { icon: Eye, iconColor: 'success' as const, label: '게시됨', value: stats.published, suffix: '건' },
+      { icon: Edit, iconColor: 'default' as const, label: '임시저장', value: stats.draft, suffix: '건' },
+      { icon: Pin, iconColor: 'primary' as const, label: '고정됨', value: stats.pinned, suffix: '건' },
+    ],
+    [stats]
+  )
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'general': return <Info size={14} />
-      case 'service': return <Bell size={14} />
-      case 'event': return <Megaphone size={14} />
-      case 'maintenance': return <AlertCircle size={14} />
-      case 'policy': return <Info size={14} />
-      default: return <Bell size={14} />
-    }
-  }
+  const togglePinned = useCallback((noticeId: string) => {
+    setNotices((prev) =>
+      prev.map((notice) =>
+        notice.id === noticeId ? { ...notice, isPinned: !notice.isPinned } : notice
+      )
+    )
+  }, [])
 
-  const getCategoryText = (category: string) => {
-    switch (category) {
-      case 'general': return '일반'
-      case 'service': return '서비스'
-      case 'event': return '이벤트'
-      case 'maintenance': return '점검'
-      case 'policy': return '정책'
-      default: return category
-    }
-  }
-
-  const getTargetText = (target: string) => {
-    switch (target) {
-      case 'all': return '전체'
-      case 'customer': return '고객'
-      case 'owner': return '점주'
-      case 'rider': return '라이더'
-      default: return target
-    }
-  }
-
-  const togglePinned = (noticeId: string) => {
-    setNotices(prev => prev.map(notice =>
-      notice.id === noticeId ? { ...notice, isPinned: !notice.isPinned } : notice
-    ))
-  }
-
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (deleteModal.notice) {
-      setNotices(prev => prev.filter(n => n.id !== deleteModal.notice!.id))
+      setNotices((prev) => prev.filter((n) => n.id !== deleteModal.notice!.id))
       setDeleteModal({ isOpen: false, notice: null })
     }
-  }
-
-  const stats = {
-    total: notices.length,
-    published: notices.filter(n => n.status === 'published').length,
-    draft: notices.filter(n => n.status === 'draft').length,
-    pinned: notices.filter(n => n.isPinned).length
-  }
+  }, [deleteModal.notice])
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-background)' }}>
+    <div className="mx-auto max-w-7xl p-6">
       {/* Header */}
-      <header style={{
-        backgroundColor: 'var(--color-white)',
-        borderBottom: '1px solid var(--color-border)',
-        padding: '16px 20px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link href="/admin" style={{ color: 'var(--color-text-secondary)' }}>
-              <ArrowLeft size={24} />
-            </Link>
-            <h1 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              공지사항 관리
-            </h1>
-          </div>
-          <Link
-            href="/admin/notices/new"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 16px',
-              backgroundColor: 'var(--color-primary-500)',
-              color: 'white',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 600,
-              textDecoration: 'none'
-            }}
-          >
-            <Plus size={18} />
-            공지 등록
-          </Link>
-        </div>
-      </header>
+      <div className="mb-6 flex items-center justify-between">
+        <PageHeader
+          title="공지사항 관리"
+          description="플랫폼 공지사항을 관리합니다"
+          backLink="/admin"
+        />
+        <Link
+          href="/admin/notices/new"
+          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          <Plus className="h-4 w-4" />
+          공지 등록
+        </Link>
+      </div>
 
-      <div style={{ padding: '20px' }}>
-        {/* Stats */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '12px',
-          marginBottom: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              {stats.total}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>전체</div>
-          </div>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-success-500)' }}>
-              {stats.published}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>게시됨</div>
-          </div>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text-tertiary)' }}>
-              {stats.draft}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>임시저장</div>
-          </div>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-primary-500)' }}>
-              {stats.pinned}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>고정됨</div>
-          </div>
-        </div>
+      {/* Stats */}
+      <StatsCardGrid cards={statsCards} className="mb-6" />
 
-        {/* Search */}
-        <div style={{
-          backgroundColor: 'var(--color-white)',
-          borderRadius: '12px',
-          padding: '12px 16px',
-          marginBottom: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <Search size={20} color="var(--color-text-tertiary)" />
+      {/* Search and Filters */}
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-[250px] flex-1">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="공지사항 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              flex: 1,
-              border: 'none',
-              outline: 'none',
-              fontSize: '14px',
-              color: 'var(--color-text-primary)',
-              backgroundColor: 'transparent'
-            }}
+            className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value as typeof categoryFilter)}
-              style={{
-                padding: '8px 32px 8px 12px',
-                borderRadius: '8px',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-white)',
-                fontSize: '13px',
-                color: 'var(--color-text-primary)',
-                appearance: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="all">전체 카테고리</option>
-              <option value="general">일반</option>
-              <option value="service">서비스</option>
-              <option value="event">이벤트</option>
-              <option value="maintenance">점검</option>
-              <option value="policy">정책</option>
-            </select>
-            <ChevronDown
-              size={16}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                pointerEvents: 'none',
-                color: 'var(--color-text-tertiary)'
-              }}
-            />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-              style={{
-                padding: '8px 32px 8px 12px',
-                borderRadius: '8px',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-white)',
-                fontSize: '13px',
-                color: 'var(--color-text-primary)',
-                appearance: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="all">전체 상태</option>
-              <option value="published">게시됨</option>
-              <option value="draft">임시저장</option>
-              <option value="scheduled">예약</option>
-            </select>
-            <ChevronDown
-              size={16}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                pointerEvents: 'none',
-                color: 'var(--color-text-tertiary)'
-              }}
-            />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={targetFilter}
-              onChange={(e) => setTargetFilter(e.target.value as typeof targetFilter)}
-              style={{
-                padding: '8px 32px 8px 12px',
-                borderRadius: '8px',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-white)',
-                fontSize: '13px',
-                color: 'var(--color-text-primary)',
-                appearance: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="all">전체 대상</option>
-              <option value="customer">고객</option>
-              <option value="owner">점주</option>
-              <option value="rider">라이더</option>
-            </select>
-            <ChevronDown
-              size={16}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                pointerEvents: 'none',
-                color: 'var(--color-text-tertiary)'
-              }}
-            />
-          </div>
-        </div>
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className={cn(
+            'rounded-lg border px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500',
+            categoryFilter !== 'all'
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 bg-white'
+          )}
+        >
+          <option value="all">전체 카테고리</option>
+          <option value="general">일반</option>
+          <option value="service">서비스</option>
+          <option value="event">이벤트</option>
+          <option value="maintenance">점검</option>
+          <option value="policy">정책</option>
+        </select>
 
-        {/* Notice List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {filteredNotices.map(notice => {
-            const statusStyle = getStatusStyle(notice.status)
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className={cn(
+            'rounded-lg border px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500',
+            statusFilter !== 'all'
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 bg-white'
+          )}
+        >
+          <option value="all">전체 상태</option>
+          <option value="published">게시됨</option>
+          <option value="draft">임시저장</option>
+          <option value="scheduled">예약</option>
+        </select>
+
+        <select
+          value={targetFilter}
+          onChange={(e) => setTargetFilter(e.target.value)}
+          className={cn(
+            'rounded-lg border px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500',
+            targetFilter !== 'all'
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 bg-white'
+          )}
+        >
+          <option value="all">전체 대상</option>
+          <option value="customer">고객</option>
+          <option value="owner">점주</option>
+          <option value="rider">라이더</option>
+        </select>
+      </div>
+
+      {/* Notice List */}
+      {filteredNotices.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          {filteredNotices.map((notice) => {
+            const CategoryIcon = categoryConfig[notice.category].icon
 
             return (
               <div
                 key={notice.id}
-                style={{
-                  backgroundColor: 'var(--color-white)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  borderLeft: notice.isImportant ? '4px solid var(--color-error-500)' : 'none'
-                }}
+                className={cn(
+                  'rounded-xl bg-white p-4',
+                  notice.isImportant && 'border-l-4 border-l-red-500'
+                )}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                {/* Badges */}
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {notice.isPinned && (
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                        color: 'var(--color-error-500)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                      }}>
-                        <Pin size={12} />
+                      <StatusBadge variant="error">
+                        <Pin className="mr-1 h-3 w-3" />
                         고정
-                      </span>
+                      </StatusBadge>
                     )}
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      backgroundColor: statusStyle.bg,
-                      color: statusStyle.color
-                    }}>
-                      {getStatusText(notice.status)}
+                    <StatusBadge variant={statusConfig[notice.status].variant}>
+                      {statusConfig[notice.status].label}
+                    </StatusBadge>
+                    <span className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
+                      <CategoryIcon className="h-3 w-3" />
+                      {categoryConfig[notice.category].label}
                     </span>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: 500,
-                      backgroundColor: 'rgba(107, 114, 128, 0.1)',
-                      color: 'var(--color-text-secondary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      {getCategoryIcon(notice.category)}
-                      {getCategoryText(notice.category)}
-                    </span>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: 500,
-                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                      color: 'var(--color-primary-500)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      <Users size={12} />
-                      {getTargetText(notice.target)}
+                    <span className="flex items-center gap-1 rounded bg-blue-50 px-2 py-1 text-xs text-blue-600">
+                      <Users className="h-3 w-3" />
+                      {targetConfig[notice.target]}
                     </span>
                   </div>
-                  <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
-                    {notice.id}
-                  </span>
+                  <span className="text-xs text-gray-400">{notice.id}</span>
                 </div>
 
-                <h3 style={{
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'var(--color-text-primary)',
-                  marginBottom: '6px'
-                }}>
+                {/* Title & Content */}
+                <h3 className="mb-1 text-sm font-semibold text-gray-900">
                   {notice.title}
                 </h3>
-                <p style={{
-                  fontSize: '13px',
-                  color: 'var(--color-text-secondary)',
-                  marginBottom: '12px',
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden'
-                }}>
+                <p className="mb-3 line-clamp-2 text-sm text-gray-500">
                   {notice.content}
                 </p>
 
-                <div style={{
-                  display: 'flex',
-                  gap: '16px',
-                  marginBottom: '12px',
-                  flexWrap: 'wrap'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Calendar size={14} color="var(--color-text-tertiary)" />
-                    <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                      {notice.status === 'scheduled'
-                        ? `예약: ${notice.scheduledAt}`
-                        : notice.publishedAt || notice.createdAt}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Eye size={14} color="var(--color-text-tertiary)" />
-                    <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                      조회 {notice.viewCount.toLocaleString()}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
-                    작성자: {notice.author}
+                {/* Meta */}
+                <div className="mb-3 flex flex-wrap gap-4 text-xs text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" />
+                    {notice.status === 'scheduled'
+                      ? `예약: ${notice.scheduledAt}`
+                      : notice.publishedAt || notice.createdAt}
                   </span>
+                  <span className="flex items-center gap-1">
+                    <Eye className="h-3.5 w-3.5" />
+                    조회 {notice.viewCount.toLocaleString()}
+                  </span>
+                  <span>작성자: {notice.author}</span>
                 </div>
 
-                <div style={{
-                  display: 'flex',
-                  gap: '8px',
-                  paddingTop: '12px',
-                  borderTop: '1px solid var(--color-border)'
-                }}>
+                {/* Actions */}
+                <div className="flex gap-2 border-t border-gray-100 pt-3">
                   <button
+                    type="button"
                     onClick={() => togglePinned(notice.id)}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      padding: '10px',
-                      backgroundColor: notice.isPinned ? 'rgba(239, 68, 68, 0.1)' : 'rgba(107, 114, 128, 0.1)',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: notice.isPinned ? 'var(--color-error-500)' : 'var(--color-text-secondary)',
-                      cursor: 'pointer'
-                    }}
+                    className={cn(
+                      'flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium',
+                      notice.isPinned
+                        ? 'bg-red-50 text-red-500'
+                        : 'bg-gray-100 text-gray-600'
+                    )}
                   >
-                    <Pin size={16} />
+                    <Pin className="h-4 w-4" />
                     {notice.isPinned ? '고정해제' : '고정'}
                   </button>
                   <Link
                     href={`/admin/notices/${notice.id}/edit`}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      padding: '10px',
-                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: 'var(--color-primary-500)',
-                      textDecoration: 'none'
-                    }}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-50 py-2.5 text-sm font-medium text-blue-600"
                   >
-                    <Edit size={16} />
+                    <Edit className="h-4 w-4" />
                     수정
                   </Link>
                   <button
+                    type="button"
                     onClick={() => setDeleteModal({ isOpen: true, notice })}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      padding: '10px',
-                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: 'var(--color-error-500)',
-                      cursor: 'pointer'
-                    }}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-50 py-2.5 text-sm font-medium text-red-500"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 className="h-4 w-4" />
                     삭제
                   </button>
                 </div>
@@ -646,99 +413,25 @@ export default function AdminNoticesPage() {
             )
           })}
         </div>
-
-        {filteredNotices.length === 0 && (
-          <div style={{
-            textAlign: 'center',
-            padding: '60px 20px',
-            color: 'var(--color-text-tertiary)'
-          }}>
-            <Bell size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
-            <p>공지사항이 없습니다</p>
-          </div>
-        )}
-      </div>
+      ) : (
+        <EmptyState
+          icon={Bell}
+          title="검색 결과 없음"
+          description="검색 조건에 맞는 공지사항이 없습니다"
+        />
+      )}
 
       {/* Delete Modal */}
-      {deleteModal.isOpen && deleteModal.notice && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '16px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '340px'
-          }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              marginBottom: '12px',
-              textAlign: 'center'
-            }}>
-              공지사항 삭제
-            </h3>
-            <p style={{
-              fontSize: '14px',
-              color: 'var(--color-text-secondary)',
-              textAlign: 'center',
-              marginBottom: '24px'
-            }}>
-              이 공지사항을 삭제하시겠습니까?
-              <br />
-              <span style={{ color: 'var(--color-error-500)', fontSize: '13px' }}>
-                이 작업은 되돌릴 수 없습니다.
-              </span>
-            </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => setDeleteModal({ isOpen: false, notice: null })}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-white)',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'var(--color-text-secondary)',
-                  cursor: 'pointer'
-                }}
-              >
-                취소
-              </button>
-              <button
-                onClick={handleDelete}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  backgroundColor: 'var(--color-error-500)',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'white',
-                  cursor: 'pointer'
-                }}
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, notice: null })}
+        onConfirm={handleDelete}
+        title="공지사항 삭제"
+        message="이 공지사항을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
+        confirmText="삭제"
+        cancelText="취소"
+        variant="danger"
+      />
     </div>
   )
 }

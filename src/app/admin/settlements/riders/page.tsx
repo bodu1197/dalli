@@ -1,55 +1,67 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
+import { useState, useMemo, useCallback } from 'react'
 import {
-  Search,
-  Filter,
   Download,
-  Calendar,
-  ChevronDown,
-  MoreVertical,
   Bike,
   Wallet,
   Clock,
+  AlertTriangle,
+  Send,
+  Eye,
+  Calendar,
+  MapPin,
+  CreditCard,
   CheckCircle,
   XCircle,
-  AlertTriangle,
-  CreditCard,
-  Eye,
-  X,
-  Send,
-  MapPin,
-  TrendingUp
+  TrendingUp,
 } from 'lucide-react'
+import {
+  PageHeader,
+  StatsCardGrid,
+  TabNavigation,
+  SearchFilterBar,
+  DataTable,
+  StatusBadge,
+  ActionMenu,
+  BaseModal,
+  ConfirmModal,
+} from '@/components/features/admin/common'
+import type {
+  TabItem,
+  TableColumn,
+  FilterConfig,
+  ActionMenuItem,
+  StatusVariant,
+} from '@/components/features/admin/types'
 
 // Types
 interface RiderSettlement {
-  id: string
-  riderId: string
-  riderName: string
-  phone: string
-  period: { start: string; end: string }
-  deliveryCount: number
-  totalDeliveryFee: number
-  incentive: number
-  deductions: number
-  netAmount: number
-  status: 'pending' | 'processing' | 'completed' | 'failed'
-  bankAccount: {
-    bank: string
-    accountNumber: string
-    accountHolder: string
+  readonly id: string
+  readonly riderId: string
+  readonly riderName: string
+  readonly phone: string
+  readonly period: { readonly start: string; readonly end: string }
+  readonly deliveryCount: number
+  readonly totalDeliveryFee: number
+  readonly incentive: number
+  readonly deductions: number
+  readonly netAmount: number
+  readonly status: 'pending' | 'processing' | 'completed' | 'failed'
+  readonly bankAccount: {
+    readonly bank: string
+    readonly accountNumber: string
+    readonly accountHolder: string
   }
-  scheduledDate: string
-  processedDate: string | null
-  transactionId: string | null
-  avgRating: number
-  activeArea: string
+  readonly scheduledDate: string
+  readonly processedDate: string | null
+  readonly transactionId: string | null
+  readonly avgRating: number
+  readonly activeArea: string
 }
 
 // Mock Data
-const mockSettlements: RiderSettlement[] = [
+const mockSettlements: ReadonlyArray<RiderSettlement> = [
   {
     id: 'RSET001',
     riderId: 'RID001',
@@ -65,13 +77,13 @@ const mockSettlements: RiderSettlement[] = [
     bankAccount: {
       bank: '카카오뱅크',
       accountNumber: '3333-01-1234567',
-      accountHolder: '박배달'
+      accountHolder: '박배달',
     },
     scheduledDate: '2024-01-17',
     processedDate: null,
     transactionId: null,
     avgRating: 4.9,
-    activeArea: '강남구'
+    activeArea: '강남구',
   },
   {
     id: 'RSET002',
@@ -88,13 +100,13 @@ const mockSettlements: RiderSettlement[] = [
     bankAccount: {
       bank: '토스뱅크',
       accountNumber: '1000-1234-5678',
-      accountHolder: '김빠른'
+      accountHolder: '김빠른',
     },
     scheduledDate: '2024-01-17',
     processedDate: null,
     transactionId: null,
     avgRating: 4.7,
-    activeArea: '서초구'
+    activeArea: '서초구',
   },
   {
     id: 'RSET003',
@@ -111,13 +123,13 @@ const mockSettlements: RiderSettlement[] = [
     bankAccount: {
       bank: '국민은행',
       accountNumber: '123-456-789012',
-      accountHolder: '이달리'
+      accountHolder: '이달리',
     },
     scheduledDate: '2024-01-15',
     processedDate: '2024-01-15',
     transactionId: 'RTXN123456',
     avgRating: 4.95,
-    activeArea: '송파구'
+    activeArea: '송파구',
   },
   {
     id: 'RSET004',
@@ -134,13 +146,13 @@ const mockSettlements: RiderSettlement[] = [
     bankAccount: {
       bank: '신한은행',
       accountNumber: '987-654-321098',
-      accountHolder: '최스피드'
+      accountHolder: '최스피드',
     },
     scheduledDate: '2024-01-15',
     processedDate: '2024-01-15',
     transactionId: 'RTXN789012',
     avgRating: 4.5,
-    activeArea: '마포구'
+    activeArea: '마포구',
   },
   {
     id: 'RSET005',
@@ -157,799 +169,448 @@ const mockSettlements: RiderSettlement[] = [
     bankAccount: {
       bank: '우리은행',
       accountNumber: '456-789-012345',
-      accountHolder: '정라이더'
+      accountHolder: '정라이더',
     },
     scheduledDate: '2024-01-15',
     processedDate: null,
     transactionId: null,
     avgRating: 4.3,
-    activeArea: '영등포구'
-  }
+    activeArea: '영등포구',
+  },
 ]
 
-const statusLabels: Record<RiderSettlement['status'], string> = {
-  pending: '대기중',
-  processing: '처리중',
-  completed: '완료',
-  failed: '실패'
+const statusConfig: Record<
+  RiderSettlement['status'],
+  { label: string; variant: StatusVariant }
+> = {
+  pending: { label: '대기중', variant: 'warning' },
+  processing: { label: '처리중', variant: 'info' },
+  completed: { label: '완료', variant: 'success' },
+  failed: { label: '실패', variant: 'error' },
 }
 
-const statusColors: Record<RiderSettlement['status'], string> = {
-  pending: 'var(--color-warning-500)',
-  processing: 'var(--color-primary-500)',
-  completed: 'var(--color-success-500)',
-  failed: 'var(--color-error-500)'
+const SETTLEMENT_TABS: ReadonlyArray<TabItem> = [
+  { href: '/admin/settlements/owners', label: '점주 정산' },
+  { href: '/admin/settlements/riders', label: '라이더 정산' },
+  { href: '/admin/settlements/history', label: '정산 내역' },
+]
+
+const FILTER_CONFIG: ReadonlyArray<FilterConfig> = [
+  {
+    name: 'status',
+    label: '상태',
+    options: [
+      { value: 'all', label: '전체' },
+      { value: 'pending', label: '대기중' },
+      { value: 'processing', label: '처리중' },
+      { value: 'completed', label: '완료' },
+      { value: 'failed', label: '실패' },
+    ],
+  },
+  {
+    name: 'period',
+    label: '기간',
+    options: [
+      { value: 'this_week', label: '이번 주' },
+      { value: 'last_week', label: '지난 주' },
+      { value: 'this_month', label: '이번 달' },
+      { value: 'last_month', label: '지난 달' },
+    ],
+  },
+]
+
+const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('ko-KR').format(amount) + '원'
 }
 
-export default function RiderSettlementsPage() {
-  const [settlements] = useState<RiderSettlement[]>(mockSettlements)
+const formatDate = (dateString: string): string => {
+  return new Date(dateString).toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+}
+
+const getStatusIcon = (
+  status: RiderSettlement['status']
+): React.ReactElement => {
+  switch (status) {
+    case 'pending':
+      return <Clock className="h-3.5 w-3.5" />
+    case 'processing':
+      return <TrendingUp className="h-3.5 w-3.5" />
+    case 'completed':
+      return <CheckCircle className="h-3.5 w-3.5" />
+    case 'failed':
+      return <XCircle className="h-3.5 w-3.5" />
+  }
+}
+
+export default function RiderSettlementsPage(): React.ReactElement {
+  const [settlements] = useState<ReadonlyArray<RiderSettlement>>(mockSettlements)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filterStatus, setFilterStatus] = useState<string>('all')
-  const [filterPeriod, setFilterPeriod] = useState<string>('this_week')
-  const [showFilterMenu, setShowFilterMenu] = useState(false)
-  const [activeMenu, setActiveMenu] = useState<string | null>(null)
+  const [filters, setFilters] = useState<Record<string, string>>({
+    status: 'all',
+    period: 'this_week',
+  })
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showProcessModal, setShowProcessModal] = useState(false)
-  const [selectedSettlement, setSelectedSettlement] = useState<RiderSettlement | null>(null)
+  const [selectedSettlement, setSelectedSettlement] =
+    useState<RiderSettlement | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   // Filter settlements
-  const filteredSettlements = settlements.filter(settlement => {
-    const matchesSearch =
-      settlement.riderName.includes(searchQuery) ||
-      settlement.phone.includes(searchQuery) ||
-      settlement.id.includes(searchQuery)
+  const filteredSettlements = useMemo(() => {
+    return settlements.filter((settlement) => {
+      const matchesSearch =
+        settlement.riderName.includes(searchQuery) ||
+        settlement.phone.includes(searchQuery) ||
+        settlement.id.includes(searchQuery)
 
-    const matchesStatus = filterStatus === 'all' || settlement.status === filterStatus
+      const matchesStatus =
+        filters.status === 'all' || settlement.status === filters.status
 
-    return matchesSearch && matchesStatus
-  })
+      return matchesSearch && matchesStatus
+    })
+  }, [settlements, searchQuery, filters])
 
   // Stats
-  const stats = {
-    total: settlements.length,
-    pending: settlements.filter(s => s.status === 'pending').length,
-    processing: settlements.filter(s => s.status === 'processing').length,
-    completed: settlements.filter(s => s.status === 'completed').length,
-    failed: settlements.filter(s => s.status === 'failed').length,
-    totalAmount: settlements.reduce((sum, s) => sum + s.netAmount, 0),
-    totalDeliveries: settlements.reduce((sum, s) => sum + s.deliveryCount, 0),
-    pendingAmount: settlements
-      .filter(s => s.status === 'pending' || s.status === 'processing')
-      .reduce((sum, s) => sum + s.netAmount, 0)
-  }
+  const stats = useMemo(() => {
+    return {
+      totalAmount: settlements.reduce((sum, s) => sum + s.netAmount, 0),
+      totalDeliveries: settlements.reduce((sum, s) => sum + s.deliveryCount, 0),
+      pendingAmount: settlements
+        .filter((s) => s.status === 'pending' || s.status === 'processing')
+        .reduce((sum, s) => sum + s.netAmount, 0),
+      failed: settlements.filter((s) => s.status === 'failed').length,
+    }
+  }, [settlements])
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR').format(amount) + '원'
-  }
+  const statsCards = useMemo(
+    () => [
+      {
+        icon: Wallet,
+        iconColor: 'primary' as const,
+        label: '총 정산액',
+        value: formatCurrency(stats.totalAmount),
+      },
+      {
+        icon: Bike,
+        iconColor: 'success' as const,
+        label: '총 배달 건수',
+        value: stats.totalDeliveries,
+        suffix: '건',
+      },
+      {
+        icon: Clock,
+        iconColor: 'warning' as const,
+        label: '미정산액',
+        value: formatCurrency(stats.pendingAmount),
+      },
+      {
+        icon: AlertTriangle,
+        iconColor: 'error' as const,
+        label: '정산 실패',
+        value: stats.failed,
+        suffix: '건',
+      },
+    ],
+    [stats]
+  )
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    })
-  }
-
-  const handleViewDetail = (settlement: RiderSettlement) => {
+  const handleViewDetail = useCallback((settlement: RiderSettlement): void => {
     setSelectedSettlement(settlement)
     setShowDetailModal(true)
-    setActiveMenu(null)
-  }
+  }, [])
 
-  const handleProcess = (settlement: RiderSettlement) => {
+  const handleProcess = useCallback((settlement: RiderSettlement): void => {
     setSelectedSettlement(settlement)
     setShowProcessModal(true)
-    setActiveMenu(null)
-  }
+  }, [])
 
-  const confirmProcess = () => {
-    console.log('Processing settlement:', selectedSettlement?.id)
-    setShowProcessModal(false)
-    setSelectedSettlement(null)
-  }
+  const confirmProcess = useCallback((): void => {
+    setIsProcessing(true)
+    // 실제 API 호출 시뮬레이션
+    setTimeout(() => {
+      setIsProcessing(false)
+      setShowProcessModal(false)
+      setSelectedSettlement(null)
+    }, 1000)
+  }, [])
 
-  const getStatusIcon = (status: RiderSettlement['status']) => {
-    switch (status) {
-      case 'pending':
-        return <Clock size={14} />
-      case 'processing':
-        return <TrendingUp size={14} />
-      case 'completed':
-        return <CheckCircle size={14} />
-      case 'failed':
-        return <XCircle size={14} />
-    }
-  }
+  const handleFilterChange = useCallback(
+    (name: string, value: string): void => {
+      setFilters((prev) => ({ ...prev, [name]: value }))
+    },
+    []
+  )
+
+  const handleResetFilters = useCallback((): void => {
+    setFilters({ status: 'all', period: 'this_week' })
+    setSearchQuery('')
+  }, [])
+
+  const getActionItems = useCallback(
+    (settlement: RiderSettlement): ReadonlyArray<ActionMenuItem> => {
+      const items: ActionMenuItem[] = [
+        {
+          label: '상세보기',
+          icon: Eye,
+          onClick: () => handleViewDetail(settlement),
+        },
+      ]
+
+      if (settlement.status === 'pending' || settlement.status === 'failed') {
+        items.push({
+          label: '정산하기',
+          icon: Send,
+          onClick: () => handleProcess(settlement),
+        })
+      }
+
+      return items
+    },
+    [handleViewDetail, handleProcess]
+  )
+
+  const columns: ReadonlyArray<TableColumn<RiderSettlement>> = useMemo(
+    () => [
+      {
+        key: 'rider',
+        header: '라이더',
+        render: (settlement) => (
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+              <Bike className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900">
+                {settlement.riderName}
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500">{settlement.phone}</span>
+                <span className="flex items-center gap-0.5 text-xs text-gray-500">
+                  <MapPin className="h-2.5 w-2.5" />
+                  {settlement.activeArea}
+                </span>
+              </div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: 'period',
+        header: '정산기간',
+        render: (settlement) => (
+          <div className="flex items-center gap-1 text-sm text-gray-600">
+            <Calendar className="h-3.5 w-3.5" />
+            {formatDate(settlement.period.start)} ~{' '}
+            {formatDate(settlement.period.end)}
+          </div>
+        ),
+      },
+      {
+        key: 'deliveryCount',
+        header: '배달 건수',
+        align: 'center',
+        render: (settlement) => (
+          <span className="font-semibold">{settlement.deliveryCount}건</span>
+        ),
+      },
+      {
+        key: 'deliveryFee',
+        header: '배달비',
+        align: 'right',
+        render: (settlement) => (
+          <span className="font-semibold">
+            {formatCurrency(settlement.totalDeliveryFee)}
+          </span>
+        ),
+      },
+      {
+        key: 'incentive',
+        header: '인센티브',
+        align: 'right',
+        render: (settlement) => (
+          <div>
+            {settlement.incentive > 0 ? (
+              <span className="text-sm text-green-600">
+                +{formatCurrency(settlement.incentive)}
+              </span>
+            ) : (
+              <span className="text-sm text-gray-400">-</span>
+            )}
+            {settlement.deductions < 0 && (
+              <p className="mt-0.5 text-xs text-red-500">
+                공제: {formatCurrency(settlement.deductions)}
+              </p>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: 'netAmount',
+        header: '정산액',
+        align: 'right',
+        render: (settlement) => (
+          <span className="text-base font-bold text-blue-600">
+            {formatCurrency(settlement.netAmount)}
+          </span>
+        ),
+      },
+      {
+        key: 'status',
+        header: '상태',
+        align: 'center',
+        render: (settlement) => {
+          const config = statusConfig[settlement.status]
+          return (
+            <StatusBadge
+              variant={config.variant}
+              icon={getStatusIcon(settlement.status)}
+            >
+              {config.label}
+            </StatusBadge>
+          )
+        },
+      },
+      {
+        key: 'actions',
+        header: '관리',
+        align: 'center',
+        render: (settlement) => (
+          <ActionMenu items={[...getActionItems(settlement)]} />
+        ),
+      },
+    ],
+    [getActionItems]
+  )
 
   return (
-    <div style={{ padding: '24px', maxWidth: '1400px', margin: '0 auto' }}>
+    <div className="mx-auto max-w-7xl p-6">
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 700 }}>라이더 정산</h1>
-            <p style={{ color: 'var(--color-gray-500)', fontSize: '14px', marginTop: '4px' }}>
-              라이더별 배달비 정산 현황을 관리합니다
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                border: '1px solid var(--color-gray-200)',
-                borderRadius: '8px',
-                backgroundColor: 'white',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              <Download size={18} />
+      <PageHeader
+        title="라이더 정산"
+        description="라이더별 배달비 정산 현황을 관리합니다"
+        actions={
+          <>
+            <button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
+              <Download className="h-4 w-4" />
               내보내기
             </button>
-            <button
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 20px',
-                backgroundColor: 'var(--color-primary-500)',
-                color: 'white',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: 600
-              }}
-            >
-              <Send size={18} />
+            <button className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
+              <Send className="h-4 w-4" />
               일괄 정산
             </button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Stats Cards */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '16px',
-        marginBottom: '24px'
-      }}>
-        <div style={{
-          padding: '20px',
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--color-primary-50)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Wallet size={24} color="var(--color-primary-500)" />
-            </div>
-            <div>
-              <p style={{ fontSize: '12px', color: 'var(--color-gray-500)' }}>총 정산액</p>
-              <p style={{ fontSize: '20px', fontWeight: 700 }}>{formatCurrency(stats.totalAmount)}</p>
-            </div>
-          </div>
-        </div>
-
-        <div style={{
-          padding: '20px',
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--color-success-50)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Bike size={24} color="var(--color-success-500)" />
-            </div>
-            <div>
-              <p style={{ fontSize: '12px', color: 'var(--color-gray-500)' }}>총 배달 건수</p>
-              <p style={{ fontSize: '24px', fontWeight: 700 }}>{stats.totalDeliveries}건</p>
-            </div>
-          </div>
-        </div>
-
-        <div style={{
-          padding: '20px',
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--color-warning-50)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Clock size={24} color="var(--color-warning-500)" />
-            </div>
-            <div>
-              <p style={{ fontSize: '12px', color: 'var(--color-gray-500)' }}>미정산액</p>
-              <p style={{ fontSize: '20px', fontWeight: 700 }}>{formatCurrency(stats.pendingAmount)}</p>
-            </div>
-          </div>
-        </div>
-
-        <div style={{
-          padding: '20px',
-          backgroundColor: 'white',
-          borderRadius: '12px',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--color-error-50)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <AlertTriangle size={24} color="var(--color-error-500)" />
-            </div>
-            <div>
-              <p style={{ fontSize: '12px', color: 'var(--color-gray-500)' }}>정산 실패</p>
-              <p style={{ fontSize: '24px', fontWeight: 700 }}>{stats.failed}건</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <StatsCardGrid cards={statsCards} className="mb-6" />
 
       {/* Tabs */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        marginBottom: '20px',
-        borderBottom: '1px solid var(--color-gray-200)',
-        paddingBottom: '16px'
-      }}>
-        <Link
-          href="/admin/settlements/owners"
-          style={{
-            padding: '8px 16px',
-            borderRadius: '8px',
-            backgroundColor: 'var(--color-gray-100)',
-            color: 'var(--color-gray-700)',
-            textDecoration: 'none',
-            fontSize: '14px'
-          }}
-        >
-          점주 정산
-        </Link>
-        <Link
-          href="/admin/settlements/riders"
-          style={{
-            padding: '8px 16px',
-            borderRadius: '8px',
-            backgroundColor: 'var(--color-primary-500)',
-            color: 'white',
-            textDecoration: 'none',
-            fontSize: '14px',
-            fontWeight: 600
-          }}
-        >
-          라이더 정산
-        </Link>
-        <Link
-          href="/admin/settlements/history"
-          style={{
-            padding: '8px 16px',
-            borderRadius: '8px',
-            backgroundColor: 'var(--color-gray-100)',
-            color: 'var(--color-gray-700)',
-            textDecoration: 'none',
-            fontSize: '14px'
-          }}
-        >
-          정산 내역
-        </Link>
-      </div>
+      <TabNavigation
+        tabs={SETTLEMENT_TABS}
+        currentPath="/admin/settlements/riders"
+        className="mb-5"
+      />
 
       {/* Search and Filter */}
-      <div style={{
-        display: 'flex',
-        gap: '12px',
-        marginBottom: '20px',
-        flexWrap: 'wrap'
-      }}>
-        <div style={{
-          flex: 1,
-          minWidth: '300px',
-          position: 'relative'
-        }}>
-          <Search
-            size={20}
-            style={{
-              position: 'absolute',
-              left: '12px',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--color-gray-400)'
-            }}
-          />
-          <input
-            type="text"
-            placeholder="라이더명, 전화번호, 정산ID로 검색"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px 12px 12px 44px',
-              border: '1px solid var(--color-gray-200)',
-              borderRadius: '8px',
-              fontSize: '14px'
-            }}
-          />
-        </div>
+      <SearchFilterBar
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder="라이더명, 전화번호, 정산ID로 검색"
+        filters={FILTER_CONFIG}
+        filterValues={filters}
+        onFilterChange={handleFilterChange}
+        onReset={handleResetFilters}
+        className="mb-5"
+      />
 
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setShowFilterMenu(!showFilterMenu)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 16px',
-              border: '1px solid var(--color-gray-200)',
-              borderRadius: '8px',
-              backgroundColor: 'white',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            <Filter size={18} />
-            필터
-            <ChevronDown size={16} />
-          </button>
-
-          {showFilterMenu && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              right: 0,
-              marginTop: '8px',
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-              padding: '16px',
-              minWidth: '280px',
-              zIndex: 100
-            }}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  marginBottom: '8px',
-                  color: 'var(--color-gray-600)'
-                }}>
-                  상태
-                </label>
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid var(--color-gray-200)',
-                    borderRadius: '8px',
-                    fontSize: '14px'
-                  }}
-                >
-                  <option value="all">전체</option>
-                  <option value="pending">대기중</option>
-                  <option value="processing">처리중</option>
-                  <option value="completed">완료</option>
-                  <option value="failed">실패</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{
-                  display: 'block',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  marginBottom: '8px',
-                  color: 'var(--color-gray-600)'
-                }}>
-                  기간
-                </label>
-                <select
-                  value={filterPeriod}
-                  onChange={(e) => setFilterPeriod(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid var(--color-gray-200)',
-                    borderRadius: '8px',
-                    fontSize: '14px'
-                  }}
-                >
-                  <option value="this_week">이번 주</option>
-                  <option value="last_week">지난 주</option>
-                  <option value="this_month">이번 달</option>
-                  <option value="last_month">지난 달</option>
-                </select>
-              </div>
-
-              <button
-                onClick={() => {
-                  setFilterStatus('all')
-                  setFilterPeriod('this_week')
-                }}
-                style={{
-                  width: '100%',
-                  padding: '10px',
-                  border: '1px solid var(--color-gray-200)',
-                  borderRadius: '8px',
-                  backgroundColor: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                필터 초기화
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Settlements List */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        overflow: 'hidden'
-      }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ backgroundColor: 'var(--color-gray-50)' }}>
-              <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: 'var(--color-gray-600)' }}>라이더</th>
-              <th style={{ padding: '14px 16px', textAlign: 'left', fontSize: '13px', fontWeight: 600, color: 'var(--color-gray-600)' }}>정산기간</th>
-              <th style={{ padding: '14px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--color-gray-600)' }}>배달 건수</th>
-              <th style={{ padding: '14px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600, color: 'var(--color-gray-600)' }}>배달비</th>
-              <th style={{ padding: '14px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600, color: 'var(--color-gray-600)' }}>인센티브</th>
-              <th style={{ padding: '14px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 600, color: 'var(--color-gray-600)' }}>정산액</th>
-              <th style={{ padding: '14px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--color-gray-600)' }}>상태</th>
-              <th style={{ padding: '14px 16px', textAlign: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--color-gray-600)' }}>관리</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredSettlements.map((settlement) => (
-              <tr
-                key={settlement.id}
-                style={{
-                  borderBottom: '1px solid var(--color-gray-100)',
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-gray-50)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.backgroundColor = 'var(--color-gray-50)'
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                }}
-                tabIndex={0}
-              >
-                <td style={{ padding: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{
-                      width: '40px',
-                      height: '40px',
-                      borderRadius: '50%',
-                      backgroundColor: 'var(--color-success-100)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <Bike size={20} color="var(--color-success-600)" />
-                    </div>
-                    <div>
-                      <p style={{ fontWeight: 600, marginBottom: '2px' }}>{settlement.riderName}</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '12px', color: 'var(--color-gray-500)' }}>
-                          {settlement.phone}
-                        </span>
-                        <span style={{
-                          fontSize: '11px',
-                          color: 'var(--color-gray-500)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '2px'
-                        }}>
-                          <MapPin size={10} />
-                          {settlement.activeArea}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td style={{ padding: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-gray-600)', fontSize: '13px' }}>
-                    <Calendar size={14} />
-                    {formatDate(settlement.period.start)} ~ {formatDate(settlement.period.end)}
-                  </div>
-                </td>
-                <td style={{ padding: '16px', textAlign: 'center' }}>
-                  <span style={{ fontWeight: 600 }}>{settlement.deliveryCount}건</span>
-                </td>
-                <td style={{ padding: '16px', textAlign: 'right' }}>
-                  <span style={{ fontWeight: 600 }}>{formatCurrency(settlement.totalDeliveryFee)}</span>
-                </td>
-                <td style={{ padding: '16px', textAlign: 'right' }}>
-                  {settlement.incentive > 0 ? (
-                    <span style={{ color: 'var(--color-success-600)', fontSize: '13px' }}>
-                      +{formatCurrency(settlement.incentive)}
-                    </span>
-                  ) : (
-                    <span style={{ color: 'var(--color-gray-400)', fontSize: '13px' }}>-</span>
-                  )}
-                  {settlement.deductions < 0 && (
-                    <p style={{ fontSize: '11px', color: 'var(--color-error-500)', marginTop: '2px' }}>
-                      공제: {formatCurrency(settlement.deductions)}
-                    </p>
-                  )}
-                </td>
-                <td style={{ padding: '16px', textAlign: 'right' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--color-primary-600)', fontSize: '15px' }}>
-                    {formatCurrency(settlement.netAmount)}
-                  </span>
-                </td>
-                <td style={{ padding: '16px', textAlign: 'center' }}>
-                  <span style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                    color: statusColors[settlement.status],
-                    backgroundColor: `${statusColors[settlement.status]}15`
-                  }}>
-                    {getStatusIcon(settlement.status)}
-                    {statusLabels[settlement.status]}
-                  </span>
-                </td>
-                <td style={{ padding: '16px', textAlign: 'center' }}>
-                  <div style={{ position: 'relative', display: 'inline-block' }}>
-                    <button
-                      onClick={() => setActiveMenu(activeMenu === settlement.id ? null : settlement.id)}
-                      style={{
-                        padding: '8px',
-                        border: 'none',
-                        backgroundColor: 'transparent',
-                        cursor: 'pointer',
-                        borderRadius: '8px'
-                      }}
-                    >
-                      <MoreVertical size={18} color="var(--color-gray-500)" />
-                    </button>
-
-                    {activeMenu === settlement.id && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '100%',
-                        right: 0,
-                        backgroundColor: 'white',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                        minWidth: '140px',
-                        zIndex: 100,
-                        overflow: 'hidden'
-                      }}>
-                        <button
-                          onClick={() => handleViewDetail(settlement)}
-                          style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            border: 'none',
-                            backgroundColor: 'transparent',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            fontSize: '14px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            color: 'var(--color-gray-700)'
-                          }}
-                        >
-                          <Eye size={16} />
-                          상세보기
-                        </button>
-                        {(settlement.status === 'pending' || settlement.status === 'failed') && (
-                          <button
-                            onClick={() => handleProcess(settlement)}
-                            style={{
-                              width: '100%',
-                              padding: '12px 16px',
-                              border: 'none',
-                              backgroundColor: 'transparent',
-                              cursor: 'pointer',
-                              textAlign: 'left',
-                              fontSize: '14px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '10px',
-                              color: 'var(--color-primary-600)',
-                              borderTop: '1px solid var(--color-gray-100)'
-                            }}
-                          >
-                            <Send size={16} />
-                            정산하기
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {filteredSettlements.length === 0 && (
-          <div style={{
-            padding: '60px 20px',
-            textAlign: 'center',
-            color: 'var(--color-gray-500)'
-          }}>
-            <Bike size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
-            <p>검색 조건에 맞는 정산 내역이 없습니다</p>
-          </div>
-        )}
-      </div>
+      {/* Settlements Table */}
+      <DataTable
+        columns={columns}
+        data={filteredSettlements}
+        keyExtractor={(settlement) => settlement.id}
+        emptyIcon={Bike}
+        emptyMessage="검색 조건에 맞는 정산 내역이 없습니다"
+      />
 
       {/* Detail Modal */}
-      {showDetailModal && selectedSettlement && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '24px',
-            maxWidth: '600px',
-            width: '90%',
-            maxHeight: '90vh',
-            overflow: 'auto'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '24px'
-            }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700 }}>정산 상세</h3>
-              <button
-                onClick={() => setShowDetailModal(false)}
-                style={{
-                  padding: '8px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer'
-                }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
+      <BaseModal
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        title="정산 상세"
+        maxWidth="xl"
+      >
+        {selectedSettlement && (
+          <div className="space-y-5">
             {/* Rider Info */}
-            <div style={{
-              padding: '16px',
-              backgroundColor: 'var(--color-gray-50)',
-              borderRadius: '12px',
-              marginBottom: '20px'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '50%',
-                    backgroundColor: 'var(--color-success-100)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <Bike size={24} color="var(--color-success-600)" />
+            <div className="rounded-xl bg-gray-50 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                    <Bike className="h-6 w-6 text-green-600" />
                   </div>
                   <div>
-                    <p style={{ fontWeight: 600, fontSize: '16px' }}>{selectedSettlement.riderName}</p>
-                    <p style={{ fontSize: '13px', color: 'var(--color-gray-600)' }}>{selectedSettlement.phone}</p>
+                    <p className="text-base font-semibold">
+                      {selectedSettlement.riderName}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {selectedSettlement.phone}
+                    </p>
                   </div>
                 </div>
-                <span style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: statusColors[selectedSettlement.status],
-                  backgroundColor: `${statusColors[selectedSettlement.status]}15`
-                }}>
-                  {getStatusIcon(selectedSettlement.status)}
-                  {statusLabels[selectedSettlement.status]}
-                </span>
+                <StatusBadge
+                  variant={statusConfig[selectedSettlement.status].variant}
+                  icon={getStatusIcon(selectedSettlement.status)}
+                >
+                  {statusConfig[selectedSettlement.status].label}
+                </StatusBadge>
               </div>
-              <div style={{ display: 'flex', gap: '16px' }}>
-                <span style={{ fontSize: '13px', color: 'var(--color-gray-600)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <MapPin size={14} />
+              <div className="flex gap-4">
+                <span className="flex items-center gap-1 text-sm text-gray-600">
+                  <MapPin className="h-3.5 w-3.5" />
                   {selectedSettlement.activeArea}
                 </span>
-                <span style={{ fontSize: '13px', color: 'var(--color-gray-600)' }}>
+                <span className="text-sm text-gray-600">
                   평점: ⭐ {selectedSettlement.avgRating}
                 </span>
               </div>
             </div>
 
             {/* Amount Breakdown */}
-            <div style={{ marginBottom: '20px' }}>
-              <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>정산 내역</h4>
-              <div style={{ border: '1px solid var(--color-gray-200)', borderRadius: '8px', overflow: 'hidden' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--color-gray-100)' }}>
+            <div>
+              <h4 className="mb-3 text-sm font-semibold">정산 내역</h4>
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <div className="flex justify-between border-b border-gray-100 px-4 py-3">
                   <span>배달 건수</span>
-                  <span style={{ fontWeight: 600 }}>{selectedSettlement.deliveryCount}건</span>
+                  <span className="font-semibold">
+                    {selectedSettlement.deliveryCount}건
+                  </span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--color-gray-100)' }}>
+                <div className="flex justify-between border-b border-gray-100 px-4 py-3">
                   <span>배달비 합계</span>
-                  <span style={{ fontWeight: 600 }}>{formatCurrency(selectedSettlement.totalDeliveryFee)}</span>
+                  <span className="font-semibold">
+                    {formatCurrency(selectedSettlement.totalDeliveryFee)}
+                  </span>
                 </div>
                 {selectedSettlement.incentive > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--color-gray-100)', color: 'var(--color-success-600)' }}>
+                  <div className="flex justify-between border-b border-gray-100 px-4 py-3 text-green-600">
                     <span>인센티브</span>
                     <span>+{formatCurrency(selectedSettlement.incentive)}</span>
                   </div>
                 )}
                 {selectedSettlement.deductions < 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--color-gray-100)', color: 'var(--color-error-600)' }}>
+                  <div className="flex justify-between border-b border-gray-100 px-4 py-3 text-red-600">
                     <span>공제액</span>
                     <span>{formatCurrency(selectedSettlement.deductions)}</span>
                   </div>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 16px', backgroundColor: 'var(--color-primary-50)' }}>
-                  <span style={{ fontWeight: 600 }}>최종 정산액</span>
-                  <span style={{ fontWeight: 700, color: 'var(--color-primary-600)', fontSize: '16px' }}>
+                <div className="flex justify-between bg-blue-50 px-4 py-3.5">
+                  <span className="font-semibold">최종 정산액</span>
+                  <span className="text-base font-bold text-blue-600">
                     {formatCurrency(selectedSettlement.netAmount)}
                   </span>
                 </div>
@@ -957,21 +618,17 @@ export default function RiderSettlementsPage() {
             </div>
 
             {/* Bank Info */}
-            <div style={{ marginBottom: '20px' }}>
-              <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>정산 계좌</h4>
-              <div style={{
-                padding: '16px',
-                border: '1px solid var(--color-gray-200)',
-                borderRadius: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-              }}>
-                <CreditCard size={24} color="var(--color-gray-400)" />
+            <div>
+              <h4 className="mb-3 text-sm font-semibold">정산 계좌</h4>
+              <div className="flex items-center gap-3 rounded-lg border border-gray-200 p-4">
+                <CreditCard className="h-6 w-6 text-gray-400" />
                 <div>
-                  <p style={{ fontWeight: 600 }}>{selectedSettlement.bankAccount.bank}</p>
-                  <p style={{ fontSize: '13px', color: 'var(--color-gray-600)' }}>
-                    {selectedSettlement.bankAccount.accountNumber} ({selectedSettlement.bankAccount.accountHolder})
+                  <p className="font-semibold">
+                    {selectedSettlement.bankAccount.bank}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {selectedSettlement.bankAccount.accountNumber} (
+                    {selectedSettlement.bankAccount.accountHolder})
                   </p>
                 </div>
               </div>
@@ -979,17 +636,13 @@ export default function RiderSettlementsPage() {
 
             {/* Transaction Info */}
             {selectedSettlement.transactionId && (
-              <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ fontSize: '14px', fontWeight: 600, marginBottom: '12px' }}>거래 정보</h4>
-                <div style={{
-                  padding: '16px',
-                  backgroundColor: 'var(--color-success-50)',
-                  borderRadius: '8px'
-                }}>
-                  <p style={{ fontSize: '13px', color: 'var(--color-success-700)' }}>
+              <div>
+                <h4 className="mb-3 text-sm font-semibold">거래 정보</h4>
+                <div className="rounded-lg bg-green-50 p-4">
+                  <p className="text-sm text-green-700">
                     거래 ID: {selectedSettlement.transactionId}
                   </p>
-                  <p style={{ fontSize: '13px', color: 'var(--color-success-700)', marginTop: '4px' }}>
+                  <p className="mt-1 text-sm text-green-700">
                     처리일: {formatDate(selectedSettlement.processedDate!)}
                   </p>
                 </div>
@@ -997,147 +650,49 @@ export default function RiderSettlementsPage() {
             )}
 
             <button
+              type="button"
               onClick={() => setShowDetailModal(false)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid var(--color-gray-200)',
-                borderRadius: '8px',
-                backgroundColor: 'white',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
               닫기
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </BaseModal>
 
-      {/* Process Modal */}
-      {showProcessModal && selectedSettlement && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '24px',
-            maxWidth: '400px',
-            width: '90%'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '20px'
-            }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700 }}>정산 처리</h3>
-              <button
-                onClick={() => setShowProcessModal(false)}
-                style={{
-                  padding: '8px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer'
-                }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div style={{
-              padding: '16px',
-              backgroundColor: 'var(--color-gray-50)',
-              borderRadius: '8px',
-              marginBottom: '20px'
-            }}>
-              <p style={{ fontWeight: 600, marginBottom: '8px' }}>{selectedSettlement.riderName}</p>
-              <p style={{ fontSize: '13px', color: 'var(--color-gray-600)', marginBottom: '12px' }}>
-                {selectedSettlement.bankAccount.bank} {selectedSettlement.bankAccount.accountNumber}
-              </p>
-              <p style={{ fontSize: '20px', fontWeight: 700, color: 'var(--color-primary-600)' }}>
-                {formatCurrency(selectedSettlement.netAmount)}
+      {/* Process Confirm Modal */}
+      <ConfirmModal
+        isOpen={showProcessModal}
+        onClose={() => setShowProcessModal(false)}
+        onConfirm={confirmProcess}
+        title="정산 처리"
+        message={
+          selectedSettlement ? (
+            <div className="space-y-3">
+              <div className="rounded-lg bg-gray-50 p-4 text-left">
+                <p className="mb-2 font-semibold">
+                  {selectedSettlement.riderName}
+                </p>
+                <p className="mb-3 text-sm text-gray-600">
+                  {selectedSettlement.bankAccount.bank}{' '}
+                  {selectedSettlement.bankAccount.accountNumber}
+                </p>
+                <p className="text-xl font-bold text-blue-600">
+                  {formatCurrency(selectedSettlement.netAmount)}
+                </p>
+              </div>
+              <p className="text-gray-600">
+                위 계좌로 정산금을 송금하시겠습니까?
               </p>
             </div>
-
-            <p style={{ marginBottom: '20px', color: 'var(--color-gray-600)', fontSize: '14px', lineHeight: 1.6 }}>
-              위 계좌로 정산금을 송금하시겠습니까?
-            </p>
-
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => setShowProcessModal(false)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  border: '1px solid var(--color-gray-200)',
-                  borderRadius: '8px',
-                  backgroundColor: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                취소
-              </button>
-              <button
-                onClick={confirmProcess}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  backgroundColor: 'var(--color-primary-500)',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 600
-                }}
-              >
-                정산하기
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Click outside to close menus */}
-      {(showFilterMenu || activeMenu) && (
-        <button
-          type="button"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 50,
-            background: 'transparent',
-            border: 'none',
-            cursor: 'default'
-          }}
-          onClick={() => {
-            setShowFilterMenu(false)
-            setActiveMenu(null)
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              setShowFilterMenu(false)
-              setActiveMenu(null)
-            }
-          }}
-          aria-label="메뉴 닫기"
-        />
-      )}
+          ) : (
+            ''
+          )
+        }
+        confirmText="정산하기"
+        variant="info"
+        isLoading={isProcessing}
+      />
     </div>
   )
 }

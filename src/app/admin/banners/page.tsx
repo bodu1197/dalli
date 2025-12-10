@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import {
-  ArrowLeft,
   Plus,
   Search,
   Image as ImageIcon,
@@ -14,30 +13,40 @@ import {
   GripVertical,
   ExternalLink,
   Calendar,
-  ChevronDown,
   Monitor,
-  Smartphone
+  Smartphone,
 } from 'lucide-react'
+import {
+  PageHeader,
+  StatsCardGrid,
+  StatusBadge,
+  EmptyState,
+  ConfirmModal,
+} from '@/components/features/admin/common'
+import type { StatusVariant } from '@/components/features/admin/types'
+import { cn } from '@/lib/utils'
 
+// Types
 interface BannerItem {
-  id: string
-  title: string
-  position: 'home_main' | 'home_sub' | 'category' | 'event' | 'popup'
-  linkType: 'none' | 'internal' | 'external'
-  linkUrl?: string
-  status: 'active' | 'inactive' | 'scheduled'
-  isVisible: boolean
-  startDate: string
-  endDate: string
-  order: number
-  imageUrl: string
-  mobileImageUrl?: string
-  clickCount: number
-  viewCount: number
-  createdAt: string
+  readonly id: string
+  readonly title: string
+  readonly position: 'home_main' | 'home_sub' | 'category' | 'event' | 'popup'
+  readonly linkType: 'none' | 'internal' | 'external'
+  readonly linkUrl?: string
+  readonly status: 'active' | 'inactive' | 'scheduled'
+  readonly isVisible: boolean
+  readonly startDate: string
+  readonly endDate: string
+  readonly order: number
+  readonly imageUrl: string
+  readonly mobileImageUrl?: string
+  readonly clickCount: number
+  readonly viewCount: number
+  readonly createdAt: string
 }
 
-const mockBanners: BannerItem[] = [
+// Mock Data
+const mockBanners: ReadonlyArray<BannerItem> = [
   {
     id: 'BNR001',
     title: '신규 가입 50% 할인 배너',
@@ -53,7 +62,7 @@ const mockBanners: BannerItem[] = [
     mobileImageUrl: '/banners/main-1-m.jpg',
     clickCount: 15234,
     viewCount: 125000,
-    createdAt: '2024-01-01'
+    createdAt: '2024-01-01',
   },
   {
     id: 'BNR002',
@@ -70,7 +79,7 @@ const mockBanners: BannerItem[] = [
     mobileImageUrl: '/banners/main-2-m.jpg',
     clickCount: 8521,
     viewCount: 98000,
-    createdAt: '2024-01-15'
+    createdAt: '2024-01-15',
   },
   {
     id: 'BNR003',
@@ -86,7 +95,7 @@ const mockBanners: BannerItem[] = [
     imageUrl: '/banners/category-chicken.jpg',
     clickCount: 3254,
     viewCount: 45000,
-    createdAt: '2024-01-08'
+    createdAt: '2024-01-08',
   },
   {
     id: 'BNR004',
@@ -102,7 +111,7 @@ const mockBanners: BannerItem[] = [
     imageUrl: '/banners/app-download.jpg',
     clickCount: 5621,
     viewCount: 78000,
-    createdAt: '2024-01-01'
+    createdAt: '2024-01-01',
   },
   {
     id: 'BNR005',
@@ -118,7 +127,7 @@ const mockBanners: BannerItem[] = [
     imageUrl: '/banners/newyear-popup.jpg',
     clickCount: 12453,
     viewCount: 156000,
-    createdAt: '2023-12-28'
+    createdAt: '2023-12-28',
   },
   {
     id: 'BNR006',
@@ -134,623 +143,297 @@ const mockBanners: BannerItem[] = [
     mobileImageUrl: '/banners/valentine-m.jpg',
     clickCount: 0,
     viewCount: 0,
-    createdAt: '2024-01-20'
-  }
+    createdAt: '2024-01-20',
+  },
 ]
 
-export default function AdminBannersPage() {
-  const [banners, setBanners] = useState<BannerItem[]>(mockBanners)
+const statusConfig: Record<
+  BannerItem['status'],
+  { label: string; variant: StatusVariant }
+> = {
+  active: { label: '게시중', variant: 'success' },
+  scheduled: { label: '예약', variant: 'primary' },
+  inactive: { label: '비활성', variant: 'default' },
+}
+
+const positionConfig: Record<BannerItem['position'], string> = {
+  home_main: '홈 메인',
+  home_sub: '홈 서브',
+  category: '카테고리',
+  event: '이벤트',
+  popup: '팝업',
+}
+
+function getCTR(clicks: number, views: number): string {
+  if (views === 0) return '0.0'
+  return ((clicks / views) * 100).toFixed(1)
+}
+
+export default function AdminBannersPage(): React.ReactElement {
+  const [banners, setBanners] = useState<ReadonlyArray<BannerItem>>(mockBanners)
   const [searchQuery, setSearchQuery] = useState('')
-  const [positionFilter, setPositionFilter] = useState<'all' | 'home_main' | 'home_sub' | 'category' | 'event' | 'popup'>('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive' | 'scheduled'>('all')
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; banner: BannerItem | null }>({
-    isOpen: false,
-    banner: null
-  })
+  const [positionFilter, setPositionFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean
+    banner: BannerItem | null
+  }>({ isOpen: false, banner: null })
 
-  const filteredBanners = banners.filter(banner => {
-    const matchesSearch = banner.title.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesPosition = positionFilter === 'all' || banner.position === positionFilter
-    const matchesStatus = statusFilter === 'all' || banner.status === statusFilter
-    return matchesSearch && matchesPosition && matchesStatus
-  }).sort((a, b) => a.order - b.order)
+  const filteredBanners = useMemo(() => {
+    return banners
+      .filter((banner) => {
+        const matchesSearch = banner.title
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
+        const matchesPosition =
+          positionFilter === 'all' || banner.position === positionFilter
+        const matchesStatus =
+          statusFilter === 'all' || banner.status === statusFilter
+        return matchesSearch && matchesPosition && matchesStatus
+      })
+      .sort((a, b) => a.order - b.order)
+  }, [banners, searchQuery, positionFilter, statusFilter])
 
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'active':
-        return { bg: 'rgba(34, 197, 94, 0.1)', color: 'var(--color-success-500)' }
-      case 'scheduled':
-        return { bg: 'rgba(59, 130, 246, 0.1)', color: 'var(--color-primary-500)' }
-      case 'inactive':
-        return { bg: 'rgba(107, 114, 128, 0.1)', color: 'var(--color-text-tertiary)' }
-      default:
-        return { bg: 'rgba(107, 114, 128, 0.1)', color: 'var(--color-text-tertiary)' }
+  const stats = useMemo(() => {
+    return {
+      total: banners.length,
+      active: banners.filter((b) => b.status === 'active').length,
+      totalViews: banners.reduce((sum, b) => sum + b.viewCount, 0),
+      totalClicks: banners.reduce((sum, b) => sum + b.clickCount, 0),
     }
-  }
+  }, [banners])
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active': return '게시중'
-      case 'scheduled': return '예약'
-      case 'inactive': return '비활성'
-      default: return status
-    }
-  }
+  const statsCards = useMemo(
+    () => [
+      { icon: ImageIcon, iconColor: 'primary' as const, label: '전체 배너', value: stats.total },
+      { icon: Eye, iconColor: 'success' as const, label: '게시중', value: stats.active },
+      { icon: Monitor, iconColor: 'default' as const, label: '총 노출수', value: `${(stats.totalViews / 1000).toFixed(0)}K` },
+      { icon: ExternalLink, iconColor: 'primary' as const, label: '평균 CTR', value: `${getCTR(stats.totalClicks, stats.totalViews)}%` },
+    ],
+    [stats]
+  )
 
-  const getPositionText = (position: string) => {
-    switch (position) {
-      case 'home_main': return '홈 메인'
-      case 'home_sub': return '홈 서브'
-      case 'category': return '카테고리'
-      case 'event': return '이벤트'
-      case 'popup': return '팝업'
-      default: return position
-    }
-  }
+  const toggleVisibility = useCallback((bannerId: string) => {
+    setBanners((prev) =>
+      prev.map((banner) =>
+        banner.id === bannerId ? { ...banner, isVisible: !banner.isVisible } : banner
+      )
+    )
+  }, [])
 
-  const toggleVisibility = (bannerId: string) => {
-    setBanners(prev => prev.map(banner =>
-      banner.id === bannerId ? { ...banner, isVisible: !banner.isVisible } : banner
-    ))
-  }
-
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (deleteModal.banner) {
-      setBanners(prev => prev.filter(b => b.id !== deleteModal.banner!.id))
+      setBanners((prev) => prev.filter((b) => b.id !== deleteModal.banner!.id))
       setDeleteModal({ isOpen: false, banner: null })
     }
-  }
-
-  const getCTR = (clicks: number, views: number) => {
-    if (views === 0) return '0.0'
-    return ((clicks / views) * 100).toFixed(1)
-  }
-
-  const stats = {
-    total: banners.length,
-    active: banners.filter(b => b.status === 'active').length,
-    totalViews: banners.reduce((sum, b) => sum + b.viewCount, 0),
-    totalClicks: banners.reduce((sum, b) => sum + b.clickCount, 0)
-  }
+  }, [deleteModal.banner])
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-background)' }}>
+    <div className="mx-auto max-w-7xl p-6">
       {/* Header */}
-      <header style={{
-        backgroundColor: 'var(--color-white)',
-        borderBottom: '1px solid var(--color-border)',
-        padding: '16px 20px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link href="/admin" style={{ color: 'var(--color-text-secondary)' }}>
-              <ArrowLeft size={24} />
-            </Link>
-            <h1 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              배너 관리
-            </h1>
-          </div>
-          <Link
-            href="/admin/banners/new"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 16px',
-              backgroundColor: 'var(--color-primary-500)',
-              color: 'white',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 600,
-              textDecoration: 'none'
-            }}
-          >
-            <Plus size={18} />
-            배너 등록
-          </Link>
-        </div>
-      </header>
+      <div className="mb-6 flex items-center justify-between">
+        <PageHeader
+          title="배너 관리"
+          description="홈 화면 배너를 관리합니다"
+          backLink="/admin"
+        />
+        <Link
+          href="/admin/banners/new"
+          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          <Plus className="h-4 w-4" />
+          배너 등록
+        </Link>
+      </div>
 
-      <div style={{ padding: '20px' }}>
-        {/* Stats */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(2, 1fr)',
-          gap: '12px',
-          marginBottom: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginBottom: '4px' }}>
-                  전체 배너
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                  {stats.total}
-                </div>
-              </div>
-              <div style={{
-                padding: '8px',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                borderRadius: '8px'
-              }}>
-                <ImageIcon size={20} color="var(--color-primary-500)" />
-              </div>
-            </div>
-          </div>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginBottom: '4px' }}>
-                  게시중
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-success-500)' }}>
-                  {stats.active}
-                </div>
-              </div>
-              <div style={{
-                padding: '8px',
-                backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                borderRadius: '8px'
-              }}>
-                <Eye size={20} color="var(--color-success-500)" />
-              </div>
-            </div>
-          </div>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginBottom: '4px' }}>
-                  총 노출수
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-                  {(stats.totalViews / 1000).toFixed(0)}K
-                </div>
-              </div>
-              <div style={{
-                padding: '8px',
-                backgroundColor: 'rgba(107, 114, 128, 0.1)',
-                borderRadius: '8px'
-              }}>
-                <Monitor size={20} color="var(--color-text-tertiary)" />
-              </div>
-            </div>
-          </div>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)', marginBottom: '4px' }}>
-                  평균 CTR
-                </div>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-primary-500)' }}>
-                  {getCTR(stats.totalClicks, stats.totalViews)}%
-                </div>
-              </div>
-              <div style={{
-                padding: '8px',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                borderRadius: '8px'
-              }}>
-                <ExternalLink size={20} color="var(--color-primary-500)" />
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Stats */}
+      <StatsCardGrid cards={statsCards} className="mb-6" />
 
-        {/* Search */}
-        <div style={{
-          backgroundColor: 'var(--color-white)',
-          borderRadius: '12px',
-          padding: '12px 16px',
-          marginBottom: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <Search size={20} color="var(--color-text-tertiary)" />
+      {/* Search and Filters */}
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-[250px] flex-1">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="배너 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              flex: 1,
-              border: 'none',
-              outline: 'none',
-              fontSize: '14px',
-              color: 'var(--color-text-primary)',
-              backgroundColor: 'transparent'
-            }}
+            className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto' }}>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={positionFilter}
-              onChange={(e) => setPositionFilter(e.target.value as typeof positionFilter)}
-              style={{
-                padding: '8px 32px 8px 12px',
-                borderRadius: '8px',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-white)',
-                fontSize: '13px',
-                color: 'var(--color-text-primary)',
-                appearance: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="all">전체 위치</option>
-              <option value="home_main">홈 메인</option>
-              <option value="home_sub">홈 서브</option>
-              <option value="category">카테고리</option>
-              <option value="event">이벤트</option>
-              <option value="popup">팝업</option>
-            </select>
-            <ChevronDown
-              size={16}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                pointerEvents: 'none',
-                color: 'var(--color-text-tertiary)'
-              }}
-            />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-              style={{
-                padding: '8px 32px 8px 12px',
-                borderRadius: '8px',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-white)',
-                fontSize: '13px',
-                color: 'var(--color-text-primary)',
-                appearance: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="all">전체 상태</option>
-              <option value="active">게시중</option>
-              <option value="scheduled">예약</option>
-              <option value="inactive">비활성</option>
-            </select>
-            <ChevronDown
-              size={16}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                pointerEvents: 'none',
-                color: 'var(--color-text-tertiary)'
-              }}
-            />
-          </div>
-        </div>
+        <select
+          value={positionFilter}
+          onChange={(e) => setPositionFilter(e.target.value)}
+          className={cn(
+            'rounded-lg border px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500',
+            positionFilter !== 'all'
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 bg-white'
+          )}
+        >
+          <option value="all">전체 위치</option>
+          <option value="home_main">홈 메인</option>
+          <option value="home_sub">홈 서브</option>
+          <option value="category">카테고리</option>
+          <option value="event">이벤트</option>
+          <option value="popup">팝업</option>
+        </select>
 
-        {/* Banner List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {filteredBanners.map(banner => {
-            const statusStyle = getStatusStyle(banner.status)
-
-            return (
-              <div
-                key={banner.id}
-                style={{
-                  backgroundColor: 'var(--color-white)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  opacity: banner.isVisible ? 1 : 0.6
-                }}
-              >
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  {/* Drag Handle & Image */}
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                    <div style={{
-                      padding: '8px 4px',
-                      cursor: 'grab',
-                      color: 'var(--color-text-tertiary)'
-                    }}>
-                      <GripVertical size={16} />
-                    </div>
-                    <div style={{
-                      width: '80px',
-                      height: '60px',
-                      backgroundColor: 'var(--color-background)',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      overflow: 'hidden'
-                    }}>
-                      <ImageIcon size={24} color="var(--color-text-tertiary)" />
-                    </div>
-                  </div>
-
-                  {/* Info */}
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 600,
-                          backgroundColor: statusStyle.bg,
-                          color: statusStyle.color
-                        }}>
-                          {getStatusText(banner.status)}
-                        </span>
-                        <span style={{
-                          padding: '4px 8px',
-                          borderRadius: '4px',
-                          fontSize: '11px',
-                          fontWeight: 500,
-                          backgroundColor: 'rgba(107, 114, 128, 0.1)',
-                          color: 'var(--color-text-secondary)'
-                        }}>
-                          {getPositionText(banner.position)}
-                        </span>
-                      </div>
-                      <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
-                        #{banner.order}
-                      </span>
-                    </div>
-
-                    <h3 style={{
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: 'var(--color-text-primary)',
-                      marginBottom: '8px'
-                    }}>
-                      {banner.title}
-                    </h3>
-
-                    <div style={{
-                      display: 'flex',
-                      gap: '12px',
-                      marginBottom: '8px',
-                      flexWrap: 'wrap'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Calendar size={12} color="var(--color-text-tertiary)" />
-                        <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-                          {banner.startDate} ~ {banner.endDate}
-                        </span>
-                      </div>
-                      {banner.mobileImageUrl && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Smartphone size={12} color="var(--color-text-tertiary)" />
-                          <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)' }}>
-                            모바일 이미지
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Stats */}
-                    <div style={{
-                      display: 'flex',
-                      gap: '16px',
-                      padding: '8px 0',
-                      borderTop: '1px solid var(--color-border)'
-                    }}>
-                      <div>
-                        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>노출</span>
-                        <span style={{ fontSize: '12px', color: 'var(--color-text-primary)', marginLeft: '4px', fontWeight: 600 }}>
-                          {banner.viewCount.toLocaleString()}
-                        </span>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>클릭</span>
-                        <span style={{ fontSize: '12px', color: 'var(--color-text-primary)', marginLeft: '4px', fontWeight: 600 }}>
-                          {banner.clickCount.toLocaleString()}
-                        </span>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: '11px', color: 'var(--color-text-tertiary)' }}>CTR</span>
-                        <span style={{ fontSize: '12px', color: 'var(--color-primary-500)', marginLeft: '4px', fontWeight: 600 }}>
-                          {getCTR(banner.clickCount, banner.viewCount)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div style={{
-                  display: 'flex',
-                  gap: '8px',
-                  paddingTop: '12px',
-                  borderTop: '1px solid var(--color-border)',
-                  marginTop: '12px'
-                }}>
-                  <button
-                    onClick={() => toggleVisibility(banner.id)}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      padding: '10px',
-                      backgroundColor: banner.isVisible ? 'rgba(107, 114, 128, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: banner.isVisible ? 'var(--color-text-secondary)' : 'var(--color-success-500)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {banner.isVisible ? <EyeOff size={16} /> : <Eye size={16} />}
-                    {banner.isVisible ? '숨김' : '노출'}
-                  </button>
-                  <Link
-                    href={`/admin/banners/${banner.id}/edit`}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      padding: '10px',
-                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: 'var(--color-primary-500)',
-                      textDecoration: 'none'
-                    }}
-                  >
-                    <Edit size={16} />
-                    수정
-                  </Link>
-                  <button
-                    onClick={() => setDeleteModal({ isOpen: true, banner })}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      padding: '10px',
-                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: 'var(--color-error-500)',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <Trash2 size={16} />
-                    삭제
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        {filteredBanners.length === 0 && (
-          <div style={{
-            textAlign: 'center',
-            padding: '60px 20px',
-            color: 'var(--color-text-tertiary)'
-          }}>
-            <ImageIcon size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
-            <p>배너가 없습니다</p>
-          </div>
-        )}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className={cn(
+            'rounded-lg border px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500',
+            statusFilter !== 'all'
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 bg-white'
+          )}
+        >
+          <option value="all">전체 상태</option>
+          <option value="active">게시중</option>
+          <option value="scheduled">예약</option>
+          <option value="inactive">비활성</option>
+        </select>
       </div>
 
-      {/* Delete Modal */}
-      {deleteModal.isOpen && deleteModal.banner && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '16px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '340px'
-          }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              marginBottom: '12px',
-              textAlign: 'center'
-            }}>
-              배너 삭제
-            </h3>
-            <p style={{
-              fontSize: '14px',
-              color: 'var(--color-text-secondary)',
-              textAlign: 'center',
-              marginBottom: '24px'
-            }}>
-              "{deleteModal.banner.title}" 배너를 삭제하시겠습니까?
-              <br />
-              <span style={{ color: 'var(--color-error-500)', fontSize: '13px' }}>
-                이 작업은 되돌릴 수 없습니다.
-              </span>
-            </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => setDeleteModal({ isOpen: false, banner: null })}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-white)',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'var(--color-text-secondary)',
-                  cursor: 'pointer'
-                }}
-              >
-                취소
-              </button>
-              <button
-                onClick={handleDelete}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  backgroundColor: 'var(--color-error-500)',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'white',
-                  cursor: 'pointer'
-                }}
-              >
-                삭제
-              </button>
+      {/* Banner List */}
+      {filteredBanners.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          {filteredBanners.map((banner) => (
+            <div
+              key={banner.id}
+              className={cn(
+                'rounded-xl bg-white p-4',
+                !banner.isVisible && 'opacity-60'
+              )}
+            >
+              <div className="flex gap-3">
+                {/* Drag Handle & Image */}
+                <div className="flex items-start gap-2">
+                  <div className="cursor-grab p-2 text-gray-400">
+                    <GripVertical className="h-4 w-4" />
+                  </div>
+                  <div className="flex h-16 w-20 items-center justify-center overflow-hidden rounded-lg bg-gray-100">
+                    <ImageIcon className="h-6 w-6 text-gray-400" />
+                  </div>
+                </div>
+
+                {/* Info */}
+                <div className="flex-1">
+                  {/* Badges */}
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge variant={statusConfig[banner.status].variant}>
+                        {statusConfig[banner.status].label}
+                      </StatusBadge>
+                      <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
+                        {positionConfig[banner.position]}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-400">#{banner.order}</span>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="mb-2 text-sm font-semibold text-gray-900">
+                    {banner.title}
+                  </h3>
+
+                  {/* Meta */}
+                  <div className="mb-2 flex flex-wrap gap-3 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {banner.startDate} ~ {banner.endDate}
+                    </span>
+                    {banner.mobileImageUrl && (
+                      <span className="flex items-center gap-1">
+                        <Smartphone className="h-3 w-3" />
+                        모바일 이미지
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex gap-4 border-t border-gray-100 pt-2">
+                    <div>
+                      <span className="text-xs text-gray-400">노출</span>
+                      <span className="ml-1 text-xs font-semibold text-gray-900">
+                        {banner.viewCount.toLocaleString()}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-400">클릭</span>
+                      <span className="ml-1 text-xs font-semibold text-gray-900">
+                        {banner.clickCount.toLocaleString()}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-400">CTR</span>
+                      <span className="ml-1 text-xs font-semibold text-blue-600">
+                        {getCTR(banner.clickCount, banner.viewCount)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="mt-3 flex gap-2 border-t border-gray-100 pt-3">
+                <button
+                  type="button"
+                  onClick={() => toggleVisibility(banner.id)}
+                  className={cn(
+                    'flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium',
+                    banner.isVisible
+                      ? 'bg-gray-100 text-gray-600'
+                      : 'bg-green-50 text-green-600'
+                  )}
+                >
+                  {banner.isVisible ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                  {banner.isVisible ? '숨김' : '노출'}
+                </button>
+                <Link
+                  href={`/admin/banners/${banner.id}/edit`}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-50 py-2.5 text-sm font-medium text-blue-600"
+                >
+                  <Edit className="h-4 w-4" />
+                  수정
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setDeleteModal({ isOpen: true, banner })}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-50 py-2.5 text-sm font-medium text-red-500"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  삭제
+                </button>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
+      ) : (
+        <EmptyState
+          icon={ImageIcon}
+          title="검색 결과 없음"
+          description="검색 조건에 맞는 배너가 없습니다"
+        />
       )}
+
+      {/* Delete Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, banner: null })}
+        onConfirm={handleDelete}
+        title="배너 삭제"
+        message={`"${deleteModal.banner?.title}" 배너를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`}
+        confirmText="삭제"
+        cancelText="취소"
+        variant="danger"
+      />
     </div>
   )
 }

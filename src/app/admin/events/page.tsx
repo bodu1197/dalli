@@ -1,9 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import {
-  ArrowLeft,
   Plus,
   Search,
   Calendar,
@@ -15,25 +14,35 @@ import {
   Percent,
   Clock,
   Users,
-  ChevronDown
 } from 'lucide-react'
+import {
+  PageHeader,
+  StatsCardGrid,
+  StatusBadge,
+  EmptyState,
+  ConfirmModal,
+} from '@/components/features/admin/common'
+import type { StatusVariant } from '@/components/features/admin/types'
+import { cn } from '@/lib/utils'
 
+// Types
 interface EventItem {
-  id: string
-  title: string
-  description: string
-  type: 'discount' | 'freeDelivery' | 'coupon' | 'point' | 'special'
-  status: 'upcoming' | 'active' | 'ended'
-  isVisible: boolean
-  startDate: string
-  endDate: string
-  targetUsers: 'all' | 'new' | 'vip' | 'dormant'
-  participantCount: number
-  imageUrl: string
-  createdAt: string
+  readonly id: string
+  readonly title: string
+  readonly description: string
+  readonly type: 'discount' | 'freeDelivery' | 'coupon' | 'point' | 'special'
+  readonly status: 'upcoming' | 'active' | 'ended'
+  readonly isVisible: boolean
+  readonly startDate: string
+  readonly endDate: string
+  readonly targetUsers: 'all' | 'new' | 'vip' | 'dormant'
+  readonly participantCount: number
+  readonly imageUrl: string
+  readonly createdAt: string
 }
 
-const mockEvents: EventItem[] = [
+// Mock Data
+const mockEvents: ReadonlyArray<EventItem> = [
   {
     id: 'EVT001',
     title: '신규 가입 50% 할인',
@@ -46,7 +55,7 @@ const mockEvents: EventItem[] = [
     targetUsers: 'new',
     participantCount: 1523,
     imageUrl: '/events/new-user.jpg',
-    createdAt: '2024-01-01'
+    createdAt: '2024-01-01',
   },
   {
     id: 'EVT002',
@@ -60,7 +69,7 @@ const mockEvents: EventItem[] = [
     targetUsers: 'all',
     participantCount: 3241,
     imageUrl: '/events/free-delivery.jpg',
-    createdAt: '2024-01-15'
+    createdAt: '2024-01-15',
   },
   {
     id: 'EVT003',
@@ -74,7 +83,7 @@ const mockEvents: EventItem[] = [
     targetUsers: 'vip',
     participantCount: 245,
     imageUrl: '/events/vip.jpg',
-    createdAt: '2024-01-10'
+    createdAt: '2024-01-10',
   },
   {
     id: 'EVT004',
@@ -88,7 +97,7 @@ const mockEvents: EventItem[] = [
     targetUsers: 'all',
     participantCount: 0,
     imageUrl: '/events/double-point.jpg',
-    createdAt: '2024-01-18'
+    createdAt: '2024-01-18',
   },
   {
     id: 'EVT005',
@@ -102,7 +111,7 @@ const mockEvents: EventItem[] = [
     targetUsers: 'all',
     participantCount: 5621,
     imageUrl: '/events/newyear.jpg',
-    createdAt: '2023-12-20'
+    createdAt: '2023-12-20',
   },
   {
     id: 'EVT006',
@@ -116,450 +125,243 @@ const mockEvents: EventItem[] = [
     targetUsers: 'dormant',
     participantCount: 128,
     imageUrl: '/events/comeback.jpg',
-    createdAt: '2024-01-05'
-  }
+    createdAt: '2024-01-05',
+  },
 ]
 
-export default function AdminEventsPage() {
-  const [events, setEvents] = useState<EventItem[]>(mockEvents)
+const statusConfig: Record<
+  EventItem['status'],
+  { label: string; variant: StatusVariant }
+> = {
+  active: { label: '진행중', variant: 'success' },
+  upcoming: { label: '예정', variant: 'primary' },
+  ended: { label: '종료', variant: 'default' },
+}
+
+const typeConfig: Record<
+  EventItem['type'],
+  { label: string; icon: React.ComponentType<{ className?: string }> }
+> = {
+  discount: { label: '할인', icon: Percent },
+  freeDelivery: { label: '무료배달', icon: Gift },
+  coupon: { label: '쿠폰', icon: Gift },
+  point: { label: '포인트', icon: Gift },
+  special: { label: '특별', icon: Gift },
+}
+
+const targetConfig: Record<EventItem['targetUsers'], string> = {
+  all: '전체',
+  new: '신규',
+  vip: 'VIP',
+  dormant: '휴면',
+}
+
+export default function AdminEventsPage(): React.ReactElement {
+  const [events, setEvents] = useState<ReadonlyArray<EventItem>>(mockEvents)
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'active' | 'ended'>('all')
-  const [typeFilter, setTypeFilter] = useState<'all' | 'discount' | 'freeDelivery' | 'coupon' | 'point' | 'special'>('all')
-  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; event: EventItem | null }>({
-    isOpen: false,
-    event: null
-  })
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean
+    event: EventItem | null
+  }>({ isOpen: false, event: null })
 
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         event.description.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || event.status === statusFilter
-    const matchesType = typeFilter === 'all' || event.type === typeFilter
-    return matchesSearch && matchesStatus && matchesType
-  })
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      const matchesSearch =
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.description.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesStatus = statusFilter === 'all' || event.status === statusFilter
+      const matchesType = typeFilter === 'all' || event.type === typeFilter
+      return matchesSearch && matchesStatus && matchesType
+    })
+  }, [events, searchQuery, statusFilter, typeFilter])
 
-  const getStatusStyle = (status: string) => {
-    switch (status) {
-      case 'active':
-        return { bg: 'rgba(34, 197, 94, 0.1)', color: 'var(--color-success-500)' }
-      case 'upcoming':
-        return { bg: 'rgba(59, 130, 246, 0.1)', color: 'var(--color-primary-500)' }
-      case 'ended':
-        return { bg: 'rgba(107, 114, 128, 0.1)', color: 'var(--color-text-tertiary)' }
-      default:
-        return { bg: 'rgba(107, 114, 128, 0.1)', color: 'var(--color-text-tertiary)' }
+  const stats = useMemo(() => {
+    return {
+      total: events.length,
+      active: events.filter((e) => e.status === 'active').length,
+      upcoming: events.filter((e) => e.status === 'upcoming').length,
+      ended: events.filter((e) => e.status === 'ended').length,
     }
-  }
+  }, [events])
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active': return '진행중'
-      case 'upcoming': return '예정'
-      case 'ended': return '종료'
-      default: return status
-    }
-  }
+  const statsCards = useMemo(
+    () => [
+      { icon: Calendar, iconColor: 'primary' as const, label: '전체', value: stats.total, suffix: '개' },
+      { icon: Eye, iconColor: 'success' as const, label: '진행중', value: stats.active, suffix: '개' },
+      { icon: Clock, iconColor: 'primary' as const, label: '예정', value: stats.upcoming, suffix: '개' },
+      { icon: Calendar, iconColor: 'default' as const, label: '종료', value: stats.ended, suffix: '개' },
+    ],
+    [stats]
+  )
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'discount': return <Percent size={16} />
-      case 'freeDelivery': return <Gift size={16} />
-      case 'coupon': return <Gift size={16} />
-      case 'point': return <Gift size={16} />
-      case 'special': return <Gift size={16} />
-      default: return <Gift size={16} />
-    }
-  }
+  const toggleVisibility = useCallback((eventId: string) => {
+    setEvents((prev) =>
+      prev.map((event) =>
+        event.id === eventId ? { ...event, isVisible: !event.isVisible } : event
+      )
+    )
+  }, [])
 
-  const getTypeText = (type: string) => {
-    switch (type) {
-      case 'discount': return '할인'
-      case 'freeDelivery': return '무료배달'
-      case 'coupon': return '쿠폰'
-      case 'point': return '포인트'
-      case 'special': return '특별'
-      default: return type
-    }
-  }
-
-  const getTargetText = (target: string) => {
-    switch (target) {
-      case 'all': return '전체'
-      case 'new': return '신규'
-      case 'vip': return 'VIP'
-      case 'dormant': return '휴면'
-      default: return target
-    }
-  }
-
-  const toggleVisibility = (eventId: string) => {
-    setEvents(prev => prev.map(event =>
-      event.id === eventId ? { ...event, isVisible: !event.isVisible } : event
-    ))
-  }
-
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (deleteModal.event) {
-      setEvents(prev => prev.filter(e => e.id !== deleteModal.event!.id))
+      setEvents((prev) => prev.filter((e) => e.id !== deleteModal.event!.id))
       setDeleteModal({ isOpen: false, event: null })
     }
-  }
-
-  const stats = {
-    total: events.length,
-    active: events.filter(e => e.status === 'active').length,
-    upcoming: events.filter(e => e.status === 'upcoming').length,
-    ended: events.filter(e => e.status === 'ended').length
-  }
+  }, [deleteModal.event])
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-background)' }}>
+    <div className="mx-auto max-w-7xl p-6">
       {/* Header */}
-      <header style={{
-        backgroundColor: 'var(--color-white)',
-        borderBottom: '1px solid var(--color-border)',
-        padding: '16px 20px',
-        position: 'sticky',
-        top: 0,
-        zIndex: 10
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <Link href="/admin" style={{ color: 'var(--color-text-secondary)' }}>
-              <ArrowLeft size={24} />
-            </Link>
-            <h1 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              이벤트 관리
-            </h1>
-          </div>
-          <Link
-            href="/admin/events/new"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 16px',
-              backgroundColor: 'var(--color-primary-500)',
-              color: 'white',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: 600,
-              textDecoration: 'none'
-            }}
-          >
-            <Plus size={18} />
-            이벤트 등록
-          </Link>
-        </div>
-      </header>
+      <div className="mb-6 flex items-center justify-between">
+        <PageHeader
+          title="이벤트 관리"
+          description="프로모션 이벤트를 관리합니다"
+          backLink="/admin"
+        />
+        <Link
+          href="/admin/events/new"
+          className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+        >
+          <Plus className="h-4 w-4" />
+          이벤트 등록
+        </Link>
+      </div>
 
-      <div style={{ padding: '20px' }}>
-        {/* Stats */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '12px',
-          marginBottom: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text-primary)' }}>
-              {stats.total}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>전체</div>
-          </div>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-success-500)' }}>
-              {stats.active}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>진행중</div>
-          </div>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-primary-500)' }}>
-              {stats.upcoming}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>예정</div>
-          </div>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '12px',
-            padding: '16px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--color-text-tertiary)' }}>
-              {stats.ended}
-            </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>종료</div>
-          </div>
-        </div>
+      {/* Stats */}
+      <StatsCardGrid cards={statsCards} className="mb-6" />
 
-        {/* Search */}
-        <div style={{
-          backgroundColor: 'var(--color-white)',
-          borderRadius: '12px',
-          padding: '12px 16px',
-          marginBottom: '16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <Search size={20} color="var(--color-text-tertiary)" />
+      {/* Search and Filters */}
+      <div className="mb-5 flex flex-wrap items-center gap-3">
+        <div className="relative min-w-[250px] flex-1">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="이벤트 검색..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              flex: 1,
-              border: 'none',
-              outline: 'none',
-              fontSize: '14px',
-              color: 'var(--color-text-primary)',
-              backgroundColor: 'transparent'
-            }}
+            className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
 
-        {/* Filters */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto' }}>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
-              style={{
-                padding: '8px 32px 8px 12px',
-                borderRadius: '8px',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-white)',
-                fontSize: '13px',
-                color: 'var(--color-text-primary)',
-                appearance: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="all">전체 상태</option>
-              <option value="active">진행중</option>
-              <option value="upcoming">예정</option>
-              <option value="ended">종료</option>
-            </select>
-            <ChevronDown
-              size={16}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                pointerEvents: 'none',
-                color: 'var(--color-text-tertiary)'
-              }}
-            />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
-              style={{
-                padding: '8px 32px 8px 12px',
-                borderRadius: '8px',
-                border: '1px solid var(--color-border)',
-                backgroundColor: 'var(--color-white)',
-                fontSize: '13px',
-                color: 'var(--color-text-primary)',
-                appearance: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <option value="all">전체 유형</option>
-              <option value="discount">할인</option>
-              <option value="freeDelivery">무료배달</option>
-              <option value="coupon">쿠폰</option>
-              <option value="point">포인트</option>
-              <option value="special">특별</option>
-            </select>
-            <ChevronDown
-              size={16}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                pointerEvents: 'none',
-                color: 'var(--color-text-tertiary)'
-              }}
-            />
-          </div>
-        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className={cn(
+            'rounded-lg border px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500',
+            statusFilter !== 'all'
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 bg-white'
+          )}
+        >
+          <option value="all">전체 상태</option>
+          <option value="active">진행중</option>
+          <option value="upcoming">예정</option>
+          <option value="ended">종료</option>
+        </select>
 
-        {/* Event List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {filteredEvents.map(event => {
-            const statusStyle = getStatusStyle(event.status)
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className={cn(
+            'rounded-lg border px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500',
+            typeFilter !== 'all'
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 bg-white'
+          )}
+        >
+          <option value="all">전체 유형</option>
+          <option value="discount">할인</option>
+          <option value="freeDelivery">무료배달</option>
+          <option value="coupon">쿠폰</option>
+          <option value="point">포인트</option>
+          <option value="special">특별</option>
+        </select>
+      </div>
+
+      {/* Event List */}
+      {filteredEvents.length > 0 ? (
+        <div className="flex flex-col gap-3">
+          {filteredEvents.map((event) => {
+            const TypeIcon = typeConfig[event.type].icon
 
             return (
               <div
                 key={event.id}
-                style={{
-                  backgroundColor: 'var(--color-white)',
-                  borderRadius: '12px',
-                  padding: '16px',
-                  opacity: event.isVisible ? 1 : 0.6
-                }}
+                className={cn(
+                  'rounded-xl bg-white p-4',
+                  !event.isVisible && 'opacity-60'
+                )}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      backgroundColor: statusStyle.bg,
-                      color: statusStyle.color
-                    }}>
-                      {getStatusText(event.status)}
-                    </span>
-                    <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: 500,
-                      backgroundColor: 'rgba(107, 114, 128, 0.1)',
-                      color: 'var(--color-text-secondary)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
-                      {getTypeIcon(event.type)}
-                      {getTypeText(event.type)}
+                {/* Badges */}
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge variant={statusConfig[event.status].variant}>
+                      {statusConfig[event.status].label}
+                    </StatusBadge>
+                    <span className="flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
+                      <TypeIcon className="h-3 w-3" />
+                      {typeConfig[event.type].label}
                     </span>
                   </div>
-                  <span style={{ fontSize: '12px', color: 'var(--color-text-tertiary)' }}>
-                    {event.id}
+                  <span className="text-xs text-gray-400">{event.id}</span>
+                </div>
+
+                {/* Title & Description */}
+                <h3 className="mb-1 text-sm font-semibold text-gray-900">
+                  {event.title}
+                </h3>
+                <p className="mb-3 text-sm text-gray-500">{event.description}</p>
+
+                {/* Meta */}
+                <div className="mb-3 flex flex-wrap gap-4 text-xs text-gray-500">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" />
+                    {event.startDate} ~ {event.endDate}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Users className="h-3.5 w-3.5" />
+                    대상: {targetConfig[event.targetUsers]}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    참여: {event.participantCount.toLocaleString()}명
                   </span>
                 </div>
 
-                <h3 style={{
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'var(--color-text-primary)',
-                  marginBottom: '4px'
-                }}>
-                  {event.title}
-                </h3>
-                <p style={{
-                  fontSize: '13px',
-                  color: 'var(--color-text-secondary)',
-                  marginBottom: '12px'
-                }}>
-                  {event.description}
-                </p>
-
-                <div style={{
-                  display: 'flex',
-                  gap: '16px',
-                  marginBottom: '12px',
-                  flexWrap: 'wrap'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Calendar size={14} color="var(--color-text-tertiary)" />
-                    <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                      {event.startDate} ~ {event.endDate}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Users size={14} color="var(--color-text-tertiary)" />
-                    <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                      대상: {getTargetText(event.targetUsers)}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Clock size={14} color="var(--color-text-tertiary)" />
-                    <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-                      참여: {event.participantCount.toLocaleString()}명
-                    </span>
-                  </div>
-                </div>
-
-                <div style={{
-                  display: 'flex',
-                  gap: '8px',
-                  paddingTop: '12px',
-                  borderTop: '1px solid var(--color-border)'
-                }}>
+                {/* Actions */}
+                <div className="flex gap-2 border-t border-gray-100 pt-3">
                   <button
+                    type="button"
                     onClick={() => toggleVisibility(event.id)}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      padding: '10px',
-                      backgroundColor: event.isVisible ? 'rgba(107, 114, 128, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: event.isVisible ? 'var(--color-text-secondary)' : 'var(--color-success-500)',
-                      cursor: 'pointer'
-                    }}
+                    className={cn(
+                      'flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium',
+                      event.isVisible
+                        ? 'bg-gray-100 text-gray-600'
+                        : 'bg-green-50 text-green-600'
+                    )}
                   >
-                    {event.isVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {event.isVisible ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
                     {event.isVisible ? '숨김' : '노출'}
                   </button>
                   <Link
                     href={`/admin/events/${event.id}/edit`}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      padding: '10px',
-                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: 'var(--color-primary-500)',
-                      textDecoration: 'none'
-                    }}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-50 py-2.5 text-sm font-medium text-blue-600"
                   >
-                    <Edit size={16} />
+                    <Edit className="h-4 w-4" />
                     수정
                   </Link>
                   <button
+                    type="button"
                     onClick={() => setDeleteModal({ isOpen: true, event })}
-                    style={{
-                      flex: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                      padding: '10px',
-                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      color: 'var(--color-error-500)',
-                      cursor: 'pointer'
-                    }}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-50 py-2.5 text-sm font-medium text-red-500"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 className="h-4 w-4" />
                     삭제
                   </button>
                 </div>
@@ -567,99 +369,25 @@ export default function AdminEventsPage() {
             )
           })}
         </div>
-
-        {filteredEvents.length === 0 && (
-          <div style={{
-            textAlign: 'center',
-            padding: '60px 20px',
-            color: 'var(--color-text-tertiary)'
-          }}>
-            <Calendar size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
-            <p>이벤트가 없습니다</p>
-          </div>
-        )}
-      </div>
+      ) : (
+        <EmptyState
+          icon={Calendar}
+          title="검색 결과 없음"
+          description="검색 조건에 맞는 이벤트가 없습니다"
+        />
+      )}
 
       {/* Delete Modal */}
-      {deleteModal.isOpen && deleteModal.event && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'var(--color-white)',
-            borderRadius: '16px',
-            padding: '24px',
-            width: '100%',
-            maxWidth: '340px'
-          }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: 700,
-              color: 'var(--color-text-primary)',
-              marginBottom: '12px',
-              textAlign: 'center'
-            }}>
-              이벤트 삭제
-            </h3>
-            <p style={{
-              fontSize: '14px',
-              color: 'var(--color-text-secondary)',
-              textAlign: 'center',
-              marginBottom: '24px'
-            }}>
-              "{deleteModal.event.title}" 이벤트를 삭제하시겠습니까?
-              <br />
-              <span style={{ color: 'var(--color-error-500)', fontSize: '13px' }}>
-                이 작업은 되돌릴 수 없습니다.
-              </span>
-            </p>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => setDeleteModal({ isOpen: false, event: null })}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--color-border)',
-                  backgroundColor: 'var(--color-white)',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'var(--color-text-secondary)',
-                  cursor: 'pointer'
-                }}
-              >
-                취소
-              </button>
-              <button
-                onClick={handleDelete}
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  borderRadius: '12px',
-                  border: 'none',
-                  backgroundColor: 'var(--color-error-500)',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  color: 'white',
-                  cursor: 'pointer'
-                }}
-              >
-                삭제
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, event: null })}
+        onConfirm={handleDelete}
+        title="이벤트 삭제"
+        message={`"${deleteModal.event?.title}" 이벤트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`}
+        confirmText="삭제"
+        cancelText="취소"
+        variant="danger"
+      />
     </div>
   )
 }
