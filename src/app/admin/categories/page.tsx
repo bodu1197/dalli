@@ -1168,7 +1168,7 @@ export default function CategoriesPage() {
                     return (
                       <>
                         이 카테고리에 연결된 {selectedCategory.storeCount}개 가게의 카테고리가 해제됩니다.
-                        하위 {selectedCategory.children.length}개 카테고리도 함께 삭제됩니다.
+                        하위 {selectedCategory.children!.length}개 카테고리도 함께 삭제됩니다.
                       </>
                     )
                   }
@@ -1176,7 +1176,7 @@ export default function CategoriesPage() {
                     return <>이 카테고리에 연결된 {selectedCategory.storeCount}개 가게의 카테고리가 해제됩니다.</>
                   }
                   if (hasChildren) {
-                    return <>하위 {selectedCategory.children.length}개 카테고리도 함께 삭제됩니다.</>
+                    return <>하위 {selectedCategory.children!.length}개 카테고리도 함께 삭제됩니다.</>
                   }
                   return <>이 작업은 되돌릴 수 없습니다.</>
                 })()}
