@@ -2,22 +2,34 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Search, MapPin, Bell, ShoppingCart, ChevronDown, Bike, Store, ShoppingBag, Gift } from 'lucide-react'
+import { Search, MapPin, Bell, ShoppingCart, ChevronDown, Bike, Store, ShoppingBag, Gift, SlidersHorizontal } from 'lucide-react'
 
 import { CategoryGrid } from '@/components/features/category'
 import { RestaurantList } from '@/components/features/restaurant'
 import { BottomNavBar } from '@/components/layouts/BottomNavBar'
+import { KakaoMap } from '@/components/features/map/KakaoMap'
+import { PickupStoreList } from '@/components/features/pickup/PickupStoreList'
+import { PickupFilters } from '@/components/features/pickup/PickupFilters'
 import { useLocationStore } from '@/stores/location.store'
 import { useCartStore } from '@/stores/cart.store'
 import { getRecommendedRestaurants, getPopularRestaurants } from '@/lib/mock/restaurants'
 
 type PlatformCategory = 'delivery' | 'pickup' | 'shopping' | 'gift'
+type SortOption = 'distance' | 'rating' | 'discount'
+type CategoryFilter = 'all' | 'korean' | 'chinese' | 'japanese' | 'western' | 'cafe' | 'chicken' | 'pizza' | 'burger' | 'dessert'
 
 export default function HomePage() {
   const { selectedAddress } = useLocationStore()
   const cartItemCount = useCartStore((state) => state.getItemCount())
   const [activeTab, setActiveTab] = useState<'recommend' | 'popular'>('recommend')
   const [activePlatform, setActivePlatform] = useState<PlatformCategory>('delivery')
+
+  // 픽업 페이지용 상태
+  const [pickupSearchQuery, setPickupSearchQuery] = useState('')
+  const [showPickupFilters, setShowPickupFilters] = useState(false)
+  const [pickupSortBy, setPickupSortBy] = useState<SortOption>('distance')
+  const [pickupCategoryFilter, setPickupCategoryFilter] = useState<CategoryFilter>('all')
+  const [showDiscountOnly, setShowDiscountOnly] = useState(false)
 
   const recommendedRestaurants = getRecommendedRestaurants()
   const popularRestaurants = getPopularRestaurants()
@@ -245,14 +257,116 @@ export default function HomePage() {
           )}
 
           {activePlatform === 'pickup' && (
-            <section className="px-4 py-20 bg-white">
-              <div className="text-center">
-                <Store className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <h2 className="text-xl font-bold text-gray-900 mb-2">직접수령 (포장)</h2>
-                <p className="text-gray-500">곧 만나요! 🏪</p>
-                <p className="text-sm text-gray-400 mt-2">직접수령 서비스를 준비 중입니다</p>
-              </div>
-            </section>
+            <>
+              {/* 검색바 */}
+              <section className="px-4 pt-4 bg-white">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="가게 이름, 메뉴 검색"
+                    value={pickupSearchQuery}
+                    onChange={(e) => setPickupSearchQuery(e.target.value)}
+                    className="w-full h-11 pl-10 pr-4 rounded-xl bg-gray-100 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#df0012]"
+                  />
+                </div>
+              </section>
+
+              {/* 필터 버튼들 */}
+              <section className="flex gap-2 px-4 pt-3 pb-0 overflow-x-auto hide-scrollbar bg-white">
+                <button
+                  onClick={() => setShowPickupFilters(!showPickupFilters)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-300 bg-white text-sm font-medium whitespace-nowrap"
+                >
+                  <SlidersHorizontal className="w-4 h-4" />
+                  필터
+                </button>
+
+                <button
+                  onClick={() => setShowDiscountOnly(!showDiscountOnly)}
+                  className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    showDiscountOnly
+                      ? 'bg-[#df0012] text-white border border-[#df0012]'
+                      : 'bg-white text-gray-700 border border-gray-300'
+                  }`}
+                >
+                  픽업 할인
+                </button>
+
+                <button
+                  onClick={() => setPickupSortBy('distance')}
+                  className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    pickupSortBy === 'distance'
+                      ? 'bg-gray-900 text-white border border-gray-900'
+                      : 'bg-white text-gray-700 border border-gray-300'
+                  }`}
+                >
+                  가까운 순
+                </button>
+
+                <button
+                  onClick={() => setPickupSortBy('rating')}
+                  className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    pickupSortBy === 'rating'
+                      ? 'bg-gray-900 text-white border border-gray-900'
+                      : 'bg-white text-gray-700 border border-gray-300'
+                  }`}
+                >
+                  평점 높은 순
+                </button>
+
+                <button
+                  onClick={() => setPickupSortBy('discount')}
+                  className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    pickupSortBy === 'discount'
+                      ? 'bg-gray-900 text-white border border-gray-900'
+                      : 'bg-white text-gray-700 border border-gray-300'
+                  }`}
+                >
+                  할인 많은 순
+                </button>
+              </section>
+
+              {/* 프로모션 배너 */}
+              <section className="px-4 pt-3 pb-0 bg-gradient-to-r from-[#df0012] to-[#ff4757]">
+                <div className="flex items-center justify-between text-white py-3">
+                  <div>
+                    <p className="text-xs opacity-90">지금 픽업하면</p>
+                    <p className="font-bold text-base">최대 30% 할인!</p>
+                  </div>
+                  <div className="text-2xl">🏪</div>
+                </div>
+              </section>
+
+              {/* 지도 */}
+              <section className="h-[300px] bg-gray-100 relative">
+                <KakaoMap />
+
+                {/* 현재 위치 버튼 */}
+                <button className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50">
+                  <MapPin className="w-5 h-5 text-gray-700" />
+                </button>
+              </section>
+
+              {/* 가게 목록 */}
+              <section className="bg-white">
+                <PickupStoreList
+                  searchQuery={pickupSearchQuery}
+                  sortBy={pickupSortBy}
+                  categoryFilter={pickupCategoryFilter}
+                  showDiscountOnly={showDiscountOnly}
+                />
+              </section>
+
+              {/* 필터 모달 */}
+              {showPickupFilters && (
+                <PickupFilters
+                  categoryFilter={pickupCategoryFilter}
+                  onCategoryChange={setPickupCategoryFilter}
+                  onClose={() => setShowPickupFilters(false)}
+                />
+              )}
+            </>
           )}
 
           {activePlatform === 'shopping' && (
