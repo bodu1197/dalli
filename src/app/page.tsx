@@ -28,7 +28,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-[var(--color-neutral-100)]">
       <div className="max-w-[700px] mx-auto min-h-screen bg-white md:shadow-[0_0_20px_rgba(0,0,0,0.1)] pb-20">
         {/* 헤더 */}
-        <header className="sticky top-0 z-30 bg-white">
+        <header className="sticky top-0 z-30 bg-[#df0012]">
           {/* 상단 바 */}
           <div className="flex items-center justify-between px-4 h-14">
             {/* 위치 선택 */}
@@ -36,9 +36,9 @@ export default function HomePage() {
               href="/address/select"
               className="flex items-center gap-1 max-w-[200px]"
             >
-              <MapPin className="w-5 h-5 text-[var(--color-primary-500)] flex-shrink-0" />
-              <span className="font-medium truncate">{shortAddress}</span>
-              <ChevronDown className="w-4 h-4 text-[var(--color-neutral-400)] flex-shrink-0" />
+              <MapPin className="w-5 h-5 text-white flex-shrink-0" />
+              <span className="font-medium truncate text-white">{shortAddress}</span>
+              <ChevronDown className="w-4 h-4 text-white/70 flex-shrink-0" />
             </Link>
 
             {/* 알림 & 장바구니 */}
@@ -46,11 +46,11 @@ export default function HomePage() {
               {/* 장바구니 */}
               <Link
                 href="/cart"
-                className="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)]"
+                className="relative w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10"
               >
-                <ShoppingCart className="w-6 h-6 text-[var(--color-neutral-700)]" />
+                <ShoppingCart className="w-6 h-6 text-white" />
                 {cartItemCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-[var(--color-primary-500)] text-white text-xs font-bold rounded-full px-1">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-white text-[#df0012] text-xs font-bold rounded-full px-1">
                     {cartItemCount > 99 ? '99+' : cartItemCount}
                   </span>
                 )}
@@ -59,9 +59,9 @@ export default function HomePage() {
               {/* 알림 */}
               <Link
                 href="/notifications"
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)]"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10"
               >
-                <Bell className="w-6 h-6 text-[var(--color-neutral-700)]" />
+                <Bell className="w-6 h-6 text-white" />
               </Link>
             </div>
           </div>
@@ -70,10 +70,10 @@ export default function HomePage() {
           <div className="px-4 pb-3">
             <Link
               href="/search"
-              className="flex items-center gap-3 h-12 px-4 bg-[var(--color-neutral-100)] rounded-xl"
+              className="flex items-center gap-3 h-12 px-4 bg-white/20 rounded-xl backdrop-blur-sm"
             >
-              <Search className="w-5 h-5 text-[var(--color-neutral-400)]" />
-              <span className="text-[var(--color-neutral-400)]">
+              <Search className="w-5 h-5 text-white/80" />
+              <span className="text-white/80">
                 맛집, 메뉴를 검색해보세요
               </span>
             </Link>
@@ -82,8 +82,8 @@ export default function HomePage() {
 
         <main>
           {/* 이벤트 배너 */}
-          <section className="px-4 py-4">
-            <div className="relative h-32 rounded-2xl bg-gradient-to-r from-[var(--color-primary-500)] to-[var(--color-primary-400)] overflow-hidden">
+          <section className="px-4 py-4 bg-[#df0012]">
+            <div className="relative h-32 rounded-2xl bg-white/10 backdrop-blur-sm overflow-hidden">
               <div className="absolute inset-0 p-5 text-white">
                 <p className="text-sm opacity-90">달리고 신규 가입 혜택</p>
                 <h2 className="text-xl font-bold mt-1">
