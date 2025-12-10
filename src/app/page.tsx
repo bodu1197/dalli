@@ -11,10 +11,13 @@ import { useLocationStore } from '@/stores/location.store'
 import { useCartStore } from '@/stores/cart.store'
 import { getRecommendedRestaurants, getPopularRestaurants } from '@/lib/mock/restaurants'
 
+type PlatformCategory = 'delivery' | 'pickup' | 'shopping' | 'gift'
+
 export default function HomePage() {
   const { selectedAddress } = useLocationStore()
   const cartItemCount = useCartStore((state) => state.getItemCount())
   const [activeTab, setActiveTab] = useState<'recommend' | 'popular'>('recommend')
+  const [activePlatform, setActivePlatform] = useState<PlatformCategory>('delivery')
 
   const recommendedRestaurants = getRecommendedRestaurants()
   const popularRestaurants = getPopularRestaurants()
@@ -99,94 +102,180 @@ export default function HomePage() {
           {/* 플랫폼 카테고리 */}
           <section className="px-4 pt-6 pb-0 bg-white">
             <div className="grid grid-cols-4 gap-4">
-              {/* 음식배달 - ACTIVE */}
-              <Link
-                href="/"
+              {/* 음식배달 */}
+              <button
+                onClick={() => setActivePlatform('delivery')}
                 className="flex flex-col items-center gap-2 p-3 rounded-xl transition-colors"
               >
-                <div className="w-14 h-14 rounded-full bg-[#df0012] flex items-center justify-center">
-                  <Bike className="w-7 h-7 text-white" />
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                  activePlatform === 'delivery'
+                    ? 'bg-[#df0012]'
+                    : 'bg-gray-200'
+                }`}>
+                  <Bike className={`w-7 h-7 ${
+                    activePlatform === 'delivery'
+                      ? 'text-white'
+                      : 'text-gray-600'
+                  }`} />
                 </div>
-                <span className="text-xs font-bold text-[#df0012] whitespace-nowrap border-b-2 border-[#df0012] pb-0.5">음식배달</span>
-              </Link>
+                <span className={`text-xs whitespace-nowrap ${
+                  activePlatform === 'delivery'
+                    ? 'font-bold text-[#df0012] border-b-2 border-[#df0012] pb-0.5'
+                    : 'font-medium text-gray-600'
+                }`}>음식배달</span>
+              </button>
 
               {/* 픽업 */}
-              <Link
-                href="/pickup"
+              <button
+                onClick={() => setActivePlatform('pickup')}
                 className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
               >
-                <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center">
-                  <Store className="w-7 h-7 text-gray-600" />
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                  activePlatform === 'pickup'
+                    ? 'bg-[#df0012]'
+                    : 'bg-gray-200'
+                }`}>
+                  <Store className={`w-7 h-7 ${
+                    activePlatform === 'pickup'
+                      ? 'text-white'
+                      : 'text-gray-600'
+                  }`} />
                 </div>
-                <span className="text-xs font-medium text-gray-600 whitespace-nowrap">픽업</span>
-              </Link>
+                <span className={`text-xs whitespace-nowrap ${
+                  activePlatform === 'pickup'
+                    ? 'font-bold text-[#df0012] border-b-2 border-[#df0012] pb-0.5'
+                    : 'font-medium text-gray-600'
+                }`}>픽업</span>
+              </button>
 
               {/* 장보기·쇼핑 */}
-              <Link
-                href="/shopping"
+              <button
+                onClick={() => setActivePlatform('shopping')}
                 className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
               >
-                <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center">
-                  <ShoppingBag className="w-7 h-7 text-gray-600" />
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                  activePlatform === 'shopping'
+                    ? 'bg-[#df0012]'
+                    : 'bg-gray-200'
+                }`}>
+                  <ShoppingBag className={`w-7 h-7 ${
+                    activePlatform === 'shopping'
+                      ? 'text-white'
+                      : 'text-gray-600'
+                  }`} />
                 </div>
-                <span className="text-xs font-medium text-gray-600 whitespace-nowrap">장보기·쇼핑</span>
-              </Link>
+                <span className={`text-xs whitespace-nowrap ${
+                  activePlatform === 'shopping'
+                    ? 'font-bold text-[#df0012] border-b-2 border-[#df0012] pb-0.5'
+                    : 'font-medium text-gray-600'
+                }`}>장보기·쇼핑</span>
+              </button>
 
               {/* 선물하기 */}
-              <Link
-                href="/gift"
+              <button
+                onClick={() => setActivePlatform('gift')}
                 className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
               >
-                <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center">
-                  <Gift className="w-7 h-7 text-gray-600" />
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                  activePlatform === 'gift'
+                    ? 'bg-[#df0012]'
+                    : 'bg-gray-200'
+                }`}>
+                  <Gift className={`w-7 h-7 ${
+                    activePlatform === 'gift'
+                      ? 'text-white'
+                      : 'text-gray-600'
+                  }`} />
                 </div>
-                <span className="text-xs font-medium text-gray-600 whitespace-nowrap">선물하기</span>
-              </Link>
-            </div>
-          </section>
-
-          {/* 음식 카테고리 */}
-          <section className="px-4 pt-0 pb-0 bg-white">
-            <CategoryGrid />
-          </section>
-
-          {/* 식당 리스트 */}
-          <section className="bg-white">
-            {/* 탭 */}
-            <div className="flex border-b border-[var(--color-neutral-100)]">
-              <button
-                onClick={() => setActiveTab('recommend')}
-                className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
-                  activeTab === 'recommend'
-                    ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
-                    : 'text-[var(--color-neutral-400)] border-transparent'
-                }`}
-              >
-                추천 맛집
-              </button>
-              <button
-                onClick={() => setActiveTab('popular')}
-                className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
-                  activeTab === 'popular'
-                    ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
-                    : 'text-[var(--color-neutral-400)] border-transparent'
-                }`}
-              >
-                인기 맛집
+                <span className={`text-xs whitespace-nowrap ${
+                  activePlatform === 'gift'
+                    ? 'font-bold text-[#df0012] border-b-2 border-[#df0012] pb-0.5'
+                    : 'font-medium text-gray-600'
+                }`}>선물하기</span>
               </button>
             </div>
-
-            {/* 리스트 */}
-            <div className="p-4">
-              <RestaurantList
-                restaurants={
-                  activeTab === 'recommend'
-                    ? recommendedRestaurants
-                    : popularRestaurants
-                }
-              />
-            </div>
           </section>
+
+          {/* 플랫폼별 콘텐츠 */}
+          {activePlatform === 'delivery' && (
+            <>
+              {/* 음식 카테고리 */}
+              <section className="px-4 pt-0 pb-0 bg-white">
+                <CategoryGrid />
+              </section>
+
+              {/* 식당 리스트 */}
+              <section className="bg-white">
+                {/* 탭 */}
+                <div className="flex border-b border-[var(--color-neutral-100)]">
+                  <button
+                    onClick={() => setActiveTab('recommend')}
+                    className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
+                      activeTab === 'recommend'
+                        ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
+                        : 'text-[var(--color-neutral-400)] border-transparent'
+                    }`}
+                  >
+                    추천 맛집
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('popular')}
+                    className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
+                      activeTab === 'popular'
+                        ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
+                        : 'text-[var(--color-neutral-400)] border-transparent'
+                    }`}
+                  >
+                    인기 맛집
+                  </button>
+                </div>
+
+                {/* 리스트 */}
+                <div className="p-4">
+                  <RestaurantList
+                    restaurants={
+                      activeTab === 'recommend'
+                        ? recommendedRestaurants
+                        : popularRestaurants
+                    }
+                  />
+                </div>
+              </section>
+            </>
+          )}
+
+          {activePlatform === 'pickup' && (
+            <section className="px-4 py-20 bg-white">
+              <div className="text-center">
+                <Store className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <h2 className="text-xl font-bold text-gray-900 mb-2">픽업 서비스</h2>
+                <p className="text-gray-500">곧 만나요! 🏪</p>
+                <p className="text-sm text-gray-400 mt-2">픽업 서비스를 준비 중입니다</p>
+              </div>
+            </section>
+          )}
+
+          {activePlatform === 'shopping' && (
+            <section className="px-4 py-20 bg-white">
+              <div className="text-center">
+                <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <h2 className="text-xl font-bold text-gray-900 mb-2">장보기·쇼핑</h2>
+                <p className="text-gray-500">곧 만나요! 🛒</p>
+                <p className="text-sm text-gray-400 mt-2">장보기 서비스를 준비 중입니다</p>
+              </div>
+            </section>
+          )}
+
+          {activePlatform === 'gift' && (
+            <section className="px-4 py-20 bg-white">
+              <div className="text-center">
+                <Gift className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <h2 className="text-xl font-bold text-gray-900 mb-2">선물하기</h2>
+                <p className="text-gray-500">곧 만나요! 🎁</p>
+                <p className="text-sm text-gray-400 mt-2">선물하기 서비스를 준비 중입니다</p>
+              </div>
+            </section>
+          )}
         </main>
 
         {/* 하단 네비게이션 */}
