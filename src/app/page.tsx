@@ -97,7 +97,7 @@ export default function HomePage() {
           </section>
 
           {/* 플랫폼 카테고리 */}
-          <section className="px-4 pt-6 pb-4 bg-white">
+          <section className="px-4 pt-6 pb-0 bg-white">
             <div className="grid grid-cols-4 gap-4">
               {/* 음식배달 - ACTIVE */}
               <Link
