@@ -146,7 +146,7 @@ export default function HomePage() {
           </section>
 
           {/* 음식 카테고리 */}
-          <section className="px-4 pt-0 pb-5 bg-white">
+          <section className="px-4 pt-0 pb-0 bg-white">
             <CategoryGrid />
           </section>
 
