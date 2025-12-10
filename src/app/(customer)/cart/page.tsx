@@ -18,7 +18,7 @@ export default function CartPage() {
   } = useCartStore()
 
   const totalAmount = getTotalAmount()
-  const deliveryFee = 0
+  const deliveryFee: number = 0
 
   // 빈 장바구니
   if (items.length === 0) {
