@@ -42,7 +42,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-[var(--color-neutral-100)]">
       <div className="max-w-[700px] mx-auto min-h-screen bg-white md:shadow-[0_0_20px_rgba(0,0,0,0.1)] pb-20">
         {/* 헤더 */}
-        <header className="sticky top-0 z-30 bg-[#df0012] pb-6">
+        <header className="sticky top-0 z-30 bg-[#df0012] pb-8">
           {/* 상단 바 */}
           <div className="flex items-center justify-between px-4 h-14">
             {/* 위치 선택 */}
@@ -94,7 +94,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <main className="bg-white rounded-t-3xl -mt-6 relative z-10">
+        <main className="bg-white rounded-t-[2.5rem] -mt-8 relative z-10">
           {/* 플랫폼 카테고리 */}
           <section className="px-4 pt-6 pb-4">
             <div className="grid grid-cols-2 gap-4">
