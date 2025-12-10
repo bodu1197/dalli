@@ -7,14 +7,10 @@ import {
   Search,
   ChevronRight,
   AlertCircle,
-  Clock,
-  CheckCircle,
-  XCircle,
   MessageSquare,
   User,
   Store,
   Bike,
-  Calendar,
 } from 'lucide-react'
 
 interface DisputeItem {
@@ -129,20 +125,6 @@ export default function AdminDisputesPage() {
     return matchesSearch && matchesStatus && matchesType
   })
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Clock className="w-4 h-4 text-[var(--color-warning-500)]" />
-      case 'in_progress':
-        return <AlertCircle className="w-4 h-4 text-[var(--color-info-500)]" />
-      case 'resolved':
-        return <CheckCircle className="w-4 h-4 text-[var(--color-success-500)]" />
-      case 'rejected':
-        return <XCircle className="w-4 h-4 text-[var(--color-error-500)]" />
-      default:
-        return null
-    }
-  }
 
   const getStatusLabel = (status: string) => {
     switch (status) {

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -13,13 +12,11 @@ import {
   Store,
   Bike,
   Phone,
-  MessageSquare,
   Image as ImageIcon,
   ChevronRight,
   Send,
   DollarSign,
   Calendar,
-  FileText,
   ShoppingBag,
 } from 'lucide-react'
 
@@ -130,7 +127,6 @@ const MOCK_DISPUTE: DisputeDetail = {
 }
 
 export default function AdminDisputeDetailPage() {
-  const params = useParams()
   const [dispute] = useState(MOCK_DISPUTE)
   const [newMessage, setNewMessage] = useState('')
   const [showResolveModal, setShowResolveModal] = useState(false)
@@ -291,9 +287,9 @@ export default function AdminDisputeDetailPage() {
 
           {dispute.images && dispute.images.length > 0 && (
             <div className="mt-3 flex gap-2">
-              {dispute.images.map((image, index) => (
+              {dispute.images.map((imageUrl) => (
                 <div
-                  key={index}
+                  key={`${dispute.id}-img-${imageUrl}`}
                   className="w-20 h-20 bg-[var(--color-neutral-200)] rounded-lg flex items-center justify-center"
                 >
                   <ImageIcon className="w-8 h-8 text-[var(--color-neutral-400)]" />
@@ -423,34 +419,36 @@ export default function AdminDisputeDetailPage() {
         <section className="bg-white mt-2 p-4">
           <h3 className="font-bold text-[var(--color-neutral-900)] mb-3">대화 내역</h3>
           <div className="space-y-3">
-            {dispute.messages.map((message) => (
-              <div
-                key={message.id}
-                className={`p-3 rounded-lg ${
-                  message.sender === 'admin'
-                    ? 'bg-[var(--color-primary-50)] ml-8'
-                    : message.sender === 'system'
-                    ? 'bg-[var(--color-neutral-100)]'
-                    : 'bg-[var(--color-neutral-50)] mr-8'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className={`text-xs font-medium ${
-                    message.sender === 'admin'
-                      ? 'text-[var(--color-primary-600)]'
-                      : message.sender === 'system'
-                      ? 'text-[var(--color-neutral-500)]'
-                      : 'text-[var(--color-neutral-700)]'
-                  }`}>
-                    {message.senderName}
-                  </span>
-                  <span className="text-xs text-[var(--color-neutral-400)]">
-                    {formatDate(message.createdAt)}
-                  </span>
+            {dispute.messages.map((message) => {
+              const getMessageBgClass = (): string => {
+                if (message.sender === 'admin') return 'bg-[var(--color-primary-50)] ml-8'
+                if (message.sender === 'system') return 'bg-[var(--color-neutral-100)]'
+                return 'bg-[var(--color-neutral-50)] mr-8'
+              }
+
+              const getSenderTextClass = (): string => {
+                if (message.sender === 'admin') return 'text-[var(--color-primary-600)]'
+                if (message.sender === 'system') return 'text-[var(--color-neutral-500)]'
+                return 'text-[var(--color-neutral-700)]'
+              }
+
+              return (
+                <div
+                  key={message.id}
+                  className={`p-3 rounded-lg ${getMessageBgClass()}`}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-xs font-medium ${getSenderTextClass()}`}>
+                      {message.senderName}
+                    </span>
+                    <span className="text-xs text-[var(--color-neutral-400)]">
+                      {formatDate(message.createdAt)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-[var(--color-neutral-700)]">{message.content}</p>
                 </div>
-                <p className="text-sm text-[var(--color-neutral-700)]">{message.content}</p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </section>
       </main>

@@ -47,6 +47,15 @@ const MOCK_POPULAR: PopularMenu[] = [
 
 type PeriodType = 'today' | 'week' | 'month'
 
+function getPeriodLabel(period: PeriodType): string {
+  const labels: Record<PeriodType, string> = {
+    today: '오늘',
+    week: '이번 주',
+    month: '이번 달',
+  }
+  return labels[period]
+}
+
 export default function OwnerStatsPage() {
   const [period, setPeriod] = useState<PeriodType>('today')
 
@@ -80,7 +89,7 @@ export default function OwnerStatsPage() {
                   : 'bg-[var(--color-neutral-100)] text-[var(--color-neutral-600)]'
               }`}
             >
-              {p === 'today' ? '오늘' : p === 'week' ? '이번 주' : '이번 달'}
+              {getPeriodLabel(p)}
             </button>
           ))}
         </div>
@@ -140,18 +149,21 @@ export default function OwnerStatsPage() {
 
             {/* 간단한 바 차트 */}
             <div className="flex items-end gap-2 h-32">
-              {MOCK_WEEKLY.map((day, i) => (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div
-                    className="w-full bg-[var(--color-primary-500)] rounded-t-lg transition-all"
-                    style={{
-                      height: `${(day.sales / maxSales) * 100}%`,
-                      opacity: i === MOCK_WEEKLY.length - 1 ? 1 : 0.6,
-                    }}
-                  />
-                  <span className="text-xs text-[var(--color-neutral-500)]">{day.date}</span>
-                </div>
-              ))}
+              {MOCK_WEEKLY.map((day) => {
+                const dayIndex = MOCK_WEEKLY.indexOf(day)
+                return (
+                  <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
+                    <div
+                      className="w-full bg-[var(--color-primary-500)] rounded-t-lg transition-all"
+                      style={{
+                        height: `${(day.sales / maxSales) * 100}%`,
+                        opacity: dayIndex === MOCK_WEEKLY.length - 1 ? 1 : 0.6,
+                      }}
+                    />
+                    <span className="text-xs text-[var(--color-neutral-500)]">{day.date}</span>
+                  </div>
+                )
+              })}
             </div>
 
             <div className="mt-4 pt-4 border-t border-[var(--color-neutral-100)] text-center">
@@ -176,17 +188,19 @@ export default function OwnerStatsPage() {
           </div>
 
           <div className="divide-y divide-[var(--color-neutral-100)]">
-            {MOCK_POPULAR.map((menu, i) => (
-              <div key={i} className="flex items-center gap-4 px-4 py-3">
-                <span
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${
-                    i < 3
-                      ? 'bg-[var(--color-primary-500)] text-white'
-                      : 'bg-[var(--color-neutral-100)] text-[var(--color-neutral-600)]'
-                  }`}
-                >
-                  {i + 1}
-                </span>
+            {MOCK_POPULAR.map((menu) => {
+              const menuIndex = MOCK_POPULAR.indexOf(menu)
+              return (
+                <div key={menu.name} className="flex items-center gap-4 px-4 py-3">
+                  <span
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold ${
+                      menuIndex < 3
+                        ? 'bg-[var(--color-primary-500)] text-white'
+                        : 'bg-[var(--color-neutral-100)] text-[var(--color-neutral-600)]'
+                    }`}
+                  >
+                    {menuIndex + 1}
+                  </span>
                 <div className="flex-1">
                   <p className="font-medium text-[var(--color-neutral-900)]">{menu.name}</p>
                   <p className="text-sm text-[var(--color-neutral-500)]">{menu.orders}건 주문</p>
@@ -194,8 +208,9 @@ export default function OwnerStatsPage() {
                 <p className="font-medium text-[var(--color-neutral-700)]">
                   {menu.revenue.toLocaleString()}원
                 </p>
-              </div>
-            ))}
+                </div>
+              )
+            })}
           </div>
         </section>
 

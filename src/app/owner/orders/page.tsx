@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Bell, Clock, Phone, MapPin } from 'lucide-react'
+import { ArrowLeft, Bell, Clock, MapPin } from 'lucide-react'
 
 interface OwnerOrder {
   id: string
@@ -142,7 +142,14 @@ export default function OwnerOrdersPage() {
         {/* 탭 */}
         <div className="flex border-b border-[var(--color-neutral-100)]">
           {(['pending', 'cooking', 'ready', 'completed'] as TabType[]).map((tab) => {
-            const count = tab === 'pending' ? pendingCount : tab === 'cooking' ? cookingCount : tab === 'ready' ? readyCount : null
+            const getCount = (): number | null => {
+              if (tab === 'pending') return pendingCount
+              if (tab === 'cooking') return cookingCount
+              if (tab === 'ready') return readyCount
+              return null
+            }
+            const count = getCount()
+
             return (
               <button
                 key={tab}
@@ -186,7 +193,7 @@ export default function OwnerOrdersPage() {
   )
 }
 
-function OrderCard({ order }: { order: OwnerOrder }) {
+function OrderCard({ order }: Readonly<{ order: OwnerOrder }>) {
   const timeAgo = () => {
     const now = new Date()
     const created = new Date(order.createdAt)
@@ -212,19 +219,23 @@ function OrderCard({ order }: { order: OwnerOrder }) {
     alert('조리 완료 처리 (개발 중)')
   }
 
+  const getStatusBadgeClass = (): string => {
+    if (order.status === 'pending') {
+      return 'bg-[var(--color-error-100)] text-[var(--color-error-600)]'
+    }
+    if (order.status === 'cooking') {
+      return 'bg-[var(--color-warning-100)] text-[var(--color-warning-600)]'
+    }
+    return 'bg-[var(--color-success-100)] text-[var(--color-success-600)]'
+  }
+
   return (
     <Link href={`/owner/orders/${order.id}`} className="block bg-white rounded-2xl shadow-sm overflow-hidden">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-neutral-50)] border-b border-[var(--color-neutral-100)]">
         <div className="flex items-center gap-3">
           <span className="font-bold text-[var(--color-neutral-900)]">{order.orderNumber}</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${
-            order.status === 'pending'
-              ? 'bg-[var(--color-error-100)] text-[var(--color-error-600)]'
-              : order.status === 'cooking'
-              ? 'bg-[var(--color-warning-100)] text-[var(--color-warning-600)]'
-              : 'bg-[var(--color-success-100)] text-[var(--color-success-600)]'
-          }`}>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${getStatusBadgeClass()}`}>
             {STATUS_LABELS[order.status]}
           </span>
         </div>
@@ -237,8 +248,8 @@ function OrderCard({ order }: { order: OwnerOrder }) {
       {/* 주문 내역 */}
       <div className="p-4">
         <div className="space-y-2 mb-4">
-          {order.items.map((item, i) => (
-            <div key={i} className="flex items-center justify-between">
+          {order.items.map((item) => (
+            <div key={`${item.name}-${item.quantity}`} className="flex items-center justify-between">
               <div>
                 <span className="text-[var(--color-neutral-800)]">{item.name}</span>
                 {item.options && (

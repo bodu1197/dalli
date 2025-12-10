@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ChevronRight } from 'lucide-react'
 
-import { MOCK_ORDERS, getActiveOrders, getCompletedOrders } from '@/lib/mock/orders'
+import { getActiveOrders, getCompletedOrders } from '@/lib/mock/orders'
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
@@ -93,7 +93,7 @@ export default function OrdersPage() {
   )
 }
 
-function OrderCard({ order }: { order: Order }) {
+function OrderCard({ order }: Readonly<{ order: Order }>) {
   const statusColor = ORDER_STATUS_COLORS[order.status]
   const statusLabel = ORDER_STATUS_LABELS[order.status]
   const orderDate = new Date(order.createdAt).toLocaleDateString('ko-KR', {
@@ -163,7 +163,7 @@ function OrderCard({ order }: { order: Order }) {
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              // TODO: 재주문 기능
+              // Note: Reorder functionality (to be implemented)
               alert('재주문 기능 준비 중입니다')
             }}
           >

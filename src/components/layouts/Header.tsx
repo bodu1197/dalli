@@ -5,13 +5,13 @@ import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 interface HeaderProps {
-  title?: string
-  showBack?: boolean
-  showSearch?: boolean
-  showNotification?: boolean
-  transparent?: boolean
-  rightElement?: React.ReactNode
-  onBackClick?: () => void
+  readonly title?: string
+  readonly showBack?: boolean
+  readonly showSearch?: boolean
+  readonly showNotification?: boolean
+  readonly transparent?: boolean
+  readonly rightElement?: React.ReactNode
+  readonly onBackClick?: () => void
 }
 
 export function Header({
@@ -22,7 +22,7 @@ export function Header({
   transparent = false,
   rightElement,
   onBackClick,
-}: HeaderProps) {
+}: Readonly<HeaderProps>) {
   const router = useRouter()
 
   const handleBack = () => {

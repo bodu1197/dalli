@@ -2,23 +2,19 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
 import {
   ArrowLeft,
   User,
   Mail,
   Phone,
-  Calendar,
   MapPin,
   ShoppingBag,
   Star,
   CreditCard,
   Ban,
   CheckCircle,
-  Edit,
   MessageSquare,
-  Gift,
-  TrendingUp
+  Gift
 } from 'lucide-react'
 
 interface Order {
@@ -92,9 +88,7 @@ const statusConfig: Record<string, { label: string; bg: string; text: string }> 
 }
 
 export default function CustomerDetailPage() {
-  const params = useParams()
   const [customer] = useState<CustomerDetail>(mockCustomer)
-  const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'activity'>('info')
   const [showBanModal, setShowBanModal] = useState(false)
 
   return (

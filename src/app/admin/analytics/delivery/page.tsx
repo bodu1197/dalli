@@ -5,15 +5,12 @@ import Link from 'next/link'
 import {
   ArrowLeft,
   Bike,
-  Clock,
-  MapPin,
-  Calendar,
   Download,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
   CheckCircle,
-  XCircle,
+  Clock,
   Timer
 } from 'lucide-react'
 
@@ -139,7 +136,11 @@ export default function AdminAnalyticsDeliveryPage() {
                 cursor: 'pointer'
               }}
             >
-              {p === 'daily' ? '일별' : p === 'weekly' ? '주별' : '월별'}
+              {(() => {
+                if (p === 'daily') return '일별'
+                if (p === 'weekly') return '주별'
+                return '월별'
+              })()}
             </button>
           ))}
         </div>

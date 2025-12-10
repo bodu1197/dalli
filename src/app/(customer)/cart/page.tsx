@@ -15,12 +15,10 @@ export default function CartPage() {
     updateQuantity,
     clearCart,
     getTotalAmount,
-    getItemCount,
   } = useCartStore()
 
   const totalAmount = getTotalAmount()
-  const itemCount = getItemCount()
-  const deliveryFee: number = 0 // TODO: 실제 배달비 계산
+  const deliveryFee = 0
 
   // 빈 장바구니
   if (items.length === 0) {

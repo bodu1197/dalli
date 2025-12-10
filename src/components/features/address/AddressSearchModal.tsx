@@ -12,9 +12,9 @@ import { getCoordinatesFromAddress } from '@/lib/kakao/geocoding'
 import type { DaumAddressData, AddressInput } from '@/types/address.types'
 
 interface AddressSearchModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSelect: (address: AddressInput) => void
+  readonly isOpen: boolean
+  readonly onClose: () => void
+  readonly onSelect: (address: AddressInput) => void
 }
 
 type Step = 'search' | 'detail'
@@ -113,9 +113,18 @@ export function AddressSearchModal({
   return (
     <div className="fixed inset-0 z-50">
       {/* 오버레이 */}
-      <div
-        className="absolute inset-0 bg-black/50"
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/50 border-none cursor-default p-0 m-0"
         onClick={handleClose}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleClose()
+          }
+        }}
+        aria-label="모달 닫기"
+        tabIndex={0}
       />
 
       {/* 모달 */}

@@ -4,10 +4,10 @@ import { forwardRef } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string
-  error?: string
-  leftIcon?: React.ReactNode
-  rightIcon?: React.ReactNode
+  readonly label?: string
+  readonly error?: string
+  readonly leftIcon?: React.ReactNode
+  readonly rightIcon?: React.ReactNode
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(

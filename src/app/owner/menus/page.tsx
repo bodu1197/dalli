@@ -24,6 +24,39 @@ interface MenuCategory {
   items: MenuItem[]
 }
 
+// 메뉴 아이템 토글 헬퍼 함수 (중첩 방지)
+function updateMenuItemInCategory(
+  categories: MenuCategory[],
+  categoryId: string,
+  itemId: string,
+  updater: (item: MenuItem) => MenuItem
+): MenuCategory[] {
+  return categories.map((cat) => {
+    if (cat.id !== categoryId) return cat
+    return {
+      ...cat,
+      items: cat.items.map((item) =>
+        item.id === itemId ? updater(item) : item
+      ),
+    }
+  })
+}
+
+// 메뉴 아이템 삭제 헬퍼 함수 (중첩 방지)
+function removeMenuItemFromCategory(
+  categories: MenuCategory[],
+  categoryId: string,
+  itemId: string
+): MenuCategory[] {
+  return categories.map((cat) => {
+    if (cat.id !== categoryId) return cat
+    return {
+      ...cat,
+      items: cat.items.filter((item) => item.id !== itemId),
+    }
+  })
+}
+
 // Mock 메뉴 데이터
 const MOCK_CATEGORIES: MenuCategory[] = [
   {
@@ -110,32 +143,20 @@ export default function OwnerMenusPage() {
 
   const handleToggleSoldOut = (categoryId: string, itemId: string) => {
     setCategories((prev) =>
-      prev.map((cat) =>
-        cat.id === categoryId
-          ? {
-              ...cat,
-              items: cat.items.map((item) =>
-                item.id === itemId ? { ...item, isSoldOut: !item.isSoldOut } : item
-              ),
-            }
-          : cat
-      )
+      updateMenuItemInCategory(prev, categoryId, itemId, (item) => ({
+        ...item,
+        isSoldOut: !item.isSoldOut,
+      }))
     )
     setOpenMenuId(null)
   }
 
   const handleToggleAvailable = (categoryId: string, itemId: string) => {
     setCategories((prev) =>
-      prev.map((cat) =>
-        cat.id === categoryId
-          ? {
-              ...cat,
-              items: cat.items.map((item) =>
-                item.id === itemId ? { ...item, isAvailable: !item.isAvailable } : item
-              ),
-            }
-          : cat
-      )
+      updateMenuItemInCategory(prev, categoryId, itemId, (item) => ({
+        ...item,
+        isAvailable: !item.isAvailable,
+      }))
     )
     setOpenMenuId(null)
   }
@@ -143,11 +164,7 @@ export default function OwnerMenusPage() {
   const handleDelete = (categoryId: string, itemId: string) => {
     if (confirm('메뉴를 삭제하시겠습니까?')) {
       setCategories((prev) =>
-        prev.map((cat) =>
-          cat.id === categoryId
-            ? { ...cat, items: cat.items.filter((item) => item.id !== itemId) }
-            : cat
-        )
+        removeMenuItemFromCategory(prev, categoryId, itemId)
       )
     }
     setOpenMenuId(null)
@@ -261,9 +278,14 @@ export default function OwnerMenusPage() {
 
                     {openMenuId === item.id && (
                       <>
-                        <div
-                          className="fixed inset-0 z-40"
+                        <button
+                          type="button"
+                          className="fixed inset-0 z-40 cursor-default bg-transparent border-none"
                           onClick={() => setOpenMenuId(null)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Escape') setOpenMenuId(null)
+                          }}
+                          aria-label="메뉴 닫기"
                         />
                         <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-xl shadow-lg border border-[var(--color-neutral-100)] py-1 z-50">
                           <button

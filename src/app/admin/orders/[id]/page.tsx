@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -10,12 +9,9 @@ import {
   CheckCircle,
   XCircle,
   Truck,
-  MapPin,
-  Phone,
   Store,
   User,
   CreditCard,
-  AlertCircle,
   MessageSquare,
 } from 'lucide-react'
 
@@ -109,7 +105,6 @@ const MOCK_ORDER: OrderDetail = {
 }
 
 export default function AdminOrderDetailPage() {
-  const params = useParams()
   const [order] = useState(MOCK_ORDER)
   const [showCancelModal, setShowCancelModal] = useState(false)
 
@@ -210,21 +205,24 @@ export default function AdminOrderDetailPage() {
           <div className="border-t border-[var(--color-neutral-100)] pt-4">
             <h3 className="font-semibold text-[var(--color-neutral-900)] mb-3">주문 진행</h3>
             <div className="space-y-3">
-              {order.timeline.map((item, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className={`w-2 h-2 mt-1.5 rounded-full ${
-                    index === order.timeline.length - 1
-                      ? 'bg-[var(--color-primary-500)]'
-                      : 'bg-[var(--color-neutral-300)]'
-                  }`} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-[var(--color-neutral-900)]">
-                      {item.description}
-                    </p>
-                    <p className="text-xs text-[var(--color-neutral-400)]">{item.time}</p>
+              {order.timeline.map((item) => {
+                const itemIndex = order.timeline.indexOf(item)
+                return (
+                  <div key={`${item.status}-${item.time}`} className="flex items-start gap-3">
+                    <div className={`w-2 h-2 mt-1.5 rounded-full ${
+                      itemIndex === order.timeline.length - 1
+                        ? 'bg-[var(--color-primary-500)]'
+                        : 'bg-[var(--color-neutral-300)]'
+                    }`} />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-[var(--color-neutral-900)]">
+                        {item.description}
+                      </p>
+                      <p className="text-xs text-[var(--color-neutral-400)]">{item.time}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         </section>
@@ -319,8 +317,8 @@ export default function AdminOrderDetailPage() {
             주문 내역
           </h3>
           <div className="space-y-3">
-            {order.items.map((item, index) => (
-              <div key={index} className="flex items-start justify-between">
+            {order.items.map((item) => (
+              <div key={`order-item-${item.name}-${item.quantity}`} className="flex items-start justify-between">
                 <div>
                   <p className="font-medium text-[var(--color-neutral-900)]">
                     {item.name} x {item.quantity}

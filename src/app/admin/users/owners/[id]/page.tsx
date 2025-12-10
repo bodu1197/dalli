@@ -2,14 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
 import {
   ArrowLeft,
   Store,
   Mail,
   Phone,
   Calendar,
-  MapPin,
   Star,
   CreditCard,
   Ban,
@@ -99,7 +97,6 @@ const storeStatusConfig: Record<string, { label: string; bg: string; text: strin
 }
 
 export default function OwnerDetailPage() {
-  const params = useParams()
   const [owner] = useState<OwnerDetail>(mockOwner)
   const [showBanModal, setShowBanModal] = useState(false)
 

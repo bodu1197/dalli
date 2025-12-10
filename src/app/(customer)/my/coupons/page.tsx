@@ -86,7 +86,7 @@ export default function CouponsPage() {
       alert('쿠폰 코드를 입력해주세요')
       return
     }
-    // TODO: 실제 쿠폰 등록 API 호출
+    // Note: Register coupon via API (to be implemented with Supabase)
     alert(`쿠폰 코드 "${couponCode}" 등록 시도 (개발 중)`)
     setCouponCode('')
   }
@@ -190,10 +190,10 @@ export default function CouponsPage() {
 function CouponCard({
   coupon,
   daysRemaining,
-}: {
+}: Readonly<{
   coupon: Coupon
   daysRemaining: number
-}) {
+}>) {
   const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0
 
   const discountText =

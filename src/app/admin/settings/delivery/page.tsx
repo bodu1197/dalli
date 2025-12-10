@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Save,
   Bike,
-  Clock,
   MapPin,
   AlertTriangle,
   ToggleLeft,
@@ -47,6 +46,25 @@ interface DeliveryConfig {
     delayed: boolean
   }
 }
+
+// Toggle 컴포넌트를 외부로 정의 (render 함수 안에 컴포넌트 정의 금지)
+const Toggle = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
+  <button
+    onClick={onChange}
+    style={{
+      background: 'none',
+      border: 'none',
+      cursor: 'pointer',
+      padding: 0
+    }}
+  >
+    {checked ? (
+      <ToggleRight size={32} color="var(--color-primary-500)" />
+    ) : (
+      <ToggleLeft size={32} color="var(--color-text-tertiary)" />
+    )}
+  </button>
+)
 
 const defaultConfig: DeliveryConfig = {
   general: {
@@ -111,24 +129,6 @@ export default function AdminSettingsDeliveryPage() {
     setHasChanges(false)
     // Save logic here
   }
-
-  const Toggle = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
-    <button
-      onClick={onChange}
-      style={{
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        padding: 0
-      }}
-    >
-      {checked ? (
-        <ToggleRight size={32} color="var(--color-primary-500)" />
-      ) : (
-        <ToggleLeft size={32} color="var(--color-text-tertiary)" />
-      )}
-    </button>
-  )
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-background)' }}>

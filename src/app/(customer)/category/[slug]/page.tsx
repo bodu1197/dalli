@@ -9,7 +9,7 @@ import { DEFAULT_CATEGORIES } from '@/lib/constants/categories'
 import { getRestaurantsByCategory } from '@/lib/mock/restaurants'
 
 interface CategoryPageProps {
-  params: Promise<{ slug: string }>
+  readonly params: Promise<{ slug: string }>
 }
 
 const SORT_OPTIONS = [
@@ -20,7 +20,7 @@ const SORT_OPTIONS = [
   { value: 'delivery_fee', label: '배달비순' },
 ]
 
-export default function CategoryPage({ params }: CategoryPageProps) {
+export default function CategoryPage({ params }: Readonly<CategoryPageProps>) {
   const { slug } = use(params)
 
   // 카테고리 정보 가져오기

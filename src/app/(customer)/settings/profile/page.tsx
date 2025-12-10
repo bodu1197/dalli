@@ -50,11 +50,12 @@ export default function ProfileSettingsPage() {
     setIsSaving(true)
 
     try {
-      // TODO: 실제 프로필 업데이트 API 호출
+      // Note: 프로필 업데이트 API 호출 (현재 목업 데이터 사용)
       await new Promise((resolve) => setTimeout(resolve, 1000))
       alert('프로필이 저장되었습니다')
       router.push('/settings')
-    } catch {
+    } catch (error) {
+      console.error('Failed to save profile:', error)
       alert('저장에 실패했습니다')
     } finally {
       setIsSaving(false)
@@ -125,10 +126,11 @@ export default function ProfileSettingsPage() {
         <section className="mt-3 bg-white px-4 py-6 space-y-5">
           {/* 이름 */}
           <div>
-            <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+            <label htmlFor="name" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
               이름 *
             </label>
             <input
+              id="name"
               type="text"
               name="name"
               value={formData.name}
@@ -140,10 +142,11 @@ export default function ProfileSettingsPage() {
 
           {/* 연락처 */}
           <div>
-            <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+            <label htmlFor="phone" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
               연락처
             </label>
             <input
+              id="phone"
               type="tel"
               name="phone"
               value={formData.phone}
@@ -155,10 +158,11 @@ export default function ProfileSettingsPage() {
 
           {/* 이메일 (읽기 전용) */}
           <div>
-            <label className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-[var(--color-neutral-700)] mb-2">
               이메일
             </label>
             <input
+              id="email"
               type="email"
               name="email"
               value={formData.email}

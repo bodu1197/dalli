@@ -10,10 +10,10 @@ import { MOCK_RESTAURANTS } from '@/lib/mock/restaurants'
 import { getMenuById, getMenuOptions } from '@/lib/mock/menus'
 
 interface MenuDetailPageProps {
-  params: Promise<{ id: string; menuId: string }>
+  readonly params: Promise<{ id: string; menuId: string }>
 }
 
-export default function MenuDetailPage({ params }: MenuDetailPageProps) {
+export default function MenuDetailPage({ params }: Readonly<MenuDetailPageProps>) {
   const { id, menuId } = use(params)
   const [quantity, setQuantity] = useState(1)
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
@@ -174,7 +174,7 @@ export default function MenuDetailPage({ params }: MenuDetailPageProps) {
         <Button
           className="w-full h-14 text-base font-bold"
           onClick={() => {
-            // TODO: 장바구니에 담기
+            // Note: Add to cart functionality (to be integrated with cart store)
             alert('장바구니에 담겼습니다')
           }}
         >

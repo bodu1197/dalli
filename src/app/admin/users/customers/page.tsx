@@ -361,12 +361,14 @@ export default function AdminCustomersPage() {
           borderRadius: '12px',
           overflow: 'hidden'
         }}>
-          {filteredCustomers.map((customer, index) => (
-            <div
-              key={customer.id}
-              style={{
-                padding: '16px 20px',
-                borderBottom: index < filteredCustomers.length - 1 ? '1px solid var(--color-border)' : 'none'
+          {filteredCustomers.map((customer) => {
+            const customerIndex = filteredCustomers.indexOf(customer)
+            return (
+              <div
+                key={customer.id}
+                style={{
+                  padding: '16px 20px',
+                  borderBottom: customerIndex < filteredCustomers.length - 1 ? '1px solid var(--color-border)' : 'none'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -549,7 +551,8 @@ export default function AdminCustomersPage() {
                 </div>
               </div>
             </div>
-          ))}
+          )
+        })}
 
           {filteredCustomers.length === 0 && (
             <div style={{

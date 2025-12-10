@@ -39,6 +39,15 @@ const MOCK_DAILY_EARNINGS: DailyEarning[] = [
 
 type PeriodType = 'today' | 'week' | 'month'
 
+function getPeriodLabel(period: PeriodType): string {
+  const labels: Record<PeriodType, string> = {
+    today: '오늘',
+    week: '이번 주',
+    month: '이번 달',
+  }
+  return labels[period]
+}
+
 export default function RiderEarningsPage() {
   const [period, setPeriod] = useState<PeriodType>('week')
   const [weeklyStats] = useState(MOCK_WEEKLY_STATS)
@@ -78,7 +87,7 @@ export default function RiderEarningsPage() {
                   : 'bg-[var(--color-neutral-100)] text-[var(--color-neutral-600)]'
               }`}
             >
-              {p === 'today' ? '오늘' : p === 'week' ? '이번 주' : '이번 달'}
+              {getPeriodLabel(p)}
             </button>
           ))}
         </div>
@@ -158,20 +167,23 @@ export default function RiderEarningsPage() {
 
           {/* 바 차트 */}
           <div className="flex items-end gap-2 h-32">
-            {dailyEarnings.map((day, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div
-                  className="w-full bg-[var(--color-success-500)] rounded-t-lg transition-all"
-                  style={{
-                    height: `${(day.earnings / maxEarnings) * 100}%`,
-                    opacity: i === 0 ? 1 : 0.6,
-                  }}
-                />
-                <span className="text-xs text-[var(--color-neutral-500)]">
-                  {formatDate(day.date).split(' ')[0]}
-                </span>
-              </div>
-            ))}
+            {dailyEarnings.map((day) => {
+              const dayIndex = dailyEarnings.indexOf(day)
+              return (
+                <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
+                  <div
+                    className="w-full bg-[var(--color-success-500)] rounded-t-lg transition-all"
+                    style={{
+                      height: `${(day.earnings / maxEarnings) * 100}%`,
+                      opacity: dayIndex === 0 ? 1 : 0.6,
+                    }}
+                  />
+                  <span className="text-xs text-[var(--color-neutral-500)]">
+                    {formatDate(day.date).split(' ')[0]}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </section>
 
@@ -182,9 +194,9 @@ export default function RiderEarningsPage() {
           </div>
 
           <div className="divide-y divide-[var(--color-neutral-100)]">
-            {dailyEarnings.map((day, i) => (
+            {dailyEarnings.map((day) => (
               <Link
-                key={i}
+                key={day.date}
                 href={`/rider/earnings/${day.date}`}
                 className="flex items-center justify-between px-4 py-4 hover:bg-[var(--color-neutral-50)]"
               >

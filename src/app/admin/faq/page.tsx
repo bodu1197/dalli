@@ -392,14 +392,25 @@ export default function AdminFAQPage() {
                 }}
               >
                 {/* Question */}
-                <div
+                <button
+                  type="button"
                   onClick={() => setExpandedId(isExpanded ? null : faq.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      setExpandedId(isExpanded ? null : faq.id)
+                    }
+                  }}
                   style={{
                     padding: '16px',
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '12px',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    width: '100%',
+                    border: 'none',
+                    backgroundColor: 'transparent',
+                    textAlign: 'left'
                   }}
                 >
                   <div style={{
@@ -451,7 +462,7 @@ export default function AdminFAQPage() {
                   ) : (
                     <ChevronDown size={20} color="var(--color-text-tertiary)" />
                   )}
-                </div>
+                </button>
 
                 {/* Answer */}
                 {isExpanded && (

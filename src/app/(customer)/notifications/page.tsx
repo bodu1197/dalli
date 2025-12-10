@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Bell, ShoppingBag, Ticket, Star, Megaphone, Trash2, Check } from 'lucide-react'
+import { ArrowLeft, Bell, ShoppingBag, Ticket, Star, Megaphone, Trash2 } from 'lucide-react'
 
 interface Notification {
   id: string
@@ -223,15 +223,19 @@ function NotificationItem({
   getIconBgColor: (type: string) => string
   formatTime: (date: string) => string
 }) {
-  const [showActions, setShowActions] = useState(false)
-
   const content = (
-    <div
-      className={`flex items-start gap-3 px-4 py-4 bg-white hover:bg-[var(--color-neutral-50)] transition-colors ${
+    <button
+      type="button"
+      className={`flex items-start gap-3 px-4 py-4 bg-white hover:bg-[var(--color-neutral-50)] transition-colors w-full text-left ${
         !notification.isRead ? 'bg-[var(--color-primary-50)]/30' : ''
       }`}
       onClick={() => {
         if (!notification.isRead) onMarkRead()
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          if (!notification.isRead) onMarkRead()
+        }
       }}
     >
       {/* 아이콘 */}
@@ -269,16 +273,18 @@ function NotificationItem({
 
       {/* 삭제 버튼 */}
       <button
+        type="button"
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
           onDelete()
         }}
         className="p-2 -mr-2 text-[var(--color-neutral-400)] hover:text-[var(--color-error-500)]"
+        aria-label="알림 삭제"
       >
         <Trash2 className="w-4 h-4" />
       </button>
-    </div>
+    </button>
   )
 
   if (notification.link) {

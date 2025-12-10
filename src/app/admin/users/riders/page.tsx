@@ -8,7 +8,6 @@ import {
   Filter,
   ChevronDown,
   Bike,
-  Mail,
   Phone,
   Calendar,
   Star,
@@ -366,12 +365,14 @@ export default function AdminRidersPage() {
           borderRadius: '12px',
           overflow: 'hidden'
         }}>
-          {filteredRiders.map((rider, index) => (
-            <div
-              key={rider.id}
-              style={{
-                padding: '16px 20px',
-                borderBottom: index < filteredRiders.length - 1 ? '1px solid var(--color-border)' : 'none'
+          {filteredRiders.map((rider) => {
+            const riderIndex = filteredRiders.indexOf(rider)
+            return (
+              <div
+                key={rider.id}
+                style={{
+                  padding: '16px 20px',
+                  borderBottom: riderIndex < filteredRiders.length - 1 ? '1px solid var(--color-border)' : 'none'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -561,7 +562,8 @@ export default function AdminRidersPage() {
                 </div>
               </div>
             </div>
-          ))}
+            )
+          })}
 
           {filteredRiders.length === 0 && (
             <div style={{

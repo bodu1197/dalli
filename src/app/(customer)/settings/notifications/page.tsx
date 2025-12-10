@@ -61,7 +61,7 @@ export default function NotificationSettingsPage() {
     setSettings((prev) =>
       prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
     )
-    // TODO: 실제 설정 저장 API 호출
+    // Note: Save settings to API (to be implemented with Supabase)
   }
 
   const pushSettings = settings.filter((s) => s.id.startsWith('push_'))

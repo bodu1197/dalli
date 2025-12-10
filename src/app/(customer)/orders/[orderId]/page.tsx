@@ -21,10 +21,10 @@ import {
 } from '@/types/order.types'
 
 interface PageProps {
-  params: Promise<{ orderId: string }>
+  readonly params: Promise<{ orderId: string }>
 }
 
-export default function OrderDetailPage({ params }: PageProps) {
+export default function OrderDetailPage({ params }: Readonly<PageProps>) {
   const { orderId } = use(params)
   const router = useRouter()
   const order = getOrderById(orderId)
@@ -74,10 +74,6 @@ export default function OrderDetailPage({ params }: PageProps) {
     : null
 
   // 주문 금액 계산
-  const itemsTotal = order.items.reduce((sum, item) => {
-    const optionsPrice = item.options.reduce((optSum, opt) => optSum + opt.price, 0)
-    return sum + (item.price + optionsPrice) * item.quantity
-  }, 0)
   const totalPayment = order.totalAmount + order.deliveryFee
 
   return (
@@ -288,7 +284,7 @@ export default function OrderDetailPage({ params }: PageProps) {
             <button
               className="flex-1 py-3 text-center border border-[var(--color-neutral-200)] text-[var(--color-neutral-700)] font-semibold rounded-xl flex items-center justify-center gap-2"
               onClick={() => {
-                // TODO: 가게 전화 연결
+                // Note: 가게 전화 연결 (tel: 프로토콜 사용 예정)
                 alert('가게 전화 연결 기능 준비 중입니다')
               }}
             >
@@ -313,7 +309,7 @@ export default function OrderDetailPage({ params }: PageProps) {
             <button
               className="flex-1 py-3 text-center bg-[var(--color-primary-500)] text-white font-semibold rounded-xl"
               onClick={() => {
-                // TODO: 재주문 기능
+                // Note: 재주문 기능 (장바구니 스토어 연동 예정)
                 alert('재주문 기능 준비 중입니다')
               }}
             >

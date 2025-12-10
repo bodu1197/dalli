@@ -122,10 +122,10 @@ export default function FavoritesPage() {
 function FavoriteCard({
   restaurant,
   onRemove,
-}: {
+}: Readonly<{
   restaurant: FavoriteRestaurant
   onRemove: () => void
-}) {
+}>) {
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
       <Link href={`/restaurant/${restaurant.id}`} className="flex">

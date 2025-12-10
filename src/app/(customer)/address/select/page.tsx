@@ -102,26 +102,34 @@ export default function AddressSelectPage() {
             </Link>
           </div>
 
-          {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Spinner size="md" />
-            </div>
-          ) : addresses.length > 0 ? (
-            <div className="space-y-3">
-              {addresses.map((address) => (
-                <AddressCard
-                  key={address.id}
-                  address={address}
-                  isSelected={selectedAddress?.id === address.id}
-                  onSelect={() => handleSelectAddress(address)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="py-8 text-center text-[var(--color-neutral-500)]">
-              <p>저장된 주소가 없습니다</p>
-            </div>
-          )}
+          {(() => {
+            if (isLoading) {
+              return (
+                <div className="flex items-center justify-center py-8">
+                  <Spinner size="md" />
+                </div>
+              )
+            }
+            if (addresses.length > 0) {
+              return (
+                <div className="space-y-3">
+                  {addresses.map((address) => (
+                    <AddressCard
+                      key={address.id}
+                      address={address}
+                      isSelected={selectedAddress?.id === address.id}
+                      onSelect={() => handleSelectAddress(address)}
+                    />
+                  ))}
+                </div>
+              )
+            }
+            return (
+              <div className="py-8 text-center text-[var(--color-neutral-500)]">
+                <p>저장된 주소가 없습니다</p>
+              </div>
+            )
+          })()}
         </section>
 
         {/* 최근 사용한 주소 */}
@@ -132,7 +140,7 @@ export default function AddressSelectPage() {
             </h2>
             <div className="space-y-3">
               {recentAddresses
-                .filter((a) => !addresses.find((sa) => sa.id === a.id))
+                .filter((a) => !addresses.some((sa) => sa.id === a.id))
                 .map((address) => (
                   <AddressCard
                     key={address.id}

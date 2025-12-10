@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Phone, MapPin, Clock, MessageCircle, User } from 'lucide-react'
+import { ArrowLeft, Phone, MapPin, Clock, User } from 'lucide-react'
 
 interface OrderDetail {
   id: string
@@ -69,9 +69,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export default function OwnerOrderDetailPage() {
-  const params = useParams()
   const router = useRouter()
-  const orderId = params.id as string
 
   const [order, setOrder] = useState(MOCK_ORDER)
   const [cookingTime, setCookingTime] = useState(20)
@@ -200,8 +198,8 @@ export default function OwnerOrderDetailPage() {
         <section className="mt-3 bg-white p-4">
           <h2 className="font-bold text-[var(--color-neutral-900)] mb-3">주문 내역</h2>
           <div className="space-y-3">
-            {order.items.map((item, i) => (
-              <div key={i} className="flex items-center justify-between">
+            {order.items.map((item) => (
+              <div key={`item-${item.name}-${item.quantity}`} className="flex items-center justify-between">
                 <div>
                   <span className="text-[var(--color-neutral-800)]">{item.name}</span>
                   {item.options && (

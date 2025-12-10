@@ -10,9 +10,6 @@ import {
   Store,
   Bike,
   Calendar,
-  CheckCircle,
-  Clock,
-  TrendingUp,
 } from 'lucide-react'
 
 interface SettlementItem {
@@ -117,7 +114,7 @@ export default function AdminSettlementsPage() {
   const filteredSettlements = settlements.filter((item) => {
     const matchesSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (item.storeName && item.storeName.toLowerCase().includes(searchQuery.toLowerCase()))
+      item.storeName?.toLowerCase().includes(searchQuery.toLowerCase())
 
     const matchesType = typeFilter === 'all' || item.type === typeFilter
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter

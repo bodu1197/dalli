@@ -17,23 +17,31 @@ import {
   Building2,
   Save,
   AlertTriangle,
-  CheckCircle,
   Info
 } from 'lucide-react'
+import { z } from 'zod'
+import { IconInput } from '@/components/ui/IconInput'
+
+
+// Zod Schema for validation
+const adminFormSchema = z.object({
+  name: z.string().min(1, '이름을 입력해주세요'),
+  email: z.string().email('올바른 이메일 형식이 아닙니다'),
+  phone: z.string().regex(/^01[0-9]-?[0-9]{4}-?[0-9]{4}$/, '올바른 전화번호 형식이 아닙니다'),
+  password: z.string().min(8, '비밀번호는 8자 이상이어야 합니다').regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, '비밀번호는 대소문자와 숫자를 포함해야 합니다'),
+  confirmPassword: z.string(),
+  role: z.enum(['admin', 'manager', 'support']),
+  department: z.string().min(1, '부서를 선택해주세요'),
+  permissions: z.array(z.string()).min(1, '최소 하나의 권한을 선택해주세요'),
+  requireTwoFactor: z.boolean(),
+  sendWelcomeEmail: z.boolean()
+}).refine(data => data.password === data.confirmPassword, {
+  message: '비밀번호가 일치하지 않습니다',
+  path: ['confirmPassword']
+})
 
 // Types
-interface AdminFormData {
-  name: string
-  email: string
-  phone: string
-  password: string
-  confirmPassword: string
-  role: 'admin' | 'manager' | 'support'
-  department: string
-  permissions: string[]
-  requireTwoFactor: boolean
-  sendWelcomeEmail: boolean
-}
+interface AdminFormData extends z.infer<typeof adminFormSchema> {}
 
 // Permission groups
 const permissionGroups = [
@@ -219,50 +227,27 @@ export default function NewAdminPage() {
   }
 
   const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.name.trim()) {
-      newErrors.name = '이름을 입력해주세요'
+    const result = adminFormSchema.safeParse(formData)
+    if (!result.success) {
+      const newErrors: Record<string, string> = {}
+      for (const error of result.error.errors) {
+        if (error.path[0]) {
+          newErrors[error.path[0] as string] = error.message
+        }
+      }
+      setErrors(newErrors)
+      return false
     }
-
-    if (!formData.email.trim()) {
-      newErrors.email = '이메일을 입력해주세요'
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = '올바른 이메일 형식이 아닙니다'
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = '전화번호를 입력해주세요'
-    } else if (!/^01[0-9]-?[0-9]{4}-?[0-9]{4}$/.test(formData.phone.replace(/-/g, ''))) {
-      newErrors.phone = '올바른 전화번호 형식이 아닙니다'
-    }
-
-    if (!formData.password) {
-      newErrors.password = '비밀번호를 입력해주세요'
-    } else if (formData.password.length < 8) {
-      newErrors.password = '비밀번호는 8자 이상이어야 합니다'
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-      newErrors.password = '비밀번호는 대소문자와 숫자를 포함해야 합니다'
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = '비밀번호가 일치하지 않습니다'
-    }
-
-    if (!formData.department) {
-      newErrors.department = '부서를 선택해주세요'
-    }
-
-    if (formData.permissions.length === 0) {
-      newErrors.permissions = '최소 하나의 권한을 선택해주세요'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    setErrors({})
+    return true
   }
 
   const handleSubmit = async () => {
-    if (!validateForm()) return
+    if (validateForm()) {
+      // Continue with submission
+    } else {
+      return
+    }
 
     setIsSubmitting(true)
 
@@ -272,7 +257,8 @@ export default function NewAdminPage() {
       await new Promise(resolve => setTimeout(resolve, 1500))
 
       router.push('/admin/users/admins')
-    } catch {
+    } catch (error) {
+      console.error('Failed to create admin:', error)
       setErrors({ submit: '관리자 등록 중 오류가 발생했습니다' })
     } finally {
       setIsSubmitting(false)
@@ -331,138 +317,42 @@ export default function NewAdminPage() {
           </h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            {/* Name */}
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 600,
-                marginBottom: '8px',
-                color: 'var(--color-gray-700)'
-              }}>
-                이름 *
-              </label>
-              <div style={{ position: 'relative' }}>
-                <User
-                  size={18}
-                  style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--color-gray-400)'
-                  }}
-                />
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => handleChange('name', e.target.value)}
-                  placeholder="홍길동"
-                  style={{
-                    width: '100%',
-                    padding: '12px 12px 12px 42px',
-                    border: `1px solid ${errors.name ? 'var(--color-error-500)' : 'var(--color-gray-200)'}`,
-                    borderRadius: '8px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-              {errors.name && (
-                <p style={{ marginTop: '6px', fontSize: '12px', color: 'var(--color-error-500)' }}>
-                  {errors.name}
-                </p>
-              )}
-            </div>
+            <IconInput
+              id="name"
+              label="이름 *"
+              type="text"
+              placeholder="홍길동"
+              value={formData.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              icon={<User size={18} />}
+              error={errors.name}
+            />
 
-            {/* Email */}
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 600,
-                marginBottom: '8px',
-                color: 'var(--color-gray-700)'
-              }}>
-                이메일 *
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Mail
-                  size={18}
-                  style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--color-gray-400)'
-                  }}
-                />
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  placeholder="admin@dalligo.com"
-                  style={{
-                    width: '100%',
-                    padding: '12px 12px 12px 42px',
-                    border: `1px solid ${errors.email ? 'var(--color-error-500)' : 'var(--color-gray-200)'}`,
-                    borderRadius: '8px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-              {errors.email && (
-                <p style={{ marginTop: '6px', fontSize: '12px', color: 'var(--color-error-500)' }}>
-                  {errors.email}
-                </p>
-              )}
-            </div>
+            <IconInput
+              id="email"
+              label="이메일 *"
+              type="email"
+              placeholder="admin@dalligo.com"
+              value={formData.email}
+              onChange={(e) => handleChange('email', e.target.value)}
+              icon={<Mail size={18} />}
+              error={errors.email}
+            />
 
-            {/* Phone */}
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 600,
-                marginBottom: '8px',
-                color: 'var(--color-gray-700)'
-              }}>
-                전화번호 *
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Phone
-                  size={18}
-                  style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--color-gray-400)'
-                  }}
-                />
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => handleChange('phone', e.target.value)}
-                  placeholder="010-1234-5678"
-                  style={{
-                    width: '100%',
-                    padding: '12px 12px 12px 42px',
-                    border: `1px solid ${errors.phone ? 'var(--color-error-500)' : 'var(--color-gray-200)'}`,
-                    borderRadius: '8px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-              {errors.phone && (
-                <p style={{ marginTop: '6px', fontSize: '12px', color: 'var(--color-error-500)' }}>
-                  {errors.phone}
-                </p>
-              )}
-            </div>
+            <IconInput
+              id="phone"
+              label="전화번호 *"
+              type="tel"
+              placeholder="010-1234-5678"
+              value={formData.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+              icon={<Phone size={18} />}
+              error={errors.phone}
+            />
 
             {/* Department */}
             <div>
-              <label style={{
+              <label htmlFor="department" style={{
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
@@ -483,6 +373,7 @@ export default function NewAdminPage() {
                   }}
                 />
                 <select
+                  id="department"
                   value={formData.department}
                   onChange={(e) => handleChange('department', e.target.value)}
                   style={{
@@ -510,7 +401,7 @@ export default function NewAdminPage() {
 
             {/* Password */}
             <div>
-              <label style={{
+              <label htmlFor="password" style={{
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
@@ -531,6 +422,7 @@ export default function NewAdminPage() {
                   }}
                 />
                 <input
+                  id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={formData.password}
                   onChange={(e) => handleChange('password', e.target.value)}
@@ -569,7 +461,7 @@ export default function NewAdminPage() {
 
             {/* Confirm Password */}
             <div>
-              <label style={{
+              <label htmlFor="confirmPassword" style={{
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
@@ -590,6 +482,7 @@ export default function NewAdminPage() {
                   }}
                 />
                 <input
+                  id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={formData.confirmPassword}
                   onChange={(e) => handleChange('confirmPassword', e.target.value)}
@@ -674,7 +567,11 @@ export default function NewAdminPage() {
                   </div>
                   <div>
                     <p style={{ fontWeight: 600, color: formData.role === role ? 'var(--color-primary-700)' : 'var(--color-gray-900)' }}>
-                      {role === 'admin' ? '관리자' : role === 'manager' ? '매니저' : '상담원'}
+                      {(() => {
+                        if (role === 'admin') return '관리자'
+                        if (role === 'manager') return '매니저'
+                        return '상담원'
+                      })()}
                     </p>
                   </div>
                 </div>
@@ -823,16 +720,15 @@ export default function NewAdminPage() {
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <label style={{
+            <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '16px',
               border: '1px solid var(--color-gray-200)',
               borderRadius: '10px',
-              cursor: 'pointer'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <label htmlFor="requireTwoFactor" style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                 <div style={{
                   width: '40px',
                   height: '40px',
@@ -850,25 +746,25 @@ export default function NewAdminPage() {
                     첫 로그인 시 2단계 인증 설정을 요구합니다
                   </p>
                 </div>
-              </div>
+              </label>
               <input
+                id="requireTwoFactor"
                 type="checkbox"
                 checked={formData.requireTwoFactor}
                 onChange={(e) => handleChange('requireTwoFactor', e.target.checked)}
                 style={{ width: '20px', height: '20px', cursor: 'pointer' }}
               />
-            </label>
+            </div>
 
-            <label style={{
+            <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '16px',
               border: '1px solid var(--color-gray-200)',
               borderRadius: '10px',
-              cursor: 'pointer'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <label htmlFor="sendWelcomeEmail" style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                 <div style={{
                   width: '40px',
                   height: '40px',
@@ -886,14 +782,15 @@ export default function NewAdminPage() {
                     계정 생성 정보가 담긴 이메일을 발송합니다
                   </p>
                 </div>
-              </div>
+              </label>
               <input
+                id="sendWelcomeEmail"
                 type="checkbox"
                 checked={formData.sendWelcomeEmail}
                 onChange={(e) => handleChange('sendWelcomeEmail', e.target.checked)}
                 style={{ width: '20px', height: '20px', cursor: 'pointer' }}
               />
-            </label>
+            </div>
           </div>
         </div>
 

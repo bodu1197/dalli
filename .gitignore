@@ -42,3 +42,10 @@ next-env.d.ts
 
 .vercel
 .env*.local
+
+# SonarQube temporary/report files
+SONARQUBE_S3358_FIXES.md
+sonarqube_issues.json
+sonar-project.properties
+nul
+src/nul

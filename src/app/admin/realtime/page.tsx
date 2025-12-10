@@ -8,9 +8,7 @@ import {
   MapPin,
   Package,
   Clock,
-  TrendingUp,
   RefreshCw,
-  CircleDot,
   Store,
   User,
   Navigation2,
@@ -406,7 +404,7 @@ export default function AdminRealtimePage() {
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         rider.status === 'offline'
                           ? 'bg-[var(--color-neutral-700)]'
-                          : 'bg-[var(--color-neutral-700)]'
+                          : 'bg-[var(--color-primary-600)]'
                       }`}>
                         <Bike className={`w-5 h-5 ${getRiderStatusColor(rider.status)}`} />
                       </div>

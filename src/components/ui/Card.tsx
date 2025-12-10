@@ -2,8 +2,8 @@ import { forwardRef } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  hoverable?: boolean
-  padding?: 'none' | 'sm' | 'md' | 'lg'
+  readonly hoverable?: boolean
+  readonly padding?: 'none' | 'sm' | 'md' | 'lg'
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(

@@ -71,9 +71,10 @@ export default function ChatListPage() {
   const { isAuthenticated, isLoading } = useAuthStore()
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/login?redirect=/chat')
+    if (isLoading || isAuthenticated) {
+      return
     }
+    router.push('/login?redirect=/chat')
   }, [isLoading, isAuthenticated, router])
 
   if (isLoading) {
@@ -84,7 +85,9 @@ export default function ChatListPage() {
     )
   }
 
-  if (!isAuthenticated) {
+  if (isAuthenticated) {
+    // Continue rendering
+  } else {
     return null
   }
 

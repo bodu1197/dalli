@@ -117,30 +117,33 @@ export default function RiderDeliveryPage() {
 
           {/* 진행 단계 */}
           <div className="flex items-center justify-center mt-6">
-            {STATUS_STEPS.map((step, index) => (
-              <div key={step.status} className="flex items-center">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    index <= currentStepIndex
-                      ? 'bg-white text-[var(--color-primary-500)]'
-                      : 'bg-white/30 text-white'
-                  }`}
-                >
-                  {index < currentStepIndex ? (
-                    <Check className="w-5 h-5" />
-                  ) : (
-                    <span className="text-sm font-bold">{index + 1}</span>
+            {STATUS_STEPS.map((step) => {
+              const stepIndex = STATUS_STEPS.indexOf(step)
+              return (
+                <div key={step.status} className="flex items-center">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                      stepIndex <= currentStepIndex
+                        ? 'bg-white text-[var(--color-primary-500)]'
+                        : 'bg-white/30 text-white'
+                    }`}
+                  >
+                    {stepIndex < currentStepIndex ? (
+                      <Check className="w-5 h-5" />
+                    ) : (
+                      <span className="text-sm font-bold">{stepIndex + 1}</span>
+                    )}
+                  </div>
+                  {stepIndex < STATUS_STEPS.length - 1 && (
+                    <div
+                      className={`w-8 h-1 ${
+                        stepIndex < currentStepIndex ? 'bg-white' : 'bg-white/30'
+                      }`}
+                    />
                   )}
                 </div>
-                {index < STATUS_STEPS.length - 1 && (
-                  <div
-                    className={`w-8 h-1 ${
-                      index < currentStepIndex ? 'bg-white' : 'bg-white/30'
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
         </section>
 
@@ -174,8 +177,8 @@ export default function RiderDeliveryPage() {
             <div className="mt-4 pt-4 border-t border-[var(--color-neutral-100)]">
               <p className="text-sm font-medium text-[var(--color-neutral-700)] mb-2">주문 내역</p>
               <div className="space-y-1">
-                {delivery.menuItems.map((item, i) => (
-                  <p key={i} className="text-sm text-[var(--color-neutral-600)]">
+                {delivery.menuItems.map((item) => (
+                  <p key={`menu-${item.name}`} className="text-sm text-[var(--color-neutral-600)]">
                     {item.name} x {item.quantity}
                   </p>
                 ))}

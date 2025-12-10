@@ -12,7 +12,6 @@ import {
   ShieldAlert,
   Mail,
   Phone,
-  Calendar,
   Clock,
   CheckCircle,
   XCircle,
@@ -545,8 +544,19 @@ export default function AdminUsersPage() {
                   borderBottom: '1px solid var(--color-gray-100)',
                   transition: 'background-color 0.2s'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-gray-50)'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-gray-50)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-gray-50)'
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+                tabIndex={0}
               >
                 <td style={{ padding: '16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -897,19 +907,30 @@ export default function AdminUsersPage() {
 
       {/* Click outside to close menus */}
       {(showFilterMenu || activeMenu) && (
-        <div
+        <button
+          type="button"
           style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 50
+            zIndex: 50,
+            background: 'transparent',
+            border: 'none',
+            cursor: 'default'
           }}
           onClick={() => {
             setShowFilterMenu(false)
             setActiveMenu(null)
           }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setShowFilterMenu(false)
+              setActiveMenu(null)
+            }
+          }}
+          aria-label="메뉴 닫기"
         />
       )}
     </div>

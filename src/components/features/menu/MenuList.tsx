@@ -4,11 +4,11 @@ import { MenuCard } from './MenuCard'
 import type { Menu } from '@/types/restaurant.types'
 
 interface MenuListProps {
-  menus: Menu[]
-  restaurantId: string
+  readonly menus: Menu[]
+  readonly restaurantId: string
 }
 
-export function MenuList({ menus, restaurantId }: MenuListProps) {
+export function MenuList({ menus, restaurantId }: Readonly<MenuListProps>) {
   if (menus.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">

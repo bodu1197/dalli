@@ -5,10 +5,10 @@ import { cn } from '@/lib/utils'
 import { DEFAULT_CATEGORIES } from '@/lib/constants/categories'
 
 interface CategoryGridProps {
-  className?: string
+  readonly className?: string
 }
 
-export function CategoryGrid({ className }: CategoryGridProps) {
+export function CategoryGrid({ className }: Readonly<CategoryGridProps>) {
   return (
     <div className={cn('grid grid-cols-4 gap-3', className)}>
       {DEFAULT_CATEGORIES.map((category) => (

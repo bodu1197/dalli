@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Send, Image, MoreVertical } from 'lucide-react'
 
@@ -102,8 +101,6 @@ const MOCK_MESSAGES: Message[] = [
 ]
 
 export default function ChatRoomPage() {
-  const params = useParams()
-  const roomId = params.roomId as string
   const { user } = useAuthStore()
 
   const [messages, setMessages] = useState(MOCK_MESSAGES)
@@ -118,20 +115,20 @@ export default function ChatRoomPage() {
   }, [messages])
 
   const handleSend = () => {
-    if (!inputValue.trim()) return
+    if (inputValue.trim()) {
+      const newMessage: Message = {
+        id: `msg-${Date.now()}`,
+        senderId: currentUserId,
+        senderName: '나',
+        senderRole: 'customer',
+        content: inputValue.trim(),
+        createdAt: new Date().toISOString(),
+        isRead: false,
+      }
 
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      senderId: currentUserId,
-      senderName: '나',
-      senderRole: 'customer',
-      content: inputValue.trim(),
-      createdAt: new Date().toISOString(),
-      isRead: false,
+      setMessages((prev) => [...prev, newMessage])
+      setInputValue('')
     }
-
-    setMessages((prev) => [...prev, newMessage])
-    setInputValue('')
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -158,18 +155,18 @@ export default function ChatRoomPage() {
   }
 
   // 날짜별 그룹화
-  const groupedMessages: { date: string; messages: Message[] }[] = []
-  let currentDate = ''
-
-  messages.forEach((msg) => {
+  const groupedMessages = messages.reduce<{ date: string; messages: Message[] }[]>((groups, msg) => {
     const msgDate = new Date(msg.createdAt).toDateString()
-    if (msgDate !== currentDate) {
-      currentDate = msgDate
-      groupedMessages.push({ date: msg.createdAt, messages: [msg] })
+    const lastGroup = groups.at(-1)
+
+    if (lastGroup && new Date(lastGroup.date).toDateString() === msgDate) {
+      lastGroup.messages.push(msg)
     } else {
-      groupedMessages[groupedMessages.length - 1].messages.push(msg)
+      groups.push({ date: msg.createdAt, messages: [msg] })
     }
-  })
+
+    return groups
+  }, [])
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -226,8 +223,8 @@ export default function ChatRoomPage() {
 
       {/* 메시지 영역 */}
       <main className="flex-1 overflow-y-auto px-4 py-4">
-        {groupedMessages.map((group, groupIndex) => (
-          <div key={groupIndex}>
+        {groupedMessages.map((group) => (
+          <div key={group.date}>
             {/* 날짜 구분선 */}
             <div className="flex items-center justify-center my-4">
               <span className="px-3 py-1 bg-[var(--color-neutral-200)] text-[var(--color-neutral-500)] text-xs rounded-full">
@@ -254,7 +251,7 @@ export default function ChatRoomPage() {
                     }`}
                   >
                     {/* 발신자 이름 (상대방 메시지만) */}
-                    {showSender && (
+                    {showSender ? (
                       <div className="flex items-center gap-1 mb-1">
                         <span
                           className={`text-xs font-medium ${getRoleColor(
@@ -263,13 +260,13 @@ export default function ChatRoomPage() {
                         >
                           {message.senderName}
                         </span>
-                        {getRoleLabel(message.senderRole) && (
+                        {getRoleLabel(message.senderRole) ? (
                           <span className="text-xs text-[var(--color-neutral-400)]">
                             ({getRoleLabel(message.senderRole)})
                           </span>
-                        )}
+                        ) : null}
                       </div>
-                    )}
+                    ) : null}
 
                     <div className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : ''}`}>
                       {/* 메시지 버블 */}

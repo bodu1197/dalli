@@ -27,7 +27,7 @@ interface CartState {
 function generateItemId(menuId: string, options: CartItemOption[]): string {
   const optionIds = options
     .map((o) => o.id)
-    .sort()
+    .sort((a, b) => a.localeCompare(b))
     .join('-')
   return `${menuId}-${optionIds || 'no-options'}`
 }

@@ -8,7 +8,6 @@ import { ArrowLeft, Search, SlidersHorizontal, X } from 'lucide-react'
 import { RestaurantList } from '@/components/features/restaurant'
 import { Spinner } from '@/components/ui/Spinner'
 import { MOCK_RESTAURANTS } from '@/lib/mock/restaurants'
-import type { Restaurant } from '@/types/restaurant.types'
 
 // 필터 옵션
 const SORT_OPTIONS = [

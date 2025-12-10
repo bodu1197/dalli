@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, Plus, MapPin, MoreVertical, Trash2, Edit2, Star } from 'lucide-react'
+import { ChevronLeft, Plus, MapPin, MoreVertical, Trash2, Star } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
@@ -62,39 +62,47 @@ export default function AddressesPage() {
       </header>
 
       <main className="flex-1 pb-24">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Spinner size="lg" />
-          </div>
-        ) : addresses.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4">
-            <div className="w-16 h-16 rounded-full bg-[var(--color-neutral-100)] flex items-center justify-center mb-4">
-              <MapPin className="w-8 h-8 text-[var(--color-neutral-400)]" />
+        {(() => {
+          if (isLoading) {
+            return (
+              <div className="flex items-center justify-center py-12">
+                <Spinner size="lg" />
+              </div>
+            )
+          }
+          if (addresses.length === 0) {
+            return (
+              <div className="flex flex-col items-center justify-center py-16 px-4">
+                <div className="w-16 h-16 rounded-full bg-[var(--color-neutral-100)] flex items-center justify-center mb-4">
+                  <MapPin className="w-8 h-8 text-[var(--color-neutral-400)]" />
+                </div>
+                <p className="text-[var(--color-neutral-500)] text-center mb-6">
+                  저장된 배달 주소가 없습니다.<br />
+                  자주 사용하는 주소를 추가해보세요.
+                </p>
+                <Button onClick={() => setIsModalOpen(true)}>
+                  <Plus className="w-5 h-5 mr-2" />
+                  주소 추가하기
+                </Button>
+              </div>
+            )
+          }
+          return (
+            <div className="p-4 space-y-3">
+              {addresses.map((address) => (
+                <AddressItem
+                  key={address.id}
+                  address={address}
+                  isMenuOpen={activeMenu === address.id}
+                  isDeleting={deletingId === address.id}
+                  onToggleMenu={() => toggleMenu(address.id)}
+                  onSetDefault={() => handleSetDefault(address.id)}
+                  onDelete={() => handleDelete(address.id)}
+                />
+              ))}
             </div>
-            <p className="text-[var(--color-neutral-500)] text-center mb-6">
-              저장된 배달 주소가 없습니다.<br />
-              자주 사용하는 주소를 추가해보세요.
-            </p>
-            <Button onClick={() => setIsModalOpen(true)}>
-              <Plus className="w-5 h-5 mr-2" />
-              주소 추가하기
-            </Button>
-          </div>
-        ) : (
-          <div className="p-4 space-y-3">
-            {addresses.map((address) => (
-              <AddressItem
-                key={address.id}
-                address={address}
-                isMenuOpen={activeMenu === address.id}
-                isDeleting={deletingId === address.id}
-                onToggleMenu={() => toggleMenu(address.id)}
-                onSetDefault={() => handleSetDefault(address.id)}
-                onDelete={() => handleDelete(address.id)}
-              />
-            ))}
-          </div>
-        )}
+          )
+        })()}
       </main>
 
       {/* 하단 버튼 */}
@@ -118,9 +126,18 @@ export default function AddressesPage() {
 
       {/* 메뉴 닫기 오버레이 */}
       {activeMenu && (
-        <div
-          className="fixed inset-0 z-10"
+        <button
+          type="button"
+          className="fixed inset-0 z-10 cursor-default bg-transparent border-none p-0 m-0"
           onClick={() => setActiveMenu(null)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault()
+              setActiveMenu(null)
+            }
+          }}
+          aria-label="메뉴 닫기"
+          tabIndex={0}
         />
       )}
     </div>
@@ -129,12 +146,12 @@ export default function AddressesPage() {
 
 // 주소 아이템 컴포넌트
 interface AddressItemProps {
-  address: Address
-  isMenuOpen: boolean
-  isDeleting: boolean
-  onToggleMenu: () => void
-  onSetDefault: () => void
-  onDelete: () => void
+  readonly address: Address
+  readonly isMenuOpen: boolean
+  readonly isDeleting: boolean
+  readonly onToggleMenu: () => void
+  readonly onSetDefault: () => void
+  readonly onDelete: () => void
 }
 
 function AddressItem({
@@ -144,7 +161,7 @@ function AddressItem({
   onToggleMenu,
   onSetDefault,
   onDelete,
-}: AddressItemProps) {
+}: Readonly<AddressItemProps>) {
   return (
     <div className="bg-white rounded-2xl p-4 relative">
       <div className="flex items-start gap-3">

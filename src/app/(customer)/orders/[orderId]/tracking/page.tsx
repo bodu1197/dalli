@@ -16,13 +16,10 @@ import {
 } from 'lucide-react'
 
 import { getOrderById } from '@/lib/mock/orders'
-import {
-  ORDER_STATUS_LABELS,
-} from '@/types/order.types'
 import type { OrderStatus } from '@/types/order.types'
 
 interface PageProps {
-  params: Promise<{ orderId: string }>
+  readonly params: Promise<{ orderId: string }>
 }
 
 // 주문 상태 단계 정의
@@ -40,7 +37,7 @@ function getStatusIndex(status: OrderStatus): number {
   return statusOrder.indexOf(status)
 }
 
-export default function OrderTrackingPage({ params }: PageProps) {
+export default function OrderTrackingPage({ params }: Readonly<PageProps>) {
   const { orderId } = use(params)
   const router = useRouter()
   const order = getOrderById(orderId)
@@ -152,7 +149,7 @@ export default function OrderTrackingPage({ params }: PageProps) {
 
             {/* 스텝 아이템 */}
             <div className="space-y-6">
-              {ORDER_STEPS.map((step, index) => {
+              {ORDER_STEPS.map((step) => {
                 const stepIndex = getStatusIndex(step.status)
                 const isCompleted = currentStatusIndex >= stepIndex
                 const isCurrent = order.status === step.status ||

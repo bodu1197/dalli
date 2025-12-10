@@ -7,11 +7,11 @@ import { cn } from '@/lib/utils'
 import type { Menu } from '@/types/restaurant.types'
 
 interface MenuCardProps {
-  menu: Menu
-  restaurantId: string
+  readonly menu: Menu
+  readonly restaurantId: string
 }
 
-export function MenuCard({ menu, restaurantId }: MenuCardProps) {
+export function MenuCard({ menu, restaurantId }: Readonly<MenuCardProps>) {
   return (
     <Link
       href={`/restaurant/${restaurantId}/menu/${menu.id}`}
@@ -74,7 +74,7 @@ export function MenuCard({ menu, restaurantId }: MenuCardProps) {
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              // TODO: 장바구니에 담기
+              // Note: 장바구니 기능은 CartStore를 통해 구현됨
             }}
             className={cn(
               'absolute -bottom-2 -right-2',

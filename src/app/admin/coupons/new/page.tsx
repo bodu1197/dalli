@@ -44,12 +44,11 @@ export default function AdminCouponNewPage() {
     description: '',
   })
 
-  const generateCode = () => {
+  const generateCode = (): void => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    let code = ''
-    for (let i = 0; i < 8; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
+    const code = Array.from({ length: 8 }, () =>
+      chars.charAt(Math.floor(Math.random() * chars.length))
+    ).join('')
     setForm({ ...form, code })
   }
 

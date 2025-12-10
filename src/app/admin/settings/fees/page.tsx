@@ -246,11 +246,12 @@ export default function AdminSettingsFeesPage() {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
+                <label htmlFor="platformFeeValue" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
                   {config.platformFee.type === 'fixed' ? '수수료 금액' : '수수료 비율'}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
+                    id="platformFeeValue"
                     type="number"
                     value={config.platformFee.value}
                     onChange={(e) => handleChange('platformFee', 'value', Number(e.target.value))}
@@ -276,11 +277,12 @@ export default function AdminSettingsFeesPage() {
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
+                <label htmlFor="platformFeeFreeThreshold" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
                   무료 기준 금액
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
+                    id="platformFeeFreeThreshold"
                     type="number"
                     value={config.platformFee.freeThreshold}
                     onChange={(e) => handleChange('platformFee', 'freeThreshold', Number(e.target.value))}
@@ -325,11 +327,12 @@ export default function AdminSettingsFeesPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <div>
-              <label style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
+              <label htmlFor="deliveryFeeBase" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
                 기본 배달비
               </label>
               <div style={{ position: 'relative' }}>
                 <input
+                  id="deliveryFeeBase"
                   type="number"
                   value={config.deliveryFee.base}
                   onChange={(e) => handleChange('deliveryFee', 'base', Number(e.target.value))}
@@ -355,11 +358,12 @@ export default function AdminSettingsFeesPage() {
               </div>
             </div>
             <div>
-              <label style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
+              <label htmlFor="deliveryFeePerKm" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
                 km당 추가
               </label>
               <div style={{ position: 'relative' }}>
                 <input
+                  id="deliveryFeePerKm"
                   type="number"
                   value={config.deliveryFee.perKm}
                   onChange={(e) => handleChange('deliveryFee', 'perKm', Number(e.target.value))}
@@ -397,8 +401,9 @@ export default function AdminSettingsFeesPage() {
               <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
                 피크타임 할증
               </span>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <label htmlFor="surgePricingEnabled" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                 <input
+                  id="surgePricingEnabled"
                   type="checkbox"
                   checked={config.deliveryFee.surgePricing.enabled}
                   onChange={(e) => handleChange('deliveryFee', 'surgePricing.enabled', e.target.checked)}
@@ -409,10 +414,11 @@ export default function AdminSettingsFeesPage() {
             {config.deliveryFee.surgePricing.enabled && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
                 <div>
-                  <label style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
+                  <label htmlFor="surgeStart" style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
                     시작
                   </label>
                   <input
+                    id="surgeStart"
                     type="time"
                     value={config.deliveryFee.surgePricing.peakHours.start}
                     onChange={(e) => handleChange('deliveryFee', 'surgePricing.start', e.target.value)}
@@ -426,10 +432,11 @@ export default function AdminSettingsFeesPage() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
+                  <label htmlFor="surgeEnd" style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
                     종료
                   </label>
                   <input
+                    id="surgeEnd"
                     type="time"
                     value={config.deliveryFee.surgePricing.peakHours.end}
                     onChange={(e) => handleChange('deliveryFee', 'surgePricing.end', e.target.value)}
@@ -443,11 +450,12 @@ export default function AdminSettingsFeesPage() {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
+                  <label htmlFor="surgeMultiplier" style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
                     할증률
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="surgeMultiplier"
                       type="number"
                       step="0.1"
                       value={config.deliveryFee.surgePricing.multiplier}
@@ -487,8 +495,9 @@ export default function AdminSettingsFeesPage() {
               <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
                 날씨 할증
               </span>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+              <label htmlFor="weatherSurgeEnabled" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
                 <input
+                  id="weatherSurgeEnabled"
                   type="checkbox"
                   checked={config.deliveryFee.weatherSurge.enabled}
                   onChange={(e) => handleChange('deliveryFee', 'weatherSurge.enabled', e.target.checked)}
@@ -499,11 +508,12 @@ export default function AdminSettingsFeesPage() {
             {config.deliveryFee.weatherSurge.enabled && (
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <div>
-                  <label style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
+                  <label htmlFor="rainMultiplier" style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
                     비 할증률
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="rainMultiplier"
                       type="number"
                       step="0.1"
                       value={config.deliveryFee.weatherSurge.rainMultiplier}
@@ -530,11 +540,12 @@ export default function AdminSettingsFeesPage() {
                   </div>
                 </div>
                 <div>
-                  <label style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
+                  <label htmlFor="snowMultiplier" style={{ fontSize: '11px', color: 'var(--color-text-tertiary)', marginBottom: '4px', display: 'block' }}>
                     눈 할증률
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input
+                      id="snowMultiplier"
                       type="number"
                       step="0.1"
                       value={config.deliveryFee.weatherSurge.snowMultiplier}
@@ -581,11 +592,12 @@ export default function AdminSettingsFeesPage() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
+              <label htmlFor="commissionPercentage" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
                 수수료율
               </label>
               <div style={{ position: 'relative' }}>
                 <input
+                  id="commissionPercentage"
                   type="number"
                   value={config.ownerCommission.percentage}
                   onChange={(e) => handleChange('ownerCommission', 'percentage', Number(e.target.value))}
@@ -611,11 +623,12 @@ export default function AdminSettingsFeesPage() {
               </div>
             </div>
             <div>
-              <label style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
+              <label htmlFor="minMonthlyFee" style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '8px', display: 'block' }}>
                 최소 월 수수료
               </label>
               <div style={{ position: 'relative' }}>
                 <input
+                  id="minMonthlyFee"
                   type="number"
                   value={config.ownerCommission.minMonthlyFee}
                   onChange={(e) => handleChange('ownerCommission', 'minMonthlyFee', Number(e.target.value))}
@@ -657,9 +670,9 @@ export default function AdminSettingsFeesPage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {feeHistory.map((item, index) => (
+            {feeHistory.map((item) => (
               <div
-                key={index}
+                key={`${item.date}-${item.change}`}
                 style={{
                   padding: '12px',
                   backgroundColor: 'var(--color-background)',

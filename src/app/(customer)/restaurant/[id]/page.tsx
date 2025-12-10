@@ -22,14 +22,14 @@ import { MOCK_RESTAURANTS } from '@/lib/mock/restaurants'
 import { getMenusByRestaurantId, getPopularMenus } from '@/lib/mock/menus'
 
 interface RestaurantDetailPageProps {
-  params: Promise<{ id: string }>
+  readonly params: Promise<{ id: string }>
 }
 
 type TabType = 'menu' | 'info' | 'review'
 
 export default function RestaurantDetailPage({
   params,
-}: RestaurantDetailPageProps) {
+}: Readonly<RestaurantDetailPageProps>) {
   const { id } = use(params)
   const [activeTab, setActiveTab] = useState<TabType>('menu')
   const [isFavorite, setIsFavorite] = useState(false)

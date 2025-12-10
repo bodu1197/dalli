@@ -250,19 +250,19 @@ export default function SignUpPage() {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                checked={Boolean(agreeTerms && agreePrivacy && agreeMarketing)}
+                checked={!!(agreeTerms && agreePrivacy && agreeMarketing)}
                 onChange={handleAllAgree}
                 className="sr-only"
               />
               <div
                 className={cn(
                   'w-6 h-6 rounded-md border-2 flex items-center justify-center',
-                  Boolean(agreeTerms && agreePrivacy && agreeMarketing)
+                  !!(agreeTerms && agreePrivacy && agreeMarketing)
                     ? 'border-[var(--color-primary-500)] bg-[var(--color-primary-500)]'
                     : 'border-[var(--color-neutral-300)]'
                 )}
               >
-                {Boolean(agreeTerms && agreePrivacy && agreeMarketing) && (
+                {!!(agreeTerms && agreePrivacy && agreeMarketing) && (
                   <Check className="w-4 h-4 text-white" />
                 )}
               </div>

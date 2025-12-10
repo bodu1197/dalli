@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   Search,
   Plus,
-  ChevronRight,
   Ticket,
   Percent,
   DollarSign,
@@ -15,7 +14,6 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle,
   Copy,
   MoreVertical,
   Edit,
@@ -123,7 +121,6 @@ const MOCK_COUPONS: CouponItem[] = [
 ]
 
 type StatusFilter = 'all' | 'active' | 'inactive' | 'expired'
-type TargetFilter = 'all' | 'new' | 'vip'
 
 export default function AdminCouponsPage() {
   const [coupons] = useState(MOCK_COUPONS)

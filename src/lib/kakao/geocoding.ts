@@ -104,14 +104,15 @@ export async function searchPlacesByKeyword(
     throw new Error('카카오 REST API 키가 설정되지 않았습니다')
   }
 
-  let url = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(keyword)}`
-
+  const baseUrl = `https://dapi.kakao.com/v2/local/search/keyword.json?query=${encodeURIComponent(keyword)}`
+  
+  let coordinatesParam = ''
   if (coordinates) {
-    url += `&x=${coordinates.lng}&y=${coordinates.lat}`
-    if (radius) {
-      url += `&radius=${radius}`
-    }
+    const radiusParam = radius ? `&radius=${radius}` : ''
+    coordinatesParam = `&x=${coordinates.lng}&y=${coordinates.lat}${radiusParam}`
   }
+
+  const url = baseUrl + coordinatesParam
 
   const response = await fetch(url, {
     headers: {

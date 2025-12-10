@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Star, MessageCircle, ThumbsUp, MoreVertical } from 'lucide-react'
+import { ArrowLeft, Star, MessageCircle, ThumbsUp } from 'lucide-react'
 
 interface Review {
   id: string
@@ -193,11 +193,11 @@ export default function OwnerReviewsPage() {
                       {review.customerName}
                     </span>
                     <div className="flex items-center gap-0.5">
-                      {Array.from({ length: 5 }).map((_, i) => (
+                      {Array.from({ length: 5 }).map((_, starIdx) => (
                         <Star
-                          key={i}
+                          key={`review-${review.id}-star-${starIdx}`}
                           className={`w-4 h-4 ${
-                            i < review.rating
+                            starIdx < review.rating
                               ? 'fill-[var(--color-warning-400)] text-[var(--color-warning-400)]'
                               : 'text-[var(--color-neutral-200)]'
                           }`}
@@ -225,64 +225,72 @@ export default function OwnerReviewsPage() {
               )}
 
               {/* 사장님 답글 */}
-              {review.reply ? (
-                <div className="mt-4 p-3 bg-[var(--color-neutral-50)] rounded-xl">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MessageCircle className="w-4 h-4 text-[var(--color-primary-500)]" />
-                    <span className="text-sm font-medium text-[var(--color-primary-500)]">
-                      사장님 답글
-                    </span>
-                  </div>
-                  <p className="text-sm text-[var(--color-neutral-600)]">
-                    {review.reply.content}
-                  </p>
-                </div>
-              ) : replyingId === review.id ? (
-                <div className="mt-4">
-                  <textarea
-                    value={replyContent}
-                    onChange={(e) => setReplyContent(e.target.value)}
-                    placeholder="답글을 입력하세요..."
-                    rows={3}
-                    className="w-full px-4 py-3 bg-[var(--color-neutral-50)] border border-[var(--color-neutral-200)] rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)]"
-                  />
-                  <div className="flex justify-end gap-2 mt-2">
-                    <button
-                      onClick={() => {
-                        setReplyingId(null)
-                        setReplyContent('')
-                      }}
-                      className="px-4 py-2 text-sm text-[var(--color-neutral-600)]"
-                    >
-                      취소
-                    </button>
-                    <button
-                      onClick={() => handleSubmitReply(review.id)}
-                      className="px-4 py-2 bg-[var(--color-primary-500)] text-white text-sm font-medium rounded-lg"
-                    >
-                      등록
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setReplyingId(review.id)}
-                  className="mt-4 text-sm font-medium text-[var(--color-primary-500)]"
-                >
-                  답글 작성
-                </button>
-              )}
+              {(() => {
+                if (review.reply) {
+                  return (
+                    <div className="mt-4 p-3 bg-[var(--color-neutral-50)] rounded-xl">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MessageCircle className="w-4 h-4 text-[var(--color-primary-500)]" />
+                        <span className="text-sm font-medium text-[var(--color-primary-500)]">
+                          사장님 답글
+                        </span>
+                      </div>
+                      <p className="text-sm text-[var(--color-neutral-600)]">
+                        {review.reply.content}
+                      </p>
+                    </div>
+                  )
+                }
+                if (replyingId === review.id) {
+                  return (
+                    <div className="mt-4">
+                      <textarea
+                        value={replyContent}
+                        onChange={(e) => setReplyContent(e.target.value)}
+                        placeholder="답글을 입력하세요..."
+                        rows={3}
+                        className="w-full px-4 py-3 bg-[var(--color-neutral-50)] border border-[var(--color-neutral-200)] rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)]"
+                      />
+                      <div className="flex justify-end gap-2 mt-2">
+                        <button
+                          onClick={() => {
+                            setReplyingId(null)
+                            setReplyContent('')
+                          }}
+                          className="px-4 py-2 text-sm text-[var(--color-neutral-600)]"
+                        >
+                          취소
+                        </button>
+                        <button
+                          onClick={() => handleSubmitReply(review.id)}
+                          className="px-4 py-2 bg-[var(--color-primary-500)] text-white text-sm font-medium rounded-lg"
+                        >
+                          등록
+                        </button>
+                      </div>
+                    </div>
+                  )
+                }
+                return (
+                  <button
+                    onClick={() => setReplyingId(review.id)}
+                    className="mt-4 text-sm font-medium text-[var(--color-primary-500)]"
+                  >
+                    답글 작성
+                  </button>
+                )
+              })()}
             </div>
           ))}
 
           {filteredReviews.length === 0 && (
             <div className="bg-white py-12 text-center">
               <p className="text-[var(--color-neutral-500)]">
-                {filter === 'unreplied'
-                  ? '미답변 리뷰가 없습니다'
-                  : filter === 'low'
-                  ? '낮은 평점 리뷰가 없습니다'
-                  : '리뷰가 없습니다'}
+                {(() => {
+                  if (filter === 'unreplied') return '미답변 리뷰가 없습니다'
+                  if (filter === 'low') return '낮은 평점 리뷰가 없습니다'
+                  return '리뷰가 없습니다'
+                })()}
               </p>
             </div>
           )}

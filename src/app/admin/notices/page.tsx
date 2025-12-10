@@ -10,7 +10,6 @@ import {
   Edit,
   Trash2,
   Eye,
-  EyeOff,
   Pin,
   ChevronDown,
   Calendar,

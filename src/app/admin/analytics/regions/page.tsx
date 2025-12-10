@@ -210,6 +210,15 @@ const categoryColors: Record<string, string> = {
   '기타': 'var(--color-text-tertiary)'
 }
 
+function getSortLabel(sortBy: 'orderCount' | 'revenue' | 'growthRate'): string {
+  const labels = {
+    orderCount: '주문순',
+    revenue: '매출순',
+    growthRate: '성장률순',
+  }
+  return labels[sortBy]
+}
+
 export default function AdminAnalyticsRegionsPage() {
   const [selectedRegion, setSelectedRegion] = useState<RegionData | null>(mockRegions[0])
   const [sortBy, setSortBy] = useState<'orderCount' | 'revenue' | 'growthRate'>('orderCount')
@@ -346,7 +355,7 @@ export default function AdminAnalyticsRegionsPage() {
               }}
             >
               <Filter size={16} />
-              {sortBy === 'orderCount' ? '주문순' : sortBy === 'revenue' ? '매출순' : '성장률순'}
+              {getSortLabel(sortBy)}
               <ChevronDown size={16} />
             </button>
             {showSortMenu && (
@@ -564,8 +573,8 @@ export default function AdminAnalyticsRegionsPage() {
               </h3>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {selectedRegion.popularCategories.map((cat, index) => (
-                  <div key={index}>
+                {selectedRegion.popularCategories.map((cat) => (
+                  <div key={cat.name}>
                     <div style={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -621,9 +630,9 @@ export default function AdminAnalyticsRegionsPage() {
                 gap: '8px',
                 height: '150px'
               }}>
-                {selectedRegion.hourlyDistribution.map((item, index) => (
+                {selectedRegion.hourlyDistribution.map((item) => (
                   <div
-                    key={index}
+                    key={item.hour}
                     style={{
                       flex: 1,
                       display: 'flex',

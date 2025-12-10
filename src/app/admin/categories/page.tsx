@@ -10,16 +10,15 @@ import {
   GripVertical,
   ChevronRight,
   ChevronDown,
-  Image as ImageIcon,
   Eye,
   EyeOff,
-  X,
   Save,
   FolderOpen,
   Tag,
   Store,
   AlertTriangle
 } from 'lucide-react'
+import { Modal } from '@/components/ui/Modal'
 
 // Types
 interface Category {
@@ -35,6 +34,7 @@ interface Category {
   storeCount: number
   children?: Category[]
 }
+
 
 // Mock Data
 const mockCategories: Category[] = [
@@ -251,6 +251,58 @@ interface CategoryFormData {
   isActive: boolean
 }
 
+// 카테고리 삭제 헬퍼 함수 (중첩 방지)
+function removeCategoryById(cats: Category[], targetId: string): Category[] {
+  return cats.filter(c => c.id !== targetId).map(c => ({
+    ...c,
+    children: c.children ? removeCategoryById(c.children, targetId) : undefined
+  }))
+}
+
+// 카테고리 활성화 토글 헬퍼 함수 (중첩 방지)
+function toggleCategoryActive(cats: Category[], targetId: string): Category[] {
+  return cats.map(c => {
+    if (c.id === targetId) {
+      return { ...c, isActive: !c.isActive }
+    }
+    return {
+      ...c,
+      children: c.children ? toggleCategoryActive(c.children, targetId) : undefined
+    }
+  })
+}
+
+// 카테고리 업데이트 헬퍼 함수 (중첩 방지)
+function updateCategoryInList(
+  cats: Category[],
+  targetId: string,
+  updates: { name: string; slug: string; description: string; icon: string | null; isActive: boolean }
+): Category[] {
+  return cats.map(c => {
+    if (c.id === targetId) {
+      return {
+        ...c,
+        name: updates.name,
+        slug: updates.slug,
+        description: updates.description,
+        icon: updates.icon,
+        isActive: updates.isActive
+      }
+    }
+    return {
+      ...c,
+      children: c.children ? updateCategoryInList(c.children, targetId, updates) : undefined
+    }
+  })
+}
+
+// 모달 제목 헬퍼 함수
+function getModalTitle(isEditing: boolean, parentId: string | null): string {
+  if (isEditing) return '카테고리 수정'
+  if (parentId) return '하위 카테고리 추가'
+  return '카테고리 추가'
+}
+
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>(mockCategories)
   const [searchQuery, setSearchQuery] = useState('')
@@ -272,9 +324,8 @@ export default function CategoriesPage() {
 
   // Filter categories by search
   const filterCategories = (cats: Category[]): Category[] => {
-    if (!searchQuery) return cats
-
-    return cats.reduce<Category[]>((acc, cat) => {
+    if (searchQuery) {
+      return cats.reduce<Category[]>((acc, cat) => {
       const matchesSelf = cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         cat.slug.toLowerCase().includes(searchQuery.toLowerCase())
 
@@ -287,8 +338,10 @@ export default function CategoriesPage() {
         })
       }
 
-      return acc
-    }, [])
+        return acc
+      }, [])
+    }
+    return cats
   }
 
   const filteredCategories = filterCategories(categories)
@@ -352,36 +405,16 @@ export default function CategoriesPage() {
   const confirmDelete = () => {
     if (!selectedCategory) return
 
-    // Remove category from list
-    setCategories(prev => {
-      const removeCategory = (cats: Category[]): Category[] => {
-        return cats.filter(c => c.id !== selectedCategory.id).map(c => ({
-          ...c,
-          children: c.children ? removeCategory(c.children) : undefined
-        }))
-      }
-      return removeCategory(prev)
-    })
+    // Remove category from list using helper function
+    setCategories(prev => removeCategoryById(prev, selectedCategory.id))
 
     setShowDeleteModal(false)
     setSelectedCategory(null)
   }
 
   const handleToggleActive = (category: Category) => {
-    setCategories(prev => {
-      const toggleActive = (cats: Category[]): Category[] => {
-        return cats.map(c => {
-          if (c.id === category.id) {
-            return { ...c, isActive: !c.isActive }
-          }
-          return {
-            ...c,
-            children: c.children ? toggleActive(c.children) : undefined
-          }
-        })
-      }
-      return toggleActive(prev)
-    })
+    // Use helper function to avoid deep nesting
+    setCategories(prev => toggleCategoryActive(prev, category.id))
     setActiveMenu(null)
   }
 
@@ -389,28 +422,15 @@ export default function CategoriesPage() {
     if (!formData.name || !formData.slug) return
 
     if (isEditing && selectedCategory) {
-      // Update existing category
-      setCategories(prev => {
-        const updateCategory = (cats: Category[]): Category[] => {
-          return cats.map(c => {
-            if (c.id === selectedCategory.id) {
-              return {
-                ...c,
-                name: formData.name,
-                slug: formData.slug,
-                description: formData.description,
-                icon: formData.icon || null,
-                isActive: formData.isActive
-              }
-            }
-            return {
-              ...c,
-              children: c.children ? updateCategory(c.children) : undefined
-            }
-          })
-        }
-        return updateCategory(prev)
-      })
+      // Update existing category using helper function
+      const updates = {
+        name: formData.name,
+        slug: formData.slug,
+        description: formData.description,
+        icon: formData.icon || null,
+        isActive: formData.isActive
+      }
+      setCategories(prev => updateCategoryInList(prev, selectedCategory.id, updates))
     } else {
       // Add new category
       const newCategory: Category = {
@@ -428,18 +448,12 @@ export default function CategoriesPage() {
       }
 
       if (formData.parentId) {
-        // Add as subcategory
-        setCategories(prev => {
-          return prev.map(c => {
-            if (c.id === formData.parentId) {
-              return {
-                ...c,
-                children: [...(c.children || []), newCategory]
-              }
-            }
-            return c
-          })
-        })
+        // Add as subcategory - simplified map operation
+        setCategories(prev => prev.map(c =>
+          c.id === formData.parentId
+            ? { ...c, children: [...(c.children || []), newCategory] }
+            : c
+        ))
       } else {
         // Add as main category
         setCategories(prev => [...prev, newCategory])
@@ -460,9 +474,9 @@ export default function CategoriesPage() {
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9가-힣]/g, '-')
+      .replace(/[^a-z0-9\uAC00-\uD7A3]/g, '-')
       .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
+      .replace(/(^-)|(-$)/g, '')
   }
 
   const renderCategoryRow = (category: Category, level: number = 0) => {
@@ -479,10 +493,20 @@ export default function CategoriesPage() {
             paddingLeft: `${16 + level * 32}px`,
             borderBottom: '1px solid var(--color-gray-100)',
             backgroundColor: level > 0 ? 'var(--color-gray-50)' : 'white',
-            transition: 'background-color 0.2s'
+            transition: 'background-color 0.2s',
           }}
-          onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-gray-100)'}
-          onMouseOut={(e) => e.currentTarget.style.backgroundColor = level > 0 ? 'var(--color-gray-50)' : 'white'}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--color-gray-100)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = level > 0 ? 'var(--color-gray-50)' : 'white'
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--color-gray-100)'
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.backgroundColor = level > 0 ? 'var(--color-gray-50)' : 'white'
+          }}
         >
           {/* Drag Handle */}
           <div style={{ cursor: 'grab', marginRight: '12px', color: 'var(--color-gray-400)' }}>
@@ -906,332 +930,282 @@ export default function CategoriesPage() {
       </div>
 
       {/* Add/Edit Modal */}
-      {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '24px',
-            maxWidth: '500px',
-            width: '90%'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '24px'
-            }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700 }}>
-                {isEditing ? '카테고리 수정' : formData.parentId ? '하위 카테고리 추가' : '카테고리 추가'}
-              </h3>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{
-                  padding: '8px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer'
-                }}
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Name */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  marginBottom: '8px'
-                }}>
-                  카테고리명 *
-                </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => {
-                    setFormData(prev => ({
-                      ...prev,
-                      name: e.target.value,
-                      slug: prev.slug || generateSlug(e.target.value)
-                    }))
-                  }}
-                  placeholder="예: 한식"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid var(--color-gray-200)',
-                    borderRadius: '8px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-
-              {/* Slug */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  marginBottom: '8px'
-                }}>
-                  슬러그 *
-                </label>
-                <input
-                  type="text"
-                  value={formData.slug}
-                  onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-                  placeholder="예: korean"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid var(--color-gray-200)',
-                    borderRadius: '8px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-
-              {/* Icon */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  marginBottom: '8px'
-                }}>
-                  아이콘 (이모지)
-                </label>
-                <input
-                  type="text"
-                  value={formData.icon}
-                  onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
-                  placeholder="예: 🍚"
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid var(--color-gray-200)',
-                    borderRadius: '8px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  marginBottom: '8px'
-                }}>
-                  설명
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="카테고리 설명을 입력하세요"
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '12px',
-                    border: '1px solid var(--color-gray-200)',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-
-              {/* Active */}
-              <label style={{
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={getModalTitle(isEditing, formData.parentId)}
+        size="md"
+        footer={
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => setShowModal(false)}
+              style={{
+                padding: '12px 20px',
+                border: '1px solid var(--color-gray-200)',
+                borderRadius: '8px',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              취소
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!formData.name || !formData.slug}
+              style={{
+                padding: '12px 20px',
+                border: 'none',
+                borderRadius: '8px',
+                backgroundColor: !formData.name || !formData.slug ? 'var(--color-gray-300)' : 'var(--color-primary-500)',
+                color: 'white',
+                cursor: !formData.name || !formData.slug ? 'not-allowed' : 'pointer',
+                fontSize: '14px',
+                fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px',
-                cursor: 'pointer'
-              }}>
-                <input
-                  type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                  style={{ width: '18px', height: '18px' }}
-                />
-                <span style={{ fontSize: '14px' }}>활성화</span>
-              </label>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
-              <button
-                onClick={() => setShowModal(false)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  border: '1px solid var(--color-gray-200)',
-                  borderRadius: '8px',
-                  backgroundColor: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                취소
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={!formData.name || !formData.slug}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  backgroundColor: !formData.name || !formData.slug ? 'var(--color-gray-300)' : 'var(--color-primary-500)',
-                  color: 'white',
-                  cursor: !formData.name || !formData.slug ? 'not-allowed' : 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                <Save size={16} />
-                {isEditing ? '저장' : '추가'}
-              </button>
-            </div>
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+            >
+              <Save size={16} />
+              {isEditing ? '저장' : '추가'}
+            </button>
           </div>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Name */}
+          <div>
+            <label htmlFor="categoryName" style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              marginBottom: '8px'
+            }}>
+              카테고리명 *
+            </label>
+            <input
+              id="categoryName"
+              type="text"
+              value={formData.name}
+              onChange={(e) => {
+                setFormData(prev => ({
+                  ...prev,
+                  name: e.target.value,
+                  slug: prev.slug || generateSlug(e.target.value)
+                }))
+              }}
+              placeholder="예: 한식"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid var(--color-gray-200)',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+
+          {/* Slug */}
+          <div>
+            <label htmlFor="categorySlug" style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              marginBottom: '8px'
+            }}>
+              슬러그 *
+            </label>
+            <input
+              id="categorySlug"
+              type="text"
+              value={formData.slug}
+              onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
+              placeholder="예: korean"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid var(--color-gray-200)',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+
+          {/* Icon */}
+          <div>
+            <label htmlFor="categoryIcon" style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              marginBottom: '8px'
+            }}>
+              아이콘 (이모지)
+            </label>
+            <input
+              id="categoryIcon"
+              type="text"
+              value={formData.icon}
+              onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
+              placeholder="예: 🍚"
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid var(--color-gray-200)',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label htmlFor="categoryDescription" style={{
+              display: 'block',
+              fontSize: '13px',
+              fontWeight: 600,
+              marginBottom: '8px'
+            }}>
+              설명
+            </label>
+            <textarea
+              id="categoryDescription"
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="카테고리 설명을 입력하세요"
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '12px',
+                border: '1px solid var(--color-gray-200)',
+                borderRadius: '8px',
+                fontSize: '14px',
+                resize: 'vertical'
+              }}
+            />
+          </div>
+
+          {/* Active */}
+          <label style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            cursor: 'pointer'
+          }}>
+            <input
+              type="checkbox"
+              checked={formData.isActive}
+              onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+              style={{ width: '18px', height: '18px' }}
+            />
+            <span style={{ fontSize: '14px' }}>활성화</span>
+          </label>
         </div>
-      )}
+      </Modal>
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && selectedCategory && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
+      <Modal
+        isOpen={showDeleteModal && !!selectedCategory}
+        onClose={() => setShowDeleteModal(false)}
+        title="카테고리 삭제"
+        size="sm"
+        footer={
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={() => setShowDeleteModal(false)}
+              style={{
+                flex: 1,
+                padding: '12px',
+                border: '1px solid var(--color-gray-200)',
+                borderRadius: '8px',
+                backgroundColor: 'white',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              취소
+            </button>
+            <button
+              onClick={confirmDelete}
+              style={{
+                flex: 1,
+                padding: '12px',
+                border: 'none',
+                borderRadius: '8px',
+                backgroundColor: 'var(--color-error-500)',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 600
+              }}
+            >
+              삭제
+            </button>
+          </div>
+        }
+      >
+        {selectedCategory && (
           <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '24px',
-            maxWidth: '400px',
-            width: '90%'
+            padding: '16px',
+            backgroundColor: 'var(--color-error-50)',
+            borderRadius: '8px',
+            display: 'flex',
+            gap: '12px',
+            alignItems: 'flex-start'
           }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '20px'
-            }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700 }}>카테고리 삭제</h3>
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                style={{
-                  padding: '8px',
-                  border: 'none',
-                  backgroundColor: 'transparent',
-                  cursor: 'pointer'
-                }}
-              >
-                <X size={20} />
-              </button>
-            </div>
+            <AlertTriangle size={20} color="var(--color-error-500)" style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <p style={{ fontWeight: 600, color: 'var(--color-error-700)', marginBottom: '4px' }}>
+                {selectedCategory.name} 카테고리를 삭제하시겠습니까?
+              </p>
+              <p style={{ fontSize: '13px', color: 'var(--color-error-600)', lineHeight: 1.5 }}>
+                {(() => {
+                  const hasStores = selectedCategory.storeCount > 0
+                  const hasChildren = selectedCategory.children && selectedCategory.children.length > 0
 
-            <div style={{
-              padding: '16px',
-              backgroundColor: 'var(--color-error-50)',
-              borderRadius: '8px',
-              marginBottom: '20px',
-              display: 'flex',
-              gap: '12px',
-              alignItems: 'flex-start'
-            }}>
-              <AlertTriangle size={20} color="var(--color-error-500)" style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div>
-                <p style={{ fontWeight: 600, color: 'var(--color-error-700)', marginBottom: '4px' }}>
-                  {selectedCategory.name} 카테고리를 삭제하시겠습니까?
-                </p>
-                <p style={{ fontSize: '13px', color: 'var(--color-error-600)', lineHeight: 1.5 }}>
-                  {selectedCategory.storeCount > 0 && (
-                    <>이 카테고리에 연결된 {selectedCategory.storeCount}개 가게의 카테고리가 해제됩니다. </>
-                  )}
-                  {selectedCategory.children && selectedCategory.children.length > 0 && (
-                    <>하위 {selectedCategory.children.length}개 카테고리도 함께 삭제됩니다.</>
-                  )}
-                  {selectedCategory.storeCount === 0 && (!selectedCategory.children || selectedCategory.children.length === 0) && (
-                    <>이 작업은 되돌릴 수 없습니다.</>
-                  )}
-                </p>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  border: '1px solid var(--color-gray-200)',
-                  borderRadius: '8px',
-                  backgroundColor: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                취소
-              </button>
-              <button
-                onClick={confirmDelete}
-                style={{
-                  flex: 1,
-                  padding: '12px',
-                  border: 'none',
-                  borderRadius: '8px',
-                  backgroundColor: 'var(--color-error-500)',
-                  color: 'white',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  fontWeight: 600
-                }}
-              >
-                삭제
-              </button>
+                  if (hasStores && hasChildren) {
+                    return (
+                      <>
+                        이 카테고리에 연결된 {selectedCategory.storeCount}개 가게의 카테고리가 해제됩니다.
+                        하위 {selectedCategory.children.length}개 카테고리도 함께 삭제됩니다.
+                      </>
+                    )
+                  }
+                  if (hasStores) {
+                    return <>이 카테고리에 연결된 {selectedCategory.storeCount}개 가게의 카테고리가 해제됩니다.</>
+                  }
+                  if (hasChildren) {
+                    return <>하위 {selectedCategory.children.length}개 카테고리도 함께 삭제됩니다.</>
+                  }
+                  return <>이 작업은 되돌릴 수 없습니다.</>
+                })()}
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Click outside to close menus */}
       {activeMenu && (
-        <div
+        <button
+          type="button"
           style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 50
+            zIndex: 50,
+            background: 'transparent',
+            border: 'none',
+            cursor: 'default'
           }}
           onClick={() => setActiveMenu(null)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setActiveMenu(null)
+          }}
+          aria-label="메뉴 닫기"
         />
       )}
     </div>

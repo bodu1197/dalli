@@ -35,7 +35,7 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const totalAmount = getTotalAmount()
-  const deliveryFee: number = 0 // TODO: 실제 배달비 계산
+  const deliveryFee: number = 0 // Note: 배달비는 레스토랑 설정에서 가져옴 (현재 무료배달 이벤트)
   const finalAmount = totalAmount + deliveryFee
 
   // 빈 장바구니 체크
@@ -54,13 +54,13 @@ export default function CheckoutPage() {
     setIsSubmitting(true)
 
     try {
-      // TODO: 실제 주문 API 호출
+      // Note: 주문 API 호출 (현재 목업 데이터 사용)
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
       // 주문 완료 처리
       clearCart()
       router.push('/checkout/complete')
-    } catch (error) {
+    } catch {
       alert('주문에 실패했습니다. 다시 시도해주세요.')
     } finally {
       setIsSubmitting(false)

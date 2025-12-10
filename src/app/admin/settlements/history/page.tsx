@@ -6,18 +6,12 @@ import {
   Search,
   Filter,
   Download,
-  Calendar,
   ChevronDown,
-  Wallet,
   Clock,
   CheckCircle,
   XCircle,
-  AlertTriangle,
   Building2,
   Bike,
-  ArrowUpRight,
-  ArrowDownRight,
-  TrendingUp,
   FileText,
   RefreshCw
 } from 'lucide-react'
@@ -180,9 +174,9 @@ export default function SettlementHistoryPage() {
   const filteredHistory = history.filter(item => {
     const matchesSearch =
       item.recipientName.includes(searchQuery) ||
-      (item.businessName && item.businessName.includes(searchQuery)) ||
+      item.businessName?.includes(searchQuery) ||
       item.id.includes(searchQuery) ||
-      (item.transactionId && item.transactionId.includes(searchQuery))
+      item.transactionId?.includes(searchQuery)
 
     const matchesType = filterType === 'all' || item.type === filterType
     const matchesStatus = filterStatus === 'all' || item.status === filterStatus
@@ -624,8 +618,19 @@ export default function SettlementHistoryPage() {
                   borderBottom: '1px solid var(--color-gray-100)',
                   transition: 'background-color 0.2s'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-gray-50)'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-gray-50)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-gray-50)'
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+                tabIndex={0}
               >
                 <td style={{ padding: '16px' }}>
                   <div>
@@ -829,16 +834,24 @@ export default function SettlementHistoryPage() {
 
       {/* Click outside to close menus */}
       {showFilterMenu && (
-        <div
+        <button
+          type="button"
           style={{
             position: 'fixed',
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            zIndex: 50
+            zIndex: 50,
+            background: 'transparent',
+            border: 'none',
+            cursor: 'default'
           }}
           onClick={() => setShowFilterMenu(false)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setShowFilterMenu(false)
+          }}
+          aria-label="메뉴 닫기"
         />
       )}
     </div>

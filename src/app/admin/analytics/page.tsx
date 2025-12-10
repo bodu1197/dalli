@@ -14,7 +14,6 @@ import {
   Calendar,
   ChevronRight,
   BarChart3,
-  PieChart,
   MapPin,
 } from 'lucide-react'
 
@@ -103,7 +102,11 @@ export default function AdminAnalyticsPage() {
                   : 'bg-[var(--color-neutral-100)] text-[var(--color-neutral-600)]'
               }`}
             >
-              {p === 'today' ? '오늘' : p === 'week' ? '이번 주' : '이번 달'}
+              {(() => {
+                if (p === 'today') return '오늘'
+                if (p === 'week') return '이번 주'
+                return '이번 달'
+              })()}
             </button>
           ))}
         </div>
@@ -233,21 +236,24 @@ export default function AdminAnalyticsPage() {
 
           {/* 바 차트 */}
           <div className="flex items-end gap-2 h-40">
-            {dailyStats.map((day, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-xs text-[var(--color-neutral-500)]">
-                  {(day.revenue / 10000000).toFixed(1)}천
-                </span>
-                <div
-                  className="w-full bg-[var(--color-primary-500)] rounded-t-lg transition-all"
-                  style={{
-                    height: `${(day.revenue / maxRevenue) * 100}%`,
-                    opacity: i === dailyStats.length - 1 ? 1 : 0.6,
-                  }}
+            {dailyStats.map((day) => {
+              const dayIndex = dailyStats.indexOf(day)
+              return (
+                <div key={day.date} className="flex-1 flex flex-col items-center gap-1">
+                  <span className="text-xs text-[var(--color-neutral-500)]">
+                    {(day.revenue / 10000000).toFixed(1)}천
+                  </span>
+                  <div
+                    className="w-full bg-[var(--color-primary-500)] rounded-t-lg transition-all"
+                    style={{
+                      height: `${(day.revenue / maxRevenue) * 100}%`,
+                      opacity: dayIndex === dailyStats.length - 1 ? 1 : 0.6,
+                    }}
                 />
                 <span className="text-xs text-[var(--color-neutral-500)]">{day.date}</span>
-              </div>
-            ))}
+                </div>
+              )
+            })}
           </div>
         </section>
 

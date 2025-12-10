@@ -1,26 +1,19 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft,
   Store,
   User,
-  Phone,
-  Mail,
-  MapPin,
   FileText,
   CheckCircle,
   XCircle,
   Clock,
   AlertCircle,
   Download,
-  Image as ImageIcon,
   Building,
   CreditCard,
-  Calendar,
-  ChevronRight,
 } from 'lucide-react'
 
 interface ApplicationDetail {
@@ -78,6 +71,28 @@ interface ApplicationDetail {
   reviewedAt?: string
 }
 
+// 상태별 배경색 클래스 (컴포넌트 외부로 추출)
+function getStatusBgClass(status: string): string {
+  const bgClasses: Record<string, string> = {
+    reviewing: 'bg-[var(--color-info-50)]',
+    pending: 'bg-[var(--color-warning-50)]',
+    approved: 'bg-[var(--color-success-50)]',
+    rejected: 'bg-[var(--color-error-50)]',
+  }
+  return bgClasses[status] || 'bg-[var(--color-neutral-50)]'
+}
+
+// 상태별 텍스트 색상 클래스 (컴포넌트 외부로 추출)
+function getStatusTextClass(status: string): string {
+  const textClasses: Record<string, string> = {
+    reviewing: 'text-[var(--color-info-700)]',
+    pending: 'text-[var(--color-warning-700)]',
+    approved: 'text-[var(--color-success-700)]',
+    rejected: 'text-[var(--color-error-700)]',
+  }
+  return textClasses[status] || 'text-[var(--color-neutral-700)]'
+}
+
 // Mock 데이터
 const MOCK_APPLICATION: ApplicationDetail = {
   id: '1',
@@ -133,7 +148,6 @@ const MOCK_APPLICATION: ApplicationDetail = {
 }
 
 export default function AdminApplicationDetailPage() {
-  const params = useParams()
   const [application] = useState(MOCK_APPLICATION)
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [showApproveModal, setShowApproveModal] = useState(false)
@@ -148,21 +162,6 @@ export default function AdminApplicationDetailPage() {
     documentsVerified.businessLicense &&
     documentsVerified.bankAccount &&
     documentsVerified.identityCard
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-[var(--color-warning-100)] text-[var(--color-warning-600)]'
-      case 'reviewing':
-        return 'bg-[var(--color-info-100)] text-[var(--color-info-600)]'
-      case 'approved':
-        return 'bg-[var(--color-success-100)] text-[var(--color-success-600)]'
-      case 'rejected':
-        return 'bg-[var(--color-error-100)] text-[var(--color-error-600)]'
-      default:
-        return ''
-    }
-  }
 
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -239,27 +238,11 @@ export default function AdminApplicationDetailPage() {
 
       <main className="pb-32">
         {/* 상태 배너 */}
-        <div className={`p-4 ${
-          application.status === 'reviewing'
-            ? 'bg-[var(--color-info-50)]'
-            : application.status === 'pending'
-            ? 'bg-[var(--color-warning-50)]'
-            : application.status === 'approved'
-            ? 'bg-[var(--color-success-50)]'
-            : 'bg-[var(--color-error-50)]'
-        }`}>
+        <div className={`p-4 ${getStatusBgClass(application.status)}`}>
           <div className="flex items-center gap-3">
             {getStatusIcon(application.status)}
             <div>
-              <p className={`font-medium ${
-                application.status === 'reviewing'
-                  ? 'text-[var(--color-info-700)]'
-                  : application.status === 'pending'
-                  ? 'text-[var(--color-warning-700)]'
-                  : application.status === 'approved'
-                  ? 'text-[var(--color-success-700)]'
-                  : 'text-[var(--color-error-700)]'
-              }`}>
+              <p className={`font-medium ${getStatusTextClass(application.status)}`}>
                 {getStatusLabel(application.status)}
               </p>
               <p className="text-xs text-[var(--color-neutral-500)]">

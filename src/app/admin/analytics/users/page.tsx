@@ -7,14 +7,11 @@ import {
   Users,
   UserPlus,
   UserMinus,
-  Calendar,
   Download,
   TrendingUp,
   TrendingDown,
   Activity,
-  ShoppingBag,
-  Clock,
-  Star
+  ShoppingBag
 } from 'lucide-react'
 
 interface UserMetrics {
@@ -58,6 +55,15 @@ const ageGroups = [
   { range: '40대', count: 645, percentage: 14 },
   { range: '50대+', count: 278, percentage: 6 }
 ]
+
+function getPeriodLabel(period: 'daily' | 'weekly' | 'monthly'): string {
+  const labels = {
+    daily: '일별',
+    weekly: '주별',
+    monthly: '월별',
+  }
+  return labels[period]
+}
 
 export default function AdminAnalyticsUsersPage() {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily')
@@ -133,7 +139,7 @@ export default function AdminAnalyticsUsersPage() {
                 cursor: 'pointer'
               }}
             >
-              {p === 'daily' ? '일별' : p === 'weekly' ? '주별' : '월별'}
+              {getPeriodLabel(p)}
             </button>
           ))}
         </div>
@@ -346,8 +352,8 @@ export default function AdminAnalyticsUsersPage() {
                 {cohortData.map(row => (
                   <tr key={row.month}>
                     <td style={{ padding: '8px', color: 'var(--color-text-primary)', fontWeight: 500 }}>{row.month}</td>
-                    {[row.m0, row.m1, row.m2, row.m3].map((value, i) => (
-                      <td key={i} style={{ padding: '8px', textAlign: 'center' }}>
+                    {[row.m0, row.m1, row.m2, row.m3].map((value, monthIndex) => (
+                      <td key={`${row.month}-m${monthIndex}`} style={{ padding: '8px', textAlign: 'center' }}>
                         {value > 0 ? (
                           <span style={{
                             display: 'inline-block',

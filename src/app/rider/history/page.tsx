@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, MapPin, Clock, Navigation2, Calendar, ChevronDown, Check } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, Navigation2, Calendar, Check } from 'lucide-react'
 
 interface DeliveryHistory {
   id: string

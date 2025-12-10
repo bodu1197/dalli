@@ -5,12 +5,10 @@ import { cn } from '@/lib/utils'
 import type { Address } from '@/types/address.types'
 
 interface AddressCardProps {
-  address: Address
-  isSelected?: boolean
-  onSelect?: () => void
-  onEdit?: () => void
-  onDelete?: () => void
-  showActions?: boolean
+  readonly address: Address
+  readonly isSelected?: boolean
+  readonly onSelect?: () => void
+  readonly showActions?: boolean
 }
 
 const labelIcons: Record<string, React.ReactNode> = {
@@ -23,17 +21,22 @@ export function AddressCard({
   address,
   isSelected,
   onSelect,
-  onEdit,
-  onDelete,
   showActions = false,
 }: AddressCardProps) {
   const icon = address.label ? labelIcons[address.label] : null
 
   return (
-    <div
+    <button
+      type="button"
       onClick={onSelect}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && onSelect) {
+          e.preventDefault()
+          onSelect()
+        }
+      }}
       className={cn(
-        'p-4 rounded-2xl border-2 transition-all',
+        'p-4 rounded-2xl border-2 transition-all w-full text-left',
         onSelect && 'cursor-pointer',
         isSelected
           ? 'border-[var(--color-primary-500)] bg-[var(--color-primary-50)]'
@@ -81,24 +84,32 @@ export function AddressCard({
         </div>
 
         {/* 선택 체크 또는 액션 버튼 */}
-        {isSelected ? (
-          <div className="w-6 h-6 rounded-full bg-[var(--color-primary-500)] flex items-center justify-center">
-            <Check className="w-4 h-4 text-white" />
-          </div>
-        ) : showActions ? (
-          <div className="relative">
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                // 드롭다운 메뉴 표시 로직
-              }}
-              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)]"
-            >
-              <MoreVertical className="w-5 h-5 text-[var(--color-neutral-400)]" />
-            </button>
-          </div>
-        ) : null}
+        {(() => {
+          if (isSelected) {
+            return (
+              <div className="w-6 h-6 rounded-full bg-[var(--color-primary-500)] flex items-center justify-center">
+                <Check className="w-4 h-4 text-white" />
+              </div>
+            )
+          }
+          if (showActions) {
+            return (
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    // 드롭다운 메뉴 표시 로직
+                  }}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)]"
+                >
+                  <MoreVertical className="w-5 h-5 text-[var(--color-neutral-400)]" />
+                </button>
+              </div>
+            )
+          }
+          return null
+        })()}
       </div>
-    </div>
+    </button>
   )
 }

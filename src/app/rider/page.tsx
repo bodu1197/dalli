@@ -7,7 +7,6 @@ import {
   Package,
   Clock,
   DollarSign,
-  MapPin,
   Bell,
   Settings,
   ChevronRight,

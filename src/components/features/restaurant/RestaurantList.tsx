@@ -5,16 +5,16 @@ import { Spinner } from '@/components/ui/Spinner'
 import type { Restaurant } from '@/types/restaurant.types'
 
 interface RestaurantListProps {
-  restaurants: Restaurant[]
-  isLoading?: boolean
-  emptyMessage?: string
+  readonly restaurants: Restaurant[]
+  readonly isLoading?: boolean
+  readonly emptyMessage?: string
 }
 
 export function RestaurantList({
   restaurants,
   isLoading,
   emptyMessage = '주변에 가게가 없습니다',
-}: RestaurantListProps) {
+}: Readonly<RestaurantListProps>) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">

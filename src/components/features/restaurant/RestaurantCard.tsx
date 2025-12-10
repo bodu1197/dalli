@@ -8,11 +8,11 @@ import { Badge } from '@/components/ui/Badge'
 import type { Restaurant } from '@/types/restaurant.types'
 
 interface RestaurantCardProps {
-  restaurant: Restaurant
-  isAd?: boolean
+  readonly restaurant: Restaurant
+  readonly isAd?: boolean
 }
 
-export function RestaurantCard({ restaurant, isAd }: RestaurantCardProps) {
+export function RestaurantCard({ restaurant, isAd }: Readonly<RestaurantCardProps>) {
   const formattedDeliveryFee =
     restaurant.deliveryFee === 0
       ? '무료배달'

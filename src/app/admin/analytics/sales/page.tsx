@@ -8,7 +8,6 @@ import {
   TrendingDown,
   Calendar,
   Download,
-  ChevronDown,
   DollarSign,
   ShoppingBag,
   Users,
@@ -54,7 +53,7 @@ const topCategories = [
 
 export default function AdminAnalyticsSalesPage() {
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily')
-  const [dateRange, setDateRange] = useState('2024-01-14 ~ 2024-01-20')
+  const dateRange = '2024-01-14 ~ 2024-01-20'
 
   const totalSales = mockDailyData.reduce((sum, d) => sum + d.totalSales, 0)
   const totalOrders = mockDailyData.reduce((sum, d) => sum + d.orderCount, 0)
@@ -130,7 +129,11 @@ export default function AdminAnalyticsSalesPage() {
                 whiteSpace: 'nowrap'
               }}
             >
-              {p === 'daily' ? '일별' : p === 'weekly' ? '주별' : '월별'}
+              {(() => {
+                if (p === 'daily') return '일별'
+                if (p === 'weekly') return '주별'
+                return '월별'
+              })()}
             </button>
           ))}
           <div style={{
@@ -251,7 +254,7 @@ export default function AdminAnalyticsSalesPage() {
             일별 매출 추이
           </h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {mockDailyData.map((day, index) => {
+            {mockDailyData.map((day) => {
               const maxSales = Math.max(...mockDailyData.map(d => d.totalSales))
               const percentage = (day.totalSales / maxSales) * 100
 
@@ -298,7 +301,7 @@ export default function AdminAnalyticsSalesPage() {
             <Store size={18} color="var(--color-text-tertiary)" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {topStores.map((store, index) => (
+            {topStores.map((store) => (
               <div
                 key={store.id}
                 style={{

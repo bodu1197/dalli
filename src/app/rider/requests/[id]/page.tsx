@@ -147,8 +147,8 @@ export default function RiderRequestDetailPage() {
           <div className="mt-4 pt-4 border-t border-[var(--color-neutral-100)]">
             <p className="text-sm font-medium text-[var(--color-neutral-700)] mb-2">주문 내역</p>
             <div className="space-y-1">
-              {request.menuItems.map((item, i) => (
-                <p key={i} className="text-sm text-[var(--color-neutral-600)]">
+              {request.menuItems.map((item) => (
+                <p key={`req-item-${item.name}`} className="text-sm text-[var(--color-neutral-600)]">
                   {item.name} x {item.quantity}
                 </p>
               ))}

@@ -65,7 +65,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'dalligo-auth',
-      partialize: (state) => ({
+      partialize: () => ({
         // 민감한 정보는 persist하지 않음
         // 세션 복원은 Supabase가 처리
       }),

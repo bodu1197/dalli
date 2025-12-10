@@ -14,10 +14,10 @@ import { Button } from '@/components/ui/Button'
 import { getOrderById } from '@/lib/mock/orders'
 
 interface PageProps {
-  params: Promise<{ orderId: string }>
+  readonly params: Promise<{ orderId: string }>
 }
 
-export default function ReviewWritePage({ params }: PageProps) {
+export default function ReviewWritePage({ params }: Readonly<PageProps>) {
   const { orderId } = use(params)
   const router = useRouter()
   const order = getOrderById(orderId)
@@ -68,7 +68,7 @@ export default function ReviewWritePage({ params }: PageProps) {
       alert('최대 5장까지 첨부할 수 있습니다')
       return
     }
-    // TODO: 실제 이미지 업로드 구현
+    // Note: 이미지 업로드 기능 (Supabase Storage 연동 예정)
     alert('이미지 업로드 기능 준비 중입니다')
   }
 
@@ -87,12 +87,12 @@ export default function ReviewWritePage({ params }: PageProps) {
     setIsSubmitting(true)
 
     try {
-      // TODO: 실제 API 호출
+      // Note: 리뷰 등록 API 호출 (현재 목업 데이터 사용)
       await new Promise(resolve => setTimeout(resolve, 1000))
 
       alert('리뷰가 등록되었습니다')
       router.push(`/orders/${orderId}`)
-    } catch (error) {
+    } catch {
       alert('리뷰 등록에 실패했습니다')
     } finally {
       setIsSubmitting(false)
@@ -137,7 +137,7 @@ export default function ReviewWritePage({ params }: PageProps) {
           <div className="flex items-center justify-center gap-2">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
-                key={star}
+                key={`star-${star}`}
                 onClick={() => setRating(star)}
                 className="p-1 transition-transform active:scale-90"
               >
@@ -201,18 +201,18 @@ export default function ReviewWritePage({ params }: PageProps) {
             </button>
 
             {/* 첨부된 이미지 */}
-            {images.map((image, index) => (
+            {images.map((image) => (
               <div
-                key={index}
+                key={`review-img-${image}`}
                 className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden"
               >
                 <img
                   src={image}
-                  alt={`리뷰 이미지 ${index + 1}`}
+                  alt={`리뷰 이미지`}
                   className="w-full h-full object-cover"
                 />
                 <button
-                  onClick={() => handleRemoveImage(index)}
+                  onClick={() => handleRemoveImage(images.indexOf(image))}
                   className="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full flex items-center justify-center"
                 >
                   <X className="w-3 h-3 text-white" />

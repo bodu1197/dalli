@@ -65,13 +65,15 @@ export function useCurrentLocation(
       }
 
       // 좌표를 주소로 변환
-      let address: string | null = null
-      try {
-        address = await getAddressFromCoordinates(coordinates)
-      } catch (error) {
-        console.error('주소 변환 실패:', error)
-        // 주소 변환 실패해도 좌표는 사용 가능
-      }
+      const address = await (async (): Promise<string | null> => {
+        try {
+          return await getAddressFromCoordinates(coordinates)
+        } catch (error) {
+          console.error('주소 변환 실패:', error)
+          // 주소 변환 실패해도 좌표는 사용 가능
+          return null
+        }
+      })()
 
       setState({
         status: 'success',
@@ -80,21 +82,21 @@ export function useCurrentLocation(
         error: null,
       })
     } catch (error) {
-      let errorMessage = '위치를 가져오는데 실패했습니다'
-
-      if (error instanceof GeolocationPositionError) {
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMessage = '위치 권한이 거부되었습니다. 설정에서 권한을 허용해주세요'
-            break
-          case error.POSITION_UNAVAILABLE:
-            errorMessage = '위치 정보를 사용할 수 없습니다'
-            break
-          case error.TIMEOUT:
-            errorMessage = '위치 요청 시간이 초과되었습니다'
-            break
+      const errorMessage = ((): string => {
+        if (error instanceof GeolocationPositionError) {
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              return '위치 권한이 거부되었습니다. 설정에서 권한을 허용해주세요'
+            case error.POSITION_UNAVAILABLE:
+              return '위치 정보를 사용할 수 없습니다'
+            case error.TIMEOUT:
+              return '위치 요청 시간이 초과되었습니다'
+            default:
+              return '위치를 가져오는데 실패했습니다'
+          }
         }
-      }
+        return '위치를 가져오는데 실패했습니다'
+      })()
 
       setState({
         status: 'error',

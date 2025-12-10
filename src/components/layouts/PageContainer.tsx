@@ -1,11 +1,11 @@
+import { type PropsWithChildren } from 'react'
 import { cn } from '@/lib/utils'
 
 interface PageContainerProps {
-  children: React.ReactNode
-  className?: string
-  hasHeader?: boolean
-  hasBottomNav?: boolean
-  hasStickyBottom?: boolean
+  readonly className?: string
+  readonly hasHeader?: boolean
+  readonly hasBottomNav?: boolean
+  readonly hasStickyBottom?: boolean
 }
 
 export function PageContainer({
@@ -14,7 +14,7 @@ export function PageContainer({
   hasHeader = true,
   hasBottomNav = true,
   hasStickyBottom = false,
-}: PageContainerProps) {
+}: PropsWithChildren<PageContainerProps>) {
   return (
     <main
       className={cn(

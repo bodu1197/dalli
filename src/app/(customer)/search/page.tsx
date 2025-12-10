@@ -33,7 +33,8 @@ export default function SearchPage() {
     if (saved) {
       try {
         setRecentSearches(JSON.parse(saved))
-      } catch {
+      } catch (error) {
+        console.error('Failed to parse recent searches from localStorage:', error)
         setRecentSearches([])
       }
     }
@@ -175,14 +176,14 @@ export default function SearchPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            {POPULAR_KEYWORDS.map((popularKeyword, index) => (
+            {POPULAR_KEYWORDS.map((popularKeyword) => (
               <button
                 key={popularKeyword}
                 onClick={() => handleSearch(popularKeyword)}
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-neutral-100)] hover:bg-[var(--color-neutral-200)] transition-colors"
               >
                 <span className="text-sm font-bold text-[var(--color-primary-500)]">
-                  {index + 1}
+                  {POPULAR_KEYWORDS.indexOf(popularKeyword) + 1}
                 </span>
                 <span className="text-sm text-[var(--color-neutral-700)]">
                   {popularKeyword}

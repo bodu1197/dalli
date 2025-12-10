@@ -150,12 +150,12 @@ function ReviewCard({
   isMenuOpen,
   onToggleMenu,
   onDelete,
-}: {
+}: Readonly<{
   review: MyReview
   isMenuOpen: boolean
   onToggleMenu: () => void
   onDelete: () => void
-}) {
+}>) {
   const formattedDate = new Date(review.createdAt).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -182,14 +182,23 @@ function ReviewCard({
 
           {isMenuOpen && (
             <>
-              <div
-                className="fixed inset-0 z-40"
+              <button
+                type="button"
+                className="fixed inset-0 z-40 cursor-default bg-transparent border-none p-0 m-0"
                 onClick={onToggleMenu}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onToggleMenu()
+                  }
+                }}
+                aria-label="메뉴 닫기"
+                tabIndex={0}
               />
               <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-xl shadow-lg border border-[var(--color-neutral-100)] py-1 z-50">
                 <button
                   onClick={() => {
-                    // TODO: 수정 기능
+                    // Note: Review edit functionality (to be implemented)
                     alert('리뷰 수정 기능 준비 중입니다')
                     onToggleMenu()
                   }}
@@ -214,11 +223,11 @@ function ReviewCard({
       {/* 별점 + 날짜 */}
       <div className="flex items-center gap-2 mb-3">
         <div className="flex items-center gap-0.5">
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: 5 }).map((_, starIndex) => (
             <Star
-              key={i}
+              key={`review-${review.id}-star-${starIndex}`}
               className={`w-4 h-4 ${
-                i < review.rating
+                starIndex < review.rating
                   ? 'fill-[var(--color-warning-400)] text-[var(--color-warning-400)]'
                   : 'text-[var(--color-neutral-200)]'
               }`}
@@ -238,9 +247,9 @@ function ReviewCard({
       {/* 이미지 */}
       {review.images.length > 0 && (
         <div className="flex gap-2 mt-3">
-          {review.images.map((img, i) => (
+          {review.images.map((img) => (
             <div
-              key={i}
+              key={`${review.id}-img-${img}`}
               className="w-20 h-20 bg-[var(--color-neutral-200)] rounded-lg overflow-hidden"
             >
               <img src={img} alt="" className="w-full h-full object-cover" />

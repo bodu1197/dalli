@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Search, Filter, ChevronRight, User, Store, Bike, Shield, MoreVertical } from 'lucide-react'
+import { ArrowLeft, Search, ChevronRight, User, Store, Bike, Shield } from 'lucide-react'
 
 interface UserItem {
   id: string

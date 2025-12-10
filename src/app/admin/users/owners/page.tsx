@@ -297,12 +297,14 @@ export default function AdminOwnersPage() {
           borderRadius: '12px',
           overflow: 'hidden'
         }}>
-          {filteredOwners.map((owner, index) => (
-            <div
-              key={owner.id}
-              style={{
-                padding: '16px 20px',
-                borderBottom: index < filteredOwners.length - 1 ? '1px solid var(--color-border)' : 'none'
+          {filteredOwners.map((owner) => {
+            const ownerIndex = filteredOwners.indexOf(owner)
+            return (
+              <div
+                key={owner.id}
+                style={{
+                  padding: '16px 20px',
+                  borderBottom: ownerIndex < filteredOwners.length - 1 ? '1px solid var(--color-border)' : 'none'
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -488,7 +490,8 @@ export default function AdminOwnersPage() {
                 </div>
               </div>
             </div>
-          ))}
+            )
+          })}
 
           {filteredOwners.length === 0 && (
             <div style={{

@@ -31,6 +31,50 @@ curl -X POST "https://api.supabase.com/v1/projects/julomhqvaasuxtbhgeqx/database
 
 ---
 
+## 🔍 SonarQube 설정 (코드 품질 검사)
+
+> **로컬 SonarQube 서버 사용** (localhost:9000)
+
+| 항목 | 값 |
+|------|-----|
+| **Host URL** | `http://localhost:9000` |
+| **Project Key** | `dalli` |
+| **Token** | `sqa_a6454668bd672faa8dde9d8bb366139925a0f817` |
+
+### SonarQube MCP 사용법
+```typescript
+// 프로젝트 이슈 조회
+mcp__sonarqube__issues({ project_key: "dalli" })
+
+// 품질 게이트 상태 확인
+mcp__sonarqube__quality_gate_status({ project_key: "dalli" })
+
+// 시스템 상태 확인
+mcp__sonarqube__system_ping()
+```
+
+### 스캐너 실행 (수동)
+```bash
+# SonarQube 스캐너 실행 (Docker 권장)
+docker run --rm \
+  -e SONAR_HOST_URL="http://host.docker.internal:9000" \
+  -e SONAR_TOKEN="sqa_a6454668bd672faa8dde9d8bb366139925a0f817" \
+  -v "$(pwd):/usr/src" \
+  sonarsource/sonar-scanner-cli
+
+# 또는 npx 사용
+npx sonar-scanner
+```
+
+### .env.sonar 파일 (수동 생성 필요)
+```
+SONAR_TOKEN=sqa_a6454668bd672faa8dde9d8bb366139925a0f817
+SONAR_HOST_URL=http://localhost:9000
+SONAR_PROJECT_KEY=dalli
+```
+
+---
+
 ## 📋 프로젝트 개요
 
 | 항목 | 내용 |

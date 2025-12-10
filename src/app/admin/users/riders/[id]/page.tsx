@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
 import {
   ArrowLeft,
   Bike,
@@ -17,7 +16,6 @@ import {
   Package,
   Clock,
   FileCheck,
-  Shield
 } from 'lucide-react'
 
 interface DeliveryHistory {
@@ -97,7 +95,6 @@ const vehicleConfig: Record<string, { label: string; icon: string }> = {
 }
 
 export default function RiderDetailPage() {
-  const params = useParams()
   const [rider] = useState<RiderDetail>(mockRider)
   const [showBanModal, setShowBanModal] = useState(false)
 

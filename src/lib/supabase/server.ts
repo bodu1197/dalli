@@ -19,12 +19,14 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
+            for (const { name, value, options } of cookiesToSet) {
               cookieStore.set(name, value, options)
-            )
-          } catch {
-            // 서버 컴포넌트에서 호출된 경우 무시
+            }
+          } catch (error) {
+            // Intentionally ignored: 서버 컴포넌트에서 호출된 경우 무시
             // 미들웨어에서 세션을 갱신함
+            // Error is expected and safe to ignore in server components
+            console.debug('Cookie setting failed (expected in server components):', error)
           }
         },
       },

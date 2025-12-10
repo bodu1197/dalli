@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -18,7 +17,6 @@ import {
   MessageSquare,
   ChevronRight,
   AlertTriangle,
-  Calendar,
   DollarSign,
   TrendingUp,
   User,
@@ -100,7 +98,6 @@ const MOCK_RECENT_REVIEWS = [
 ]
 
 export default function AdminStoreDetailPage() {
-  const params = useParams()
   const [store] = useState(MOCK_STORE)
   const [showSuspendModal, setShowSuspendModal] = useState(false)
 

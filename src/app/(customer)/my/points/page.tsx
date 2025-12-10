@@ -200,7 +200,7 @@ export default function PointsPage() {
   )
 }
 
-function PointHistoryItem({ history }: { history: PointHistory }) {
+function PointHistoryItem({ history }: Readonly<{ history: PointHistory }>) {
   const isEarn = history.type === 'earn'
   const isExpire = history.type === 'expire'
 
@@ -211,28 +211,31 @@ function PointHistoryItem({ history }: { history: PointHistory }) {
     minute: '2-digit',
   })
 
+  const getIconBgClass = (): string => {
+    if (isEarn) return 'bg-[var(--color-success-50)]'
+    if (isExpire) return 'bg-[var(--color-neutral-100)]'
+    return 'bg-[var(--color-error-50)]'
+  }
+
+  const getIconColorClass = (): string => {
+    if (isExpire) return 'text-[var(--color-neutral-400)]'
+    return 'text-[var(--color-error-500)]'
+  }
+
+  const getAmountColorClass = (): string => {
+    if (isEarn) return 'text-[var(--color-success-500)]'
+    if (isExpire) return 'text-[var(--color-neutral-400)]'
+    return 'text-[var(--color-error-500)]'
+  }
+
   return (
     <div className="flex items-center gap-4 px-4 py-4 bg-white">
       {/* 아이콘 */}
-      <div
-        className={`w-10 h-10 rounded-full flex items-center justify-center ${
-          isEarn
-            ? 'bg-[var(--color-success-50)]'
-            : isExpire
-            ? 'bg-[var(--color-neutral-100)]'
-            : 'bg-[var(--color-error-50)]'
-        }`}
-      >
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getIconBgClass()}`}>
         {isEarn ? (
           <TrendingUp className="w-5 h-5 text-[var(--color-success-500)]" />
         ) : (
-          <TrendingDown
-            className={`w-5 h-5 ${
-              isExpire
-                ? 'text-[var(--color-neutral-400)]'
-                : 'text-[var(--color-error-500)]'
-            }`}
-          />
+          <TrendingDown className={`w-5 h-5 ${getIconColorClass()}`} />
         )}
       </div>
 
@@ -252,15 +255,7 @@ function PointHistoryItem({ history }: { history: PointHistory }) {
       </div>
 
       {/* 포인트 금액 */}
-      <p
-        className={`font-bold ${
-          isEarn
-            ? 'text-[var(--color-success-500)]'
-            : isExpire
-            ? 'text-[var(--color-neutral-400)]'
-            : 'text-[var(--color-error-500)]'
-        }`}
-      >
+      <p className={`font-bold ${getAmountColorClass()}`}>
         {isEarn ? '+' : ''}
         {history.amount.toLocaleString()}P
       </p>
