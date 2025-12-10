@@ -106,7 +106,7 @@ export default function HomePage() {
                 <div className="w-14 h-14 rounded-full bg-[#df0012] flex items-center justify-center">
                   <Bike className="w-7 h-7 text-white" />
                 </div>
-                <span className="text-xs font-medium text-gray-900">음식배달</span>
+                <span className="text-xs font-medium text-gray-900 whitespace-nowrap">음식배달</span>
               </Link>
 
               {/* 픽업 */}
@@ -117,7 +117,7 @@ export default function HomePage() {
                 <div className="w-14 h-14 rounded-full bg-[#df0012] flex items-center justify-center">
                   <Store className="w-7 h-7 text-white" />
                 </div>
-                <span className="text-xs font-medium text-gray-900">픽업</span>
+                <span className="text-xs font-medium text-gray-900 whitespace-nowrap">픽업</span>
               </Link>
 
               {/* 장보기·쇼핑 */}
@@ -128,7 +128,7 @@ export default function HomePage() {
                 <div className="w-14 h-14 rounded-full bg-[#df0012] flex items-center justify-center">
                   <ShoppingBag className="w-7 h-7 text-white" />
                 </div>
-                <span className="text-xs font-medium text-gray-900">장보기·쇼핑</span>
+                <span className="text-xs font-medium text-gray-900 whitespace-nowrap">장보기·쇼핑</span>
               </Link>
 
               {/* 선물하기 */}
@@ -139,7 +139,7 @@ export default function HomePage() {
                 <div className="w-14 h-14 rounded-full bg-[#df0012] flex items-center justify-center">
                   <Gift className="w-7 h-7 text-white" />
                 </div>
-                <span className="text-xs font-medium text-gray-900">선물하기</span>
+                <span className="text-xs font-medium text-gray-900 whitespace-nowrap">선물하기</span>
               </Link>
             </div>
           </section>
