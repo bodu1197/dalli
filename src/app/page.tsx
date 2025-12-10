@@ -101,14 +101,14 @@ export default function HomePage() {
               {/* 음식배달 */}
               <button
                 onClick={() => setActivePlatform('delivery')}
-                className="flex flex-col items-center gap-3 p-6 rounded-2xl transition-all hover:shadow-md"
+                className="flex items-center justify-center gap-2 p-4 rounded-2xl transition-all hover:shadow-md"
               >
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                   activePlatform === 'delivery'
                     ? 'bg-[#df0012] shadow-lg shadow-[#df0012]/30'
                     : 'bg-gray-100'
                 }`}>
-                  <Bike className={`w-10 h-10 ${
+                  <Bike className={`w-6 h-6 ${
                     activePlatform === 'delivery'
                       ? 'text-white'
                       : 'text-gray-500'
@@ -124,20 +124,20 @@ export default function HomePage() {
               {/* 직접수령 (포장) */}
               <button
                 onClick={() => setActivePlatform('pickup')}
-                className="flex flex-col items-center gap-3 p-6 rounded-2xl transition-all hover:shadow-md"
+                className="flex items-center justify-center gap-2 p-4 rounded-2xl transition-all hover:shadow-md"
               >
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                   activePlatform === 'pickup'
                     ? 'bg-[#df0012] shadow-lg shadow-[#df0012]/30'
                     : 'bg-gray-100'
                 }`}>
-                  <Store className={`w-10 h-10 ${
+                  <Store className={`w-6 h-6 ${
                     activePlatform === 'pickup'
                       ? 'text-white'
                       : 'text-gray-500'
                   }`} />
                 </div>
-                <span className={`text-sm whitespace-nowrap ${
+                <span className={`text-base whitespace-nowrap ${
                   activePlatform === 'pickup'
                     ? 'font-bold text-[#df0012]'
                     : 'font-medium text-gray-700'
