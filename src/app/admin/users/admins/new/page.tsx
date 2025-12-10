@@ -256,12 +256,11 @@ export default function NewAdminPage() {
 
     try {
       // API call would go here
-      console.log('Creating admin:', formData)
+      // TODO: Replace with actual API call
       await new Promise(resolve => setTimeout(resolve, 1500))
 
       router.push('/admin/users/admins')
-    } catch (error) {
-      console.error('Failed to create admin:', error)
+    } catch {
       setErrors({ submit: '관리자 등록 중 오류가 발생했습니다' })
     } finally {
       setIsSubmitting(false)

@@ -267,27 +267,27 @@ export default function AdminSettingsFeesPage(): React.ReactElement {
       value: number | boolean | string
     ) => {
       setConfig((prev) => {
+        const sectionData = prev[section]
         if (field.includes('.')) {
           const [parent, child] = field.split('.')
-          const sectionData = prev[section] as unknown as Record<
-            string,
-            Record<string, unknown>
-          >
-          return {
-            ...prev,
-            [section]: {
-              ...sectionData,
-              [parent]: {
-                ...sectionData[parent],
-                [child]: value,
+          const parentObj = sectionData[parent as keyof typeof sectionData]
+          if (typeof parentObj === 'object' && parentObj !== null) {
+            return {
+              ...prev,
+              [section]: {
+                ...sectionData,
+                [parent]: {
+                  ...parentObj,
+                  [child]: value,
+                },
               },
-            },
+            }
           }
         }
         return {
           ...prev,
           [section]: {
-            ...prev[section],
+            ...sectionData,
             [field]: value,
           },
         }

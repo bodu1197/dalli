@@ -10,6 +10,7 @@ const variantClasses: Record<StatusVariant, string> = {
   info: 'bg-blue-100 text-blue-700',
   default: 'bg-gray-100 text-gray-700',
   pending: 'bg-orange-100 text-orange-700',
+  primary: 'bg-blue-100 text-blue-700',
 }
 
 export function StatusBadge({

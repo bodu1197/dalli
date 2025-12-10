@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+import { ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { PageHeaderProps, PageHeaderAction } from '../types'
 
@@ -12,16 +14,27 @@ const actionVariantClasses = {
 export function PageHeader({
   title,
   description,
+  backLink,
   actions,
   className,
 }: PageHeaderProps): React.ReactElement {
   return (
     <div className={cn('flex items-center justify-between', className)}>
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-        {description ? (
-          <p className="mt-1 text-sm text-gray-500">{description}</p>
+      <div className="flex items-center gap-3">
+        {backLink ? (
+          <Link
+            href={backLink}
+            className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
         ) : null}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+          {description ? (
+            <p className="mt-1 text-sm text-gray-500">{description}</p>
+          ) : null}
+        </div>
       </div>
       {actions && actions.length > 0 ? (
         <div className="flex items-center gap-3">

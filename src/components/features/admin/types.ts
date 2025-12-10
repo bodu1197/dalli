@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react'
 // ========================================
 // 통계 카드 타입
 // ========================================
-export type IconColorType = 'primary' | 'success' | 'warning' | 'error' | 'info'
+export type IconColorType = 'primary' | 'success' | 'warning' | 'error' | 'info' | 'default'
 
 export interface StatsCardProps {
   readonly icon: LucideIcon
@@ -81,7 +81,7 @@ export interface TabNavigationProps {
 // ========================================
 // 상태 배지 타입
 // ========================================
-export type StatusVariant = 'success' | 'warning' | 'error' | 'info' | 'default' | 'pending'
+export type StatusVariant = 'success' | 'warning' | 'error' | 'info' | 'default' | 'pending' | 'primary'
 
 export interface StatusBadgeProps {
   readonly variant: StatusVariant
@@ -143,6 +143,7 @@ export interface PageHeaderAction {
 export interface PageHeaderProps {
   readonly title: string
   readonly description?: string
+  readonly backLink?: string
   readonly actions?: ReadonlyArray<PageHeaderAction>
   readonly className?: string
 }

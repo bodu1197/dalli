@@ -9,7 +9,7 @@ describe('Kakao Geocoding API', () => {
 
   beforeEach(async () => {
     originalFetch = global.fetch
-    global.fetch = vi.fn() as any // Cast to any to bypass TS error
+    global.fetch = vi.fn() as typeof fetch
     vi.clearAllMocks()
 
     // Stub the environment variable

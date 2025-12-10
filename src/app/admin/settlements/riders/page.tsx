@@ -195,10 +195,11 @@ const SETTLEMENT_TABS: ReadonlyArray<TabItem> = [
   { href: '/admin/settlements/history', label: '정산 내역' },
 ]
 
-const FILTER_CONFIG: ReadonlyArray<FilterConfig> = [
+const createFilterConfig = (filters: Record<string, string>): ReadonlyArray<FilterConfig> => [
   {
     name: 'status',
     label: '상태',
+    value: filters.status,
     options: [
       { value: 'all', label: '전체' },
       { value: 'pending', label: '대기중' },
@@ -210,6 +211,7 @@ const FILTER_CONFIG: ReadonlyArray<FilterConfig> = [
   {
     name: 'period',
     label: '기간',
+    value: filters.period,
     options: [
       { value: 'this_week', label: '이번 주' },
       { value: 'last_week', label: '지난 주' },
@@ -465,10 +467,7 @@ export default function RiderSettlementsPage(): React.ReactElement {
         render: (settlement) => {
           const config = statusConfig[settlement.status]
           return (
-            <StatusBadge
-              variant={config.variant}
-              icon={getStatusIcon(settlement.status)}
-            >
+            <StatusBadge variant={config.variant}>
               {config.label}
             </StatusBadge>
           )
@@ -492,18 +491,20 @@ export default function RiderSettlementsPage(): React.ReactElement {
       <PageHeader
         title="라이더 정산"
         description="라이더별 배달비 정산 현황을 관리합니다"
-        actions={
-          <>
-            <button className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50">
-              <Download className="h-4 w-4" />
-              내보내기
-            </button>
-            <button className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700">
-              <Send className="h-4 w-4" />
-              일괄 정산
-            </button>
-          </>
-        }
+        actions={[
+          {
+            label: '내보내기',
+            onClick: () => {},
+            icon: Download,
+            variant: 'outline',
+          },
+          {
+            label: '일괄 정산',
+            onClick: () => {},
+            icon: Send,
+            variant: 'primary',
+          },
+        ]}
       />
 
       {/* Stats Cards */}
@@ -512,7 +513,7 @@ export default function RiderSettlementsPage(): React.ReactElement {
       {/* Tabs */}
       <TabNavigation
         tabs={SETTLEMENT_TABS}
-        currentPath="/admin/settlements/riders"
+        activeHref="/admin/settlements/riders"
         className="mb-5"
       />
 
@@ -521,8 +522,7 @@ export default function RiderSettlementsPage(): React.ReactElement {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="라이더명, 전화번호, 정산ID로 검색"
-        filters={FILTER_CONFIG}
-        filterValues={filters}
+        filters={createFilterConfig(filters)}
         onFilterChange={handleFilterChange}
         onReset={handleResetFilters}
         className="mb-5"
@@ -564,7 +564,6 @@ export default function RiderSettlementsPage(): React.ReactElement {
                 </div>
                 <StatusBadge
                   variant={statusConfig[selectedSettlement.status].variant}
-                  icon={getStatusIcon(selectedSettlement.status)}
                 >
                   {statusConfig[selectedSettlement.status].label}
                 </StatusBadge>
@@ -667,27 +666,9 @@ export default function RiderSettlementsPage(): React.ReactElement {
         onConfirm={confirmProcess}
         title="정산 처리"
         message={
-          selectedSettlement ? (
-            <div className="space-y-3">
-              <div className="rounded-lg bg-gray-50 p-4 text-left">
-                <p className="mb-2 font-semibold">
-                  {selectedSettlement.riderName}
-                </p>
-                <p className="mb-3 text-sm text-gray-600">
-                  {selectedSettlement.bankAccount.bank}{' '}
-                  {selectedSettlement.bankAccount.accountNumber}
-                </p>
-                <p className="text-xl font-bold text-blue-600">
-                  {formatCurrency(selectedSettlement.netAmount)}
-                </p>
-              </div>
-              <p className="text-gray-600">
-                위 계좌로 정산금을 송금하시겠습니까?
-              </p>
-            </div>
-          ) : (
-            ''
-          )
+          selectedSettlement
+            ? `${selectedSettlement.riderName}님에게 ${formatCurrency(selectedSettlement.netAmount)}을 ${selectedSettlement.bankAccount.bank} ${selectedSettlement.bankAccount.accountNumber}로 송금하시겠습니까?`
+            : ''
         }
         confirmText="정산하기"
         variant="info"
