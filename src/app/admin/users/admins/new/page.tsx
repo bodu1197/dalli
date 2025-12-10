@@ -230,9 +230,9 @@ export default function NewAdminPage() {
     const result = adminFormSchema.safeParse(formData)
     if (!result.success) {
       const newErrors: Record<string, string> = {}
-      for (const error of result.error.errors) {
-        if (error.path[0]) {
-          newErrors[error.path[0] as string] = error.message
+      for (const issue of result.error.issues) {
+        if (issue.path[0]) {
+          newErrors[issue.path[0] as string] = issue.message
         }
       }
       setErrors(newErrors)
