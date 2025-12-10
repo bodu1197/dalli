@@ -28,7 +28,10 @@ const adminFormSchema = z.object({
   name: z.string().min(1, '이름을 입력해주세요'),
   email: z.string().email('올바른 이메일 형식이 아닙니다'),
   phone: z.string().regex(/^01[0-9]-?[0-9]{4}-?[0-9]{4}$/, '올바른 전화번호 형식이 아닙니다'),
-  password: z.string().min(8, '비밀번호는 8자 이상이어야 합니다').regex(/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, '비밀번호는 대소문자와 숫자를 포함해야 합니다'),
+  password: z.string().min(8, '비밀번호는 8자 이상이어야 합니다').refine(
+    (val) => /[a-z]/.test(val) && /[A-Z]/.test(val) && /\d/.test(val),
+    '비밀번호는 대소문자와 숫자를 포함해야 합니다'
+  ),
   confirmPassword: z.string(),
   role: z.enum(['admin', 'manager', 'support']),
   department: z.string().min(1, '부서를 선택해주세요'),

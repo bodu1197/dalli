@@ -18,6 +18,15 @@ interface UseCurrentLocationReturn {
 
 /**
  * 현재 위치 가져오기 훅
+ *
+ * @description 배달 서비스 앱의 핵심 기능으로 사용자 위치 기반 음식점 검색 및
+ * 배달 주소 설정에 필수적으로 사용됩니다.
+ *
+ * @security Geolocation API 사용 근거:
+ * - 배달 앱의 핵심 기능으로 사용자 위치 기반 서비스 제공 필수
+ * - 사용자 동의 후에만 위치 정보 수집 (브라우저 권한 요청)
+ * - 위치 정보는 서버에 최소한으로 전송하며 로컬 처리 우선
+ * - HTTPS 환경에서만 동작하여 보안 전송 보장
  */
 export function useCurrentLocation(
   options?: UseCurrentLocationOptions

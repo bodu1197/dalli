@@ -46,8 +46,10 @@ export default function AdminCouponNewPage() {
 
   const generateCode = (): void => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    const code = Array.from({ length: 8 }, () =>
-      chars.charAt(Math.floor(Math.random() * chars.length))
+    const randomValues = new Uint32Array(8)
+    crypto.getRandomValues(randomValues)
+    const code = Array.from(randomValues, (val) =>
+      chars.charAt(val % chars.length)
     ).join('')
     setForm({ ...form, code })
   }
