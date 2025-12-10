@@ -97,7 +97,7 @@ export default function HomePage() {
           </section>
 
           {/* 플랫폼 카테고리 */}
-          <section className="px-4 py-6 bg-white">
+          <section className="px-4 pt-6 pb-4 bg-white">
             <div className="grid grid-cols-4 gap-4">
               {/* 음식배달 - ACTIVE */}
               <Link
@@ -146,8 +146,7 @@ export default function HomePage() {
           </section>
 
           {/* 음식 카테고리 */}
-          <section className="px-4 py-4 bg-white border-t border-gray-100">
-            <h2 className="text-base font-bold mb-4 text-gray-900">음식 종류</h2>
+          <section className="px-4 pt-[30px] pb-4 bg-white">
             <CategoryGrid />
           </section>
 
