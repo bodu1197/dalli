@@ -146,12 +146,12 @@ export default function HomePage() {
           </section>
 
           {/* 음식 카테고리 */}
-          <section className="px-4 pt-[30px] pb-4 bg-white">
+          <section className="px-4 pt-[30px] pb-5 bg-white">
             <CategoryGrid />
           </section>
 
           {/* 식당 리스트 */}
-          <section className="mt-2 bg-white">
+          <section className="bg-white">
             {/* 탭 */}
             <div className="flex border-b border-[var(--color-neutral-100)]">
               <button
