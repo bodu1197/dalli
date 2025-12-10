@@ -301,7 +301,7 @@ export default function AdminAnalyticsSalesPage() {
             <Store size={18} color="var(--color-text-tertiary)" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {topStores.map((store) => (
+            {topStores.map((store, index) => (
               <div
                 key={store.id}
                 style={{
