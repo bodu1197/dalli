@@ -236,7 +236,7 @@ export default function HomePage() {
                       : 'bg-white text-gray-700 border border-gray-300'
                   }`}
                 >
-                  평점 높은 순
+                  평점순
                 </button>
 
                 <button
@@ -247,7 +247,7 @@ export default function HomePage() {
                       : 'bg-white text-gray-700 border border-gray-300'
                   }`}
                 >
-                  할인 많은 순
+                  할인순
                 </button>
               </section>
 
