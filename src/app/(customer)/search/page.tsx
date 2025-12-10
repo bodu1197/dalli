@@ -106,6 +106,7 @@ export default function SearchPage() {
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
                 placeholder="맛집, 메뉴를 검색해보세요"
+                aria-label="맛집 및 메뉴 검색"
                 className="w-full h-10 pl-10 pr-10 rounded-xl bg-[var(--color-neutral-100)] border-none"
                 autoFocus
               />

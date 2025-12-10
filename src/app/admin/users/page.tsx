@@ -198,6 +198,7 @@ export default function AdminUsersPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="이름, 이메일, 전화번호 검색"
+              aria-label="회원 검색"
               className="w-full pl-10 pr-4 py-3 bg-[var(--color-neutral-100)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)]"
             />
           </div>
@@ -231,6 +232,7 @@ export default function AdminUsersPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              aria-label="회원 상태 필터"
               className="px-3 py-1.5 bg-[var(--color-neutral-100)] rounded-lg text-sm focus:outline-none"
             >
               <option value="all">모든 상태</option>

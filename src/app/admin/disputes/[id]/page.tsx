@@ -463,6 +463,7 @@ export default function AdminDisputeDetailPage() {
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               placeholder="메시지를 입력하세요"
+              aria-label="분쟁 메시지 입력"
               className="flex-1 px-4 py-3 bg-[var(--color-neutral-100)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)]"
             />
             <button
@@ -558,6 +559,7 @@ export default function AdminDisputeDetailPage() {
                       value={resolveAmount}
                       onChange={(e) => setResolveAmount(Number(e.target.value))}
                       disabled={resolveType === 'full'}
+                      aria-label="환불 금액"
                       className="w-full pl-12 pr-4 py-3 bg-[var(--color-neutral-100)] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] disabled:opacity-50"
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[var(--color-neutral-500)]">원</span>
@@ -574,6 +576,7 @@ export default function AdminDisputeDetailPage() {
                   value={resolveNote}
                   onChange={(e) => setResolveNote(e.target.value)}
                   placeholder={resolveType === 'reject' ? '거절 사유를 입력하세요' : '처리 내용을 입력하세요'}
+                  aria-label={resolveType === 'reject' ? '거절 사유' : '처리 내용'}
                   className="w-full p-4 bg-[var(--color-neutral-100)] rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)]"
                   rows={4}
                 />

@@ -441,6 +441,7 @@ export default function SettlementHistoryPage() {
             placeholder="수령인명, 상호명, 거래ID로 검색"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="정산 내역 검색"
             style={{
               width: '100%',
               padding: '12px 12px 12px 44px',
