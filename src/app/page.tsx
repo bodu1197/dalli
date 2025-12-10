@@ -25,7 +25,6 @@ export default function HomePage() {
   const [activePlatform, setActivePlatform] = useState<PlatformCategory>('delivery')
 
   // 픽업 페이지용 상태
-  const [pickupSearchQuery, setPickupSearchQuery] = useState('')
   const [showPickupFilters, setShowPickupFilters] = useState(false)
   const [pickupSortBy, setPickupSortBy] = useState<SortOption>('distance')
   const [pickupCategoryFilter, setPickupCategoryFilter] = useState<CategoryFilter>('all')
@@ -96,21 +95,6 @@ export default function HomePage() {
         </header>
 
         <main>
-          {/* 이벤트 배너 */}
-          <section className="px-4 py-4 bg-[#df0012]">
-            <div className="relative h-32 rounded-2xl bg-white/10 backdrop-blur-sm overflow-hidden">
-              <div className="absolute inset-0 p-5 text-white">
-                <p className="text-sm opacity-90">달리고 신규 가입 혜택</p>
-                <h2 className="text-xl font-bold mt-1">
-                  첫 주문 배달비 무료!
-                </h2>
-                <p className="text-sm mt-2 opacity-80">
-                  지금 바로 주문하세요
-                </p>
-              </div>
-            </div>
-          </section>
-
           {/* 플랫폼 카테고리 */}
           <section className="px-4 pt-6 pb-0 bg-white">
             <div className="grid grid-cols-4 gap-4">
@@ -258,22 +242,8 @@ export default function HomePage() {
 
           {activePlatform === 'pickup' && (
             <>
-              {/* 검색바 */}
-              <section className="px-4 pt-4 bg-white">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="가게 이름, 메뉴 검색"
-                    value={pickupSearchQuery}
-                    onChange={(e) => setPickupSearchQuery(e.target.value)}
-                    className="w-full h-11 pl-10 pr-4 rounded-xl bg-gray-100 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#df0012]"
-                  />
-                </div>
-              </section>
-
               {/* 필터 버튼들 */}
-              <section className="flex gap-2 px-4 pt-3 pb-0 overflow-x-auto hide-scrollbar bg-white">
+              <section className="flex gap-2 px-4 pt-6 pb-0 overflow-x-auto hide-scrollbar bg-white">
                 <button
                   onClick={() => setShowPickupFilters(!showPickupFilters)}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-300 bg-white text-sm font-medium whitespace-nowrap"
@@ -327,17 +297,6 @@ export default function HomePage() {
                 </button>
               </section>
 
-              {/* 프로모션 배너 */}
-              <section className="px-4 pt-3 pb-0 bg-gradient-to-r from-[#df0012] to-[#ff4757]">
-                <div className="flex items-center justify-between text-white py-3">
-                  <div>
-                    <p className="text-xs opacity-90">지금 픽업하면</p>
-                    <p className="font-bold text-base">최대 30% 할인!</p>
-                  </div>
-                  <div className="text-2xl">🏪</div>
-                </div>
-              </section>
-
               {/* 지도 */}
               <section className="h-[300px] bg-gray-100 relative">
                 <KakaoMap />
@@ -351,7 +310,7 @@ export default function HomePage() {
               {/* 가게 목록 */}
               <section className="bg-white">
                 <PickupStoreList
-                  searchQuery={pickupSearchQuery}
+                  searchQuery=""
                   sortBy={pickupSortBy}
                   categoryFilter={pickupCategoryFilter}
                   showDiscountOnly={showDiscountOnly}
