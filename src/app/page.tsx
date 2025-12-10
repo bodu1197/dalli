@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Search, MapPin, Bell, ShoppingCart, ChevronDown, Bike, Store, ShoppingBag, Gift, SlidersHorizontal } from 'lucide-react'
+import { Search, MapPin, Bell, ShoppingCart, ChevronDown, Bike, Store, SlidersHorizontal } from 'lucide-react'
 
 import { CategoryGrid } from '@/components/features/category'
 import { RestaurantList } from '@/components/features/restaurant'
@@ -14,7 +14,7 @@ import { useLocationStore } from '@/stores/location.store'
 import { useCartStore } from '@/stores/cart.store'
 import { getRecommendedRestaurants, getPopularRestaurants } from '@/lib/mock/restaurants'
 
-type PlatformCategory = 'delivery' | 'pickup' | 'shopping' | 'gift'
+type PlatformCategory = 'delivery' | 'pickup'
 type SortOption = 'distance' | 'rating' | 'discount'
 type CategoryFilter = 'all' | 'korean' | 'chinese' | 'japanese' | 'western' | 'cafe' | 'chicken' | 'pizza' | 'burger' | 'dessert'
 
@@ -96,98 +96,52 @@ export default function HomePage() {
 
         <main>
           {/* 플랫폼 카테고리 */}
-          <section className="px-4 pt-6 pb-0 bg-white">
-            <div className="grid grid-cols-4 gap-4">
+          <section className="px-4 pt-6 pb-4 bg-white">
+            <div className="grid grid-cols-2 gap-4">
               {/* 음식배달 */}
               <button
                 onClick={() => setActivePlatform('delivery')}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl transition-colors"
+                className="flex flex-col items-center gap-3 p-6 rounded-2xl transition-all hover:shadow-md"
               >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
                   activePlatform === 'delivery'
-                    ? 'bg-[#df0012]'
-                    : 'bg-gray-200'
+                    ? 'bg-[#df0012] shadow-lg shadow-[#df0012]/30'
+                    : 'bg-gray-100'
                 }`}>
-                  <Bike className={`w-7 h-7 ${
+                  <Bike className={`w-10 h-10 ${
                     activePlatform === 'delivery'
                       ? 'text-white'
-                      : 'text-gray-600'
+                      : 'text-gray-500'
                   }`} />
                 </div>
-                <span className={`text-xs whitespace-nowrap ${
+                <span className={`text-base whitespace-nowrap ${
                   activePlatform === 'delivery'
-                    ? 'font-bold text-[#df0012] border-b-2 border-[#df0012] pb-0.5'
-                    : 'font-medium text-gray-600'
+                    ? 'font-bold text-[#df0012]'
+                    : 'font-medium text-gray-700'
                 }`}>음식배달</span>
               </button>
 
               {/* 직접수령 (포장) */}
               <button
                 onClick={() => setActivePlatform('pickup')}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+                className="flex flex-col items-center gap-3 p-6 rounded-2xl transition-all hover:shadow-md"
               >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
                   activePlatform === 'pickup'
-                    ? 'bg-[#df0012]'
-                    : 'bg-gray-200'
+                    ? 'bg-[#df0012] shadow-lg shadow-[#df0012]/30'
+                    : 'bg-gray-100'
                 }`}>
-                  <Store className={`w-7 h-7 ${
+                  <Store className={`w-10 h-10 ${
                     activePlatform === 'pickup'
                       ? 'text-white'
-                      : 'text-gray-600'
+                      : 'text-gray-500'
                   }`} />
                 </div>
-                <span className={`text-[10px] whitespace-nowrap ${
+                <span className={`text-sm whitespace-nowrap ${
                   activePlatform === 'pickup'
-                    ? 'font-bold text-[#df0012] border-b-2 border-[#df0012] pb-0.5'
-                    : 'font-medium text-gray-600'
+                    ? 'font-bold text-[#df0012]'
+                    : 'font-medium text-gray-700'
                 }`}>직접수령 (포장)</span>
-              </button>
-
-              {/* 심부름 */}
-              <button
-                onClick={() => setActivePlatform('shopping')}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
-                  activePlatform === 'shopping'
-                    ? 'bg-[#df0012]'
-                    : 'bg-gray-200'
-                }`}>
-                  <ShoppingBag className={`w-7 h-7 ${
-                    activePlatform === 'shopping'
-                      ? 'text-white'
-                      : 'text-gray-600'
-                  }`} />
-                </div>
-                <span className={`text-xs whitespace-nowrap ${
-                  activePlatform === 'shopping'
-                    ? 'font-bold text-[#df0012] border-b-2 border-[#df0012] pb-0.5'
-                    : 'font-medium text-gray-600'
-                }`}>심부름</span>
-              </button>
-
-              {/* 선물하기 */}
-              <button
-                onClick={() => setActivePlatform('gift')}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
-              >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
-                  activePlatform === 'gift'
-                    ? 'bg-[#df0012]'
-                    : 'bg-gray-200'
-                }`}>
-                  <Gift className={`w-7 h-7 ${
-                    activePlatform === 'gift'
-                      ? 'text-white'
-                      : 'text-gray-600'
-                  }`} />
-                </div>
-                <span className={`text-xs whitespace-nowrap ${
-                  activePlatform === 'gift'
-                    ? 'font-bold text-[#df0012] border-b-2 border-[#df0012] pb-0.5'
-                    : 'font-medium text-gray-600'
-                }`}>선물하기</span>
               </button>
             </div>
           </section>
@@ -326,28 +280,6 @@ export default function HomePage() {
                 />
               )}
             </>
-          )}
-
-          {activePlatform === 'shopping' && (
-            <section className="px-4 py-20 bg-white">
-              <div className="text-center">
-                <ShoppingBag className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <h2 className="text-xl font-bold text-gray-900 mb-2">심부름</h2>
-                <p className="text-gray-500">곧 만나요! 🏃</p>
-                <p className="text-sm text-gray-400 mt-2">심부름 서비스를 준비 중입니다</p>
-              </div>
-            </section>
-          )}
-
-          {activePlatform === 'gift' && (
-            <section className="px-4 py-20 bg-white">
-              <div className="text-center">
-                <Gift className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <h2 className="text-xl font-bold text-gray-900 mb-2">선물하기</h2>
-                <p className="text-gray-500">곧 만나요! 🎁</p>
-                <p className="text-sm text-gray-400 mt-2">선물하기 서비스를 준비 중입니다</p>
-              </div>
-            </section>
           )}
         </main>
 

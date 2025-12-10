@@ -2,13 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, ShoppingBag, Heart, ClipboardList, User } from 'lucide-react'
+import { Home, ClipboardList, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/', icon: Home, label: '홈' },
-  { href: '/shopping', icon: ShoppingBag, label: '장보기' },
-  { href: '/favorites', icon: Heart, label: '찜', fillWhenActive: true },
   { href: '/orders', icon: ClipboardList, label: '주문내역' },
   { href: '/my', icon: User, label: '마이' },
 ]
@@ -48,7 +46,6 @@ export function BottomNavBar() {
                     ? 'text-[var(--color-neutral-900)]'
                     : 'text-[var(--color-neutral-400)]'
                 )}
-                fill={isActive && item.fillWhenActive ? 'currentColor' : 'none'}
               />
               <span
                 className={cn(
