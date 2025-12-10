@@ -42,7 +42,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-[var(--color-neutral-100)]">
       <div className="max-w-[700px] mx-auto min-h-screen bg-white md:shadow-[0_0_20px_rgba(0,0,0,0.1)] pb-20">
         {/* 헤더 */}
-        <header className="sticky top-0 z-30 bg-[#df0012]">
+        <header className="sticky top-0 z-30 bg-[#df0012] pb-6">
           {/* 상단 바 */}
           <div className="flex items-center justify-between px-4 h-14">
             {/* 위치 선택 */}
@@ -94,9 +94,9 @@ export default function HomePage() {
           </div>
         </header>
 
-        <main>
+        <main className="bg-white rounded-t-3xl -mt-6 relative z-10">
           {/* 플랫폼 카테고리 */}
-          <section className="px-4 pt-6 pb-4 bg-white">
+          <section className="px-4 pt-6 pb-4">
             <div className="grid grid-cols-2 gap-4">
               {/* 음식배달 */}
               <button
@@ -150,12 +150,12 @@ export default function HomePage() {
           {activePlatform === 'delivery' && (
             <>
               {/* 음식 카테고리 */}
-              <section className="px-4 pt-0 pb-0 bg-white">
+              <section className="px-4 pt-0 pb-0">
                 <CategoryGrid />
               </section>
 
               {/* 식당 리스트 */}
-              <section className="bg-white">
+              <section>
                 {/* 탭 */}
                 <div className="flex border-b border-[var(--color-neutral-100)]">
                   <button
