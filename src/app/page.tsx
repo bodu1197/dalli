@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Search, MapPin, Bell, ShoppingCart, ChevronDown } from 'lucide-react'
+import { Search, MapPin, Bell, ShoppingCart, ChevronDown, Bike, Store, ShoppingBag, Gift } from 'lucide-react'
 
-import { CategoryGrid } from '@/components/features/category'
 import { RestaurantList } from '@/components/features/restaurant'
 import { BottomNavBar } from '@/components/layouts/BottomNavBar'
 import { useLocationStore } from '@/stores/location.store'
@@ -96,10 +95,53 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* 카테고리 */}
-          <section className="px-4 py-4 bg-white">
-            <h2 className="text-lg font-bold mb-4">뭐 먹을까?</h2>
-            <CategoryGrid />
+          {/* 플랫폼 카테고리 */}
+          <section className="px-4 py-6 bg-white">
+            <div className="grid grid-cols-4 gap-4">
+              {/* 음식배달 */}
+              <Link
+                href="/"
+                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-14 h-14 rounded-full bg-[#df0012] flex items-center justify-center">
+                  <Bike className="w-7 h-7 text-white" />
+                </div>
+                <span className="text-xs font-medium text-gray-900">음식배달</span>
+              </Link>
+
+              {/* 픽업 */}
+              <Link
+                href="/pickup"
+                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-14 h-14 rounded-full bg-[#df0012] flex items-center justify-center">
+                  <Store className="w-7 h-7 text-white" />
+                </div>
+                <span className="text-xs font-medium text-gray-900">픽업</span>
+              </Link>
+
+              {/* 장보기·쇼핑 */}
+              <Link
+                href="/shopping"
+                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-14 h-14 rounded-full bg-[#df0012] flex items-center justify-center">
+                  <ShoppingBag className="w-7 h-7 text-white" />
+                </div>
+                <span className="text-xs font-medium text-gray-900">장보기·쇼핑</span>
+              </Link>
+
+              {/* 선물하기 */}
+              <Link
+                href="/gift"
+                className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-14 h-14 rounded-full bg-[#df0012] flex items-center justify-center">
+                  <Gift className="w-7 h-7 text-white" />
+                </div>
+                <span className="text-xs font-medium text-gray-900">선물하기</span>
+              </Link>
+            </div>
           </section>
 
           {/* 식당 리스트 */}
