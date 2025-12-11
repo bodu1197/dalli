@@ -13,109 +13,27 @@ interface PickupStoreListProps {
   showDiscountOnly: boolean
 }
 
-// 임시 픽업 가게 데이터
-const MOCK_PICKUP_STORES: Array<{
-  id: string
-  name: string
-  category: CategoryFilter
-  categoryName: string
-  rating: number
-  reviewCount: number
-  distance: number
-  pickupTime: string
-  discount: number
-  image: string
-  hasPickupDiscount: boolean
-}> = [
-  {
-    id: '1',
-    name: '교촌치킨 강남점',
-    category: 'chicken',
-    categoryName: '치킨',
-    rating: 4.8,
-    reviewCount: 342,
-    distance: 0.5,
-    pickupTime: '15~20분',
-    discount: 30,
-    image: '/images/restaurants/default.jpg',
-    hasPickupDiscount: true,
-  },
-  {
-    id: '2',
-    name: '스타벅스 역삼점',
-    category: 'cafe',
-    categoryName: '카페',
-    rating: 4.6,
-    reviewCount: 523,
-    distance: 0.3,
-    pickupTime: '10~15분',
-    discount: 20,
-    image: '/images/restaurants/default.jpg',
-    hasPickupDiscount: true,
-  },
-  {
-    id: '3',
-    name: '맘스터치 서초점',
-    category: 'burger',
-    categoryName: '버거',
-    rating: 4.5,
-    reviewCount: 287,
-    distance: 0.8,
-    pickupTime: '20~25분',
-    discount: 15,
-    image: '/images/restaurants/default.jpg',
-    hasPickupDiscount: true,
-  },
-  {
-    id: '4',
-    name: '본죽 논현점',
-    category: 'korean',
-    categoryName: '한식',
-    rating: 4.7,
-    reviewCount: 198,
-    distance: 1.2,
-    pickupTime: '15~20분',
-    discount: 0,
-    image: '/images/restaurants/default.jpg',
-    hasPickupDiscount: false,
-  },
-]
-
 export function PickupStoreList({
   searchQuery,
   sortBy,
   categoryFilter,
   showDiscountOnly,
 }: PickupStoreListProps) {
-  // 필터링 및 정렬 로직
-  let filteredStores = [...MOCK_PICKUP_STORES]
-
-  // 검색어 필터
-  if (searchQuery) {
-    filteredStores = filteredStores.filter(
-      (store) =>
-        store.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        store.categoryName.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }
-
-  // 카테고리 필터
-  if (categoryFilter && categoryFilter !== 'all') {
-    filteredStores = filteredStores.filter((store) => store.category === categoryFilter)
-  }
-
-  // 할인만 보기 필터
-  if (showDiscountOnly) {
-    filteredStores = filteredStores.filter((store) => store.hasPickupDiscount)
-  }
-
-  // 정렬
-  filteredStores.sort((a, b) => {
-    if (sortBy === 'distance') return a.distance - b.distance
-    if (sortBy === 'rating') return b.rating - a.rating
-    if (sortBy === 'discount') return b.discount - a.discount
-    return 0
-  })
+  // TODO: Supabase에서 실제 데이터 가져오기
+  // 현재는 빈 배열
+  const filteredStores: Array<{
+    id: string
+    name: string
+    category: CategoryFilter
+    categoryName: string
+    rating: number
+    reviewCount: number
+    distance: number
+    pickupTime: string
+    discount: number
+    image: string
+    hasPickupDiscount: boolean
+  }> = []
 
   return (
     <div className="divide-y divide-gray-100">
