@@ -87,7 +87,7 @@ export default function HomePage() {
 
         <main className="bg-white rounded-t-[2.5rem] -mt-8 relative z-10">
           {/* 필터 버튼들 */}
-          <section className="flex gap-2 px-4 pt-11 pb-0 overflow-x-auto hide-scrollbar bg-white">
+          <section className="flex gap-2 px-4 pt-[54px] pb-0 overflow-x-auto hide-scrollbar bg-white">
             <button
               onClick={() => setShowPickupFilters(!showPickupFilters)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-300 bg-white text-sm font-medium whitespace-nowrap"
