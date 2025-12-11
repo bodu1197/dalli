@@ -31,9 +31,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[var(--color-neutral-100)]">
-      <div className="max-w-[700px] mx-auto min-h-screen bg-[#df0012] md:shadow-[0_0_20px_rgba(0,0,0,0.1)] pb-20">
-        {/* 헤더 */}
-        <header className="sticky top-0 z-30 bg-[#df0012] pb-8">
+      {/* 헤더 - 고정 */}
+      <header className="fixed top-0 left-0 right-0 z-30 bg-[#df0012] pb-8">
+        <div className="max-w-[700px] mx-auto">
           {/* 상단 바 */}
           <div className="flex items-center justify-between px-4 h-14">
             {/* 위치 선택 */}
@@ -83,9 +83,12 @@ export default function HomePage() {
               </span>
             </Link>
           </div>
-        </header>
+        </div>
+      </header>
 
-        <main className="bg-white rounded-t-xl -mt-8 relative z-40 overflow-hidden">
+      {/* 메인 컨텐츠 */}
+      <div className="max-w-[700px] mx-auto min-h-screen bg-[#df0012] md:shadow-[0_0_20px_rgba(0,0,0,0.1)] pb-20">
+        <main className="bg-white rounded-t-xl relative z-40 overflow-hidden mt-[110px]">
           {/* 필터 버튼들 */}
           <section className="flex gap-2 px-4 pt-5 pb-5 overflow-x-auto hide-scrollbar bg-white">
             <button
