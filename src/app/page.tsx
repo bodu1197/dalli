@@ -35,7 +35,7 @@ export default function HomePage() {
       <div className="max-w-[700px] mx-auto min-h-screen bg-white relative">
 
         {/* 헤더 - 고정 */}
-        <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[700px] z-50 bg-[#df0012] pb-8 before:content-[''] before:absolute before:bottom-[-20px] before:left-0 before:right-0 before:h-[20px] before:bg-[#df0012] before:z-[1] after:content-[''] after:absolute after:bottom-[-20px] after:left-0 after:right-0 after:h-[20px] after:bg-white after:rounded-t-[20px] after:z-[2]">
+        <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[700px] z-50 bg-[#df0012] pb-8 before:content-[''] before:absolute before:bottom-[-20px] before:left-0 before:right-0 before:h-[20px] before:bg-[#df0012] before:z-[1] after:content-[''] after:absolute after:bottom-[-20px] after:left-0 after:right-0 after:h-[20px] after:bg-transparent after:rounded-t-[20px] after:z-[2]">
           {/* 상단 바 */}
           <div className="flex items-center justify-between px-4 h-14">
             {/* 위치 선택 */}
@@ -88,7 +88,7 @@ export default function HomePage() {
         </header>
 
         {/* 필터 버튼 영역 - 둥근 모서리 */}
-        <div className="bg-white rounded-t-xl relative mt-[190px] hidden">
+        <div className="bg-white rounded-t-xl relative mt-[190px]">
           {/* 필터 버튼들 */}
           <section className="flex gap-2 px-4 pt-5 pb-5 overflow-x-auto hide-scrollbar">
             <button
