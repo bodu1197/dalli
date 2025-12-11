@@ -138,7 +138,7 @@ export default function HomePage() {
           </section>
 
           {/* 지도 */}
-          <section className="h-[300px] bg-gray-100 relative">
+          <section className="h-[300px] bg-gray-100 relative mt-5">
             <KakaoMap />
 
             {/* 현재 위치 버튼 */}
