@@ -89,15 +89,13 @@ export default function MyPage() {
       icon: <Ticket className="w-5 h-5" />,
       label: '쿠폰함',
       href: '/my/coupons',
-      badge: '3',
-      color: 'text-[var(--color-primary-500)]',
+      // TODO: Supabase에서 실제 쿠폰 개수 가져오기
     },
     {
       icon: <span className="text-lg">🅿️</span>,
       label: '포인트',
       href: '/my/points',
-      badge: '1,200P',
-      color: 'text-[var(--color-primary-500)]',
+      // TODO: Supabase에서 실제 포인트 가져오기
     },
   ]
 
