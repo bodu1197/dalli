@@ -87,12 +87,14 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* 노란색 섹션 - 헤더 아래 */}
-        <section className="h-[200px] bg-yellow-400 mt-[110px]">
+        {/* 노란색 섹션 - 고정 */}
+        <section className="fixed top-[110px] left-1/2 -translate-x-1/2 w-full max-w-[700px] h-[200px] bg-yellow-400 z-40">
         </section>
 
-        {/* 필터 버튼들 */}
-        <section className="flex gap-2 px-4 pt-5 pb-5 overflow-x-auto hide-scrollbar bg-white">
+        {/* 필터 버튼 영역 - 둥근 모서리 */}
+        <div className="bg-white rounded-t-xl relative z-30 mt-[160px]">
+          {/* 필터 버튼들 */}
+          <section className="flex gap-2 px-4 pt-5 pb-5 overflow-x-auto hide-scrollbar">
             <button
               onClick={() => setShowPickupFilters(!showPickupFilters)}
               className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-300 bg-white text-sm font-medium whitespace-nowrap"
@@ -135,34 +137,35 @@ export default function HomePage() {
             </button>
           </section>
 
-        {/* 지도 */}
-        <section className="h-[300px] bg-gray-100 relative">
-          <KakaoMap />
+          {/* 지도 */}
+          <section className="h-[300px] bg-gray-100 relative">
+            <KakaoMap />
 
-          {/* 현재 위치 버튼 */}
-          <button className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50">
-            <MapPin className="w-5 h-5 text-gray-700" />
-          </button>
-        </section>
+            {/* 현재 위치 버튼 */}
+            <button className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50">
+              <MapPin className="w-5 h-5 text-gray-700" />
+            </button>
+          </section>
 
-        {/* 가게 목록 */}
-        <section className="bg-white pb-20">
-          <PickupStoreList
-            searchQuery=""
-            sortBy={pickupSortBy}
-            categoryFilter={pickupCategoryFilter}
-            showDiscountOnly={showDiscountOnly}
-          />
-        </section>
+          {/* 가게 목록 */}
+          <section className="bg-white pb-20">
+            <PickupStoreList
+              searchQuery=""
+              sortBy={pickupSortBy}
+              categoryFilter={pickupCategoryFilter}
+              showDiscountOnly={showDiscountOnly}
+            />
+          </section>
 
-        {/* 필터 모달 */}
-        {showPickupFilters && (
-          <PickupFilters
-            categoryFilter={pickupCategoryFilter}
-            onCategoryChange={setPickupCategoryFilter}
-            onClose={() => setShowPickupFilters(false)}
-          />
-        )}
+          {/* 필터 모달 */}
+          {showPickupFilters && (
+            <PickupFilters
+              categoryFilter={pickupCategoryFilter}
+              onCategoryChange={setPickupCategoryFilter}
+              onClose={() => setShowPickupFilters(false)}
+            />
+          )}
+        </div>
 
         {/* 하단 네비게이션 */}
         <BottomNavBar />
