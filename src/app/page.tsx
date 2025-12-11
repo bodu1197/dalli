@@ -97,12 +97,7 @@ export default function HomePage() {
             </button>
 
             <button
-              onClick={() => {
-                const newValue = !showDiscountOnly
-                setShowDiscountOnly(newValue)
-                // 픽업 할인 켜면 자동으로 할인순 정렬, 끄면 거리순으로 복원
-                setPickupSortBy(newValue ? 'discount' : 'distance')
-              }}
+              onClick={() => setShowDiscountOnly(!showDiscountOnly)}
               className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                 showDiscountOnly
                   ? 'bg-[#df0012] text-white border border-[#df0012]'
@@ -115,11 +110,10 @@ export default function HomePage() {
             <button
               onClick={() => setPickupSortBy('distance')}
               className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                pickupSortBy === 'distance' && !showDiscountOnly
+                pickupSortBy === 'distance'
                   ? 'bg-gray-900 text-white border border-gray-900'
                   : 'bg-white text-gray-700 border border-gray-300'
               }`}
-              disabled={showDiscountOnly}
             >
               가까운 순
             </button>
@@ -127,11 +121,10 @@ export default function HomePage() {
             <button
               onClick={() => setPickupSortBy('rating')}
               className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                pickupSortBy === 'rating' && !showDiscountOnly
+                pickupSortBy === 'rating'
                   ? 'bg-gray-900 text-white border border-gray-900'
                   : 'bg-white text-gray-700 border border-gray-300'
               }`}
-              disabled={showDiscountOnly}
             >
               평점순
             </button>
