@@ -85,7 +85,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <main className="bg-white rounded-t-[2.5rem] -mt-8 relative z-10">
+        <main className="bg-white rounded-t-[2.5rem] -mt-8 relative z-40">
           {/* 필터 버튼들 */}
           <section className="flex gap-2 px-4 pt-[54px] pb-0 overflow-x-auto hide-scrollbar bg-white">
             <button
