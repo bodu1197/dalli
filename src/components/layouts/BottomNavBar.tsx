@@ -1,18 +1,47 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, ClipboardList, User } from 'lucide-react'
+import { Home, ClipboardList, ShoppingCart, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
 
-const navItems = [
+const baseNavItems = [
   { href: '/', icon: Home, label: '홈' },
   { href: '/orders', icon: ClipboardList, label: '주문내역' },
-  { href: '/my', icon: User, label: '마이' },
+  { href: '/cart', icon: ShoppingCart, label: '장바구니' },
 ]
 
 export function BottomNavBar() {
   const pathname = usePathname()
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const supabase = createClient()
+
+  useEffect(() => {
+    // 초기 인증 상태 확인
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user)
+    })
+
+    // 인증 상태 변경 감지
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user)
+    })
+
+    return () => subscription.unsubscribe()
+  }, [supabase.auth])
+
+  // 마이 항목을 로그인 상태에 따라 동적으로 설정
+  const myNavItem = {
+    href: isLoggedIn ? '/my' : '/login',
+    icon: User,
+    label: isLoggedIn ? '마이' : '로그인',
+  }
+
+  const navItems = [...baseNavItems, myNavItem]
 
   return (
     <nav
