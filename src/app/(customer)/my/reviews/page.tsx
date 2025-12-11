@@ -20,46 +20,7 @@ interface MyReview {
 }
 
 // Mock 내 리뷰 데이터
-const MOCK_MY_REVIEWS: MyReview[] = [
-  {
-    id: '1',
-    restaurantId: '1',
-    restaurantName: 'BBQ 치킨 강남점',
-    orderId: 'ORD001',
-    rating: 5,
-    content: '치킨이 정말 바삭바삭하고 맛있어요! 배달도 빨랐고 양도 푸짐해서 만족스러웠습니다. 다음에 또 시켜먹을게요~',
-    images: [],
-    createdAt: '2024-12-08T15:30:00',
-    ownerReply: {
-      content: '맛있게 드셔주셔서 감사합니다! 다음에도 맛있는 치킨으로 찾아뵙겠습니다 :)',
-      createdAt: '2024-12-08T16:00:00',
-    },
-  },
-  {
-    id: '2',
-    restaurantId: '2',
-    restaurantName: '맥도날드 역삼점',
-    orderId: 'ORD002',
-    rating: 4,
-    content: '빅맥 세트 맛있게 먹었습니다. 감자튀김이 조금 식어서 왔는데 그래도 전체적으로 만족해요.',
-    images: [],
-    createdAt: '2024-12-07T13:00:00',
-  },
-  {
-    id: '3',
-    restaurantId: '3',
-    restaurantName: '본죽&비빔밥 강남역점',
-    orderId: 'ORD003',
-    rating: 5,
-    content: '전복죽 진짜 맛있어요! 전복도 실하고 죽도 부드럽고 속이 따뜻해지는 맛이에요. 강추합니다!',
-    images: [],
-    createdAt: '2024-12-05T10:00:00',
-    ownerReply: {
-      content: '좋은 리뷰 감사합니다! 항상 정성껏 준비하겠습니다.',
-      createdAt: '2024-12-05T11:30:00',
-    },
-  },
-]
+const MOCK_MY_REVIEWS: MyReview[] = []
 
 export default function MyReviewsPage() {
   const [reviews, setReviews] = useState(MOCK_MY_REVIEWS)
@@ -226,11 +187,10 @@ function ReviewCard({
           {Array.from({ length: 5 }).map((_, starIndex) => (
             <Star
               key={`review-${review.id}-star-${starIndex}`}
-              className={`w-4 h-4 ${
-                starIndex < review.rating
+              className={`w-4 h-4 ${starIndex < review.rating
                   ? 'fill-[var(--color-warning-400)] text-[var(--color-warning-400)]'
                   : 'text-[var(--color-neutral-200)]'
-              }`}
+                }`}
             />
           ))}
         </div>
