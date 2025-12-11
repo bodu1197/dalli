@@ -270,6 +270,8 @@ export type Database = {
           estimated_delivery_time: string | null
           actual_delivery_time: string | null
           cancelled_reason: string | null
+          payment_method: 'card' | 'kakaopay' | 'naverpay' | 'tosspay' | 'samsungpay' | 'payco' | 'cash' | null
+          payment_key: string | null
           created_at: string
           updated_at: string
         }
@@ -289,6 +291,8 @@ export type Database = {
           estimated_delivery_time?: string | null
           actual_delivery_time?: string | null
           cancelled_reason?: string | null
+          payment_method?: 'card' | 'kakaopay' | 'naverpay' | 'tosspay' | 'samsungpay' | 'payco' | 'cash' | null
+          payment_key?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -308,6 +312,8 @@ export type Database = {
           estimated_delivery_time?: string | null
           actual_delivery_time?: string | null
           cancelled_reason?: string | null
+          payment_method?: 'card' | 'kakaopay' | 'naverpay' | 'tosspay' | 'samsungpay' | 'payco' | 'cash' | null
+          payment_key?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -331,6 +337,163 @@ export type Database = {
             columns: ['rider_id']
             isOneToOne: false
             referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      order_cancellations: {
+        Row: {
+          id: string
+          order_id: string
+          requested_by: string
+          requested_by_type: 'customer' | 'owner' | 'rider' | 'admin' | 'system'
+          cancel_type: 'instant' | 'request'
+          status: 'pending' | 'approved' | 'rejected' | 'completed'
+          reason_category: string
+          reason_detail: string | null
+          refund_amount: number
+          refund_rate: number
+          can_refund_coupon: boolean
+          can_refund_points: boolean
+          coupon_refunded: boolean
+          points_refunded: boolean
+          rejected_reason: string | null
+          processed_by: string | null
+          processed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          requested_by: string
+          requested_by_type: 'customer' | 'owner' | 'rider' | 'admin' | 'system'
+          cancel_type: 'instant' | 'request'
+          status?: 'pending' | 'approved' | 'rejected' | 'completed'
+          reason_category: string
+          reason_detail?: string | null
+          refund_amount: number
+          refund_rate: number
+          can_refund_coupon?: boolean
+          can_refund_points?: boolean
+          coupon_refunded?: boolean
+          points_refunded?: boolean
+          rejected_reason?: string | null
+          processed_by?: string | null
+          processed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          requested_by?: string
+          requested_by_type?: 'customer' | 'owner' | 'rider' | 'admin' | 'system'
+          cancel_type?: 'instant' | 'request'
+          status?: 'pending' | 'approved' | 'rejected' | 'completed'
+          reason_category?: string
+          reason_detail?: string | null
+          refund_amount?: number
+          refund_rate?: number
+          can_refund_coupon?: boolean
+          can_refund_points?: boolean
+          coupon_refunded?: boolean
+          points_refunded?: boolean
+          rejected_reason?: string | null
+          processed_by?: string | null
+          processed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'order_cancellations_order_id_fkey'
+            columns: ['order_id']
+            isOneToOne: false
+            referencedRelation: 'orders'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'order_cancellations_requested_by_fkey'
+            columns: ['requested_by']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'order_cancellations_processed_by_fkey'
+            columns: ['processed_by']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      refunds: {
+        Row: {
+          id: string
+          order_id: string
+          cancellation_id: string | null
+          amount: number
+          payment_method: 'card' | 'kakaopay' | 'naverpay' | 'tosspay' | 'samsungpay' | 'payco' | 'cash'
+          payment_key: string | null
+          status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+          pg_response: Json | null
+          pg_transaction_id: string | null
+          failed_reason: string | null
+          retry_count: number
+          last_retry_at: string | null
+          completed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          cancellation_id?: string | null
+          amount: number
+          payment_method: 'card' | 'kakaopay' | 'naverpay' | 'tosspay' | 'samsungpay' | 'payco' | 'cash'
+          payment_key?: string | null
+          status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+          pg_response?: Json | null
+          pg_transaction_id?: string | null
+          failed_reason?: string | null
+          retry_count?: number
+          last_retry_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          cancellation_id?: string | null
+          amount?: number
+          payment_method?: 'card' | 'kakaopay' | 'naverpay' | 'tosspay' | 'samsungpay' | 'payco' | 'cash'
+          payment_key?: string | null
+          status?: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled'
+          pg_response?: Json | null
+          pg_transaction_id?: string | null
+          failed_reason?: string | null
+          retry_count?: number
+          last_retry_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'refunds_order_id_fkey'
+            columns: ['order_id']
+            isOneToOne: false
+            referencedRelation: 'orders'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'refunds_cancellation_id_fkey'
+            columns: ['cancellation_id']
+            isOneToOne: false
+            referencedRelation: 'order_cancellations'
             referencedColumns: ['id']
           }
         ]
@@ -422,6 +585,14 @@ export type Restaurant = Tables<'restaurants'>
 export type Menu = Tables<'menus'>
 export type Order = Tables<'orders'>
 export type Review = Tables<'reviews'>
+export type OrderCancellation = Tables<'order_cancellations'>
+export type Refund = Tables<'refunds'>
 
 // 주문 상태 타입
 export type OrderStatus = Order['status']
+
+// 취소 관련 타입
+export type CancelType = OrderCancellation['cancel_type']
+export type CancelStatus = OrderCancellation['status']
+export type RefundStatus = Refund['status']
+export type PaymentMethod = NonNullable<Order['payment_method']>

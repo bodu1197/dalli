@@ -1,6 +1,6 @@
 'use client'
 
-import { use } from 'react'
+import { use, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -19,6 +19,9 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 } from '@/types/order.types'
+import { CancelOrderButton } from '@/components/features/order'
+import { CANCEL_REASON_LABELS } from '@/lib/constants/order-cancellation'
+import type { CancelReasonCategory } from '@/types/order-cancellation.types'
 
 interface PageProps {
   readonly params: Promise<{ orderId: string }>
@@ -28,6 +31,16 @@ export default function OrderDetailPage({ params }: Readonly<PageProps>) {
   const { orderId } = use(params)
   const router = useRouter()
   const order = getOrderById(orderId)
+
+  // 취소 완료 시 페이지 새로고침
+  const handleCancelComplete = useCallback(() => {
+    router.refresh()
+  }, [router])
+
+  // 취소 사유 라벨 가져오기
+  const getCancelReasonLabel = (reason: string): string => {
+    return CANCEL_REASON_LABELS[reason as CancelReasonCategory] ?? reason
+  }
 
   if (!order) {
     return (
@@ -138,8 +151,23 @@ export default function OrderDetailPage({ params }: Readonly<PageProps>) {
           {order.status === 'cancelled' && order.cancelledReason && (
             <div className="mt-4 p-4 bg-red-50 rounded-xl">
               <p className="text-sm text-red-600">
-                <span className="font-semibold">취소 사유:</span> {order.cancelledReason}
+                <span className="font-semibold">취소 사유:</span>{' '}
+                {getCancelReasonLabel(order.cancelledReason)}
               </p>
+            </div>
+          )}
+
+          {/* 취소 가능한 주문: 취소 버튼 */}
+          {isActive && (
+            <div className="mt-4">
+              <CancelOrderButton
+                orderId={order.id}
+                orderStatus={order.status}
+                onCancelComplete={handleCancelComplete}
+                variant="outline"
+                size="lg"
+                className="w-full"
+              />
             </div>
           )}
         </div>
