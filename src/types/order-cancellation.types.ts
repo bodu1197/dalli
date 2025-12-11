@@ -466,3 +466,274 @@ export interface CancellationProcessResult {
   /** 에러 메시지 */
   errorMessage: string | null
 }
+
+// ============================================================================
+// Phase 4: 점주 승인 필요 취소 시스템 타입
+// ============================================================================
+
+/**
+ * 취소 유형 (확장)
+ * - instant: 즉시 취소
+ * - approval_required: 점주 승인 필요
+ * - not_allowed: 취소 불가
+ */
+export type CancellationType = 'instant' | 'approval_required' | 'not_allowed'
+
+/**
+ * 점주 액션 상태
+ */
+export type OwnerActionType = 'pending' | 'approved' | 'rejected'
+
+/**
+ * DB 취소 정책 레코드
+ */
+export interface CancellationPolicyRecord {
+  /** 정책 ID */
+  id: string
+  /** 주문 상태 */
+  orderStatus: string
+  /** 취소 유형 */
+  cancellationType: CancellationType
+  /** 환불율 (0-100) */
+  refundRate: number
+  /** 쿠폰 환불 가능 여부 */
+  canRefundCoupon: boolean
+  /** 포인트 환불 가능 여부 */
+  canRefundPoints: boolean
+  /** 승인 타임아웃 (분) */
+  approvalTimeoutMinutes: number
+  /** 정책 설명 */
+  description: string | null
+  /** 고객용 메시지 */
+  messageForCustomer: string | null
+  /** 활성화 여부 */
+  isActive: boolean
+  /** 생성 시간 */
+  createdAt: string
+  /** 수정 시간 */
+  updatedAt: string
+}
+
+/**
+ * 취소 정책 조회 결과
+ */
+export interface CancellationPolicyResult {
+  /** 취소 유형 */
+  cancellationType: CancellationType
+  /** 환불율 (0-100) */
+  refundRate: number
+  /** 쿠폰 환불 가능 여부 */
+  canRefundCoupon: boolean
+  /** 포인트 환불 가능 여부 */
+  canRefundPoints: boolean
+  /** 승인 타임아웃 (분) */
+  approvalTimeoutMinutes: number
+  /** 정책 설명 */
+  description: string
+  /** 고객용 메시지 */
+  messageForCustomer: string
+}
+
+/**
+ * 취소 가능 여부 확인 결과 (확장)
+ */
+export interface CanCancelOrderResult {
+  /** 취소 가능 여부 */
+  canCancel: boolean
+  /** 취소 정책 */
+  policy: CancellationPolicyResult
+  /** 예상 환불 정보 */
+  estimatedRefund: {
+    /** 총 환불 금액 */
+    amount: number
+    /** 메뉴 환불 금액 */
+    menuRefundAmount: number
+    /** 배달비 환불 금액 */
+    deliveryRefundAmount: number
+    /** 환불율 (0-100) */
+    refundRate: number
+    /** 쿠폰 환불 가능 */
+    couponRefund: boolean
+    /** 포인트 환불 가능 */
+    pointsRefund: boolean
+  } | null
+}
+
+/**
+ * 취소 요청 생성 파라미터
+ */
+export interface CreateCancellationRequestParams {
+  /** 주문 ID */
+  orderId: string
+  /** 취소 사유 */
+  reason: string
+  /** 상세 사유 */
+  detailedReason?: string
+}
+
+/**
+ * 취소 요청 생성 결과
+ */
+export interface CancellationRequestResult {
+  /** 성공 여부 */
+  success: boolean
+  /** 취소 ID */
+  cancellationId: string | null
+  /** 취소 유형 */
+  cancellationType: CancellationType
+  /** 환불 금액 */
+  refundAmount: number
+  /** 환불율 */
+  refundRate: number
+  /** 승인 기한 (점주 승인 필요 시) */
+  approvalDeadline: Date | null
+  /** 점주 승인 필요 여부 */
+  requiresApproval: boolean
+  /** 메시지 */
+  message: string
+  /** 에러 메시지 (실패 시) */
+  errorMessage: string | null
+}
+
+/**
+ * 대기 중인 승인 요청
+ */
+export interface PendingApproval {
+  /** 취소 ID */
+  cancellationId: string
+  /** 주문 ID */
+  orderId: string
+  /** 주문 번호 */
+  orderNumber: string
+  /** 고객 이름 */
+  customerName: string
+  /** 고객 연락처 */
+  customerPhone: string
+  /** 주문 금액 */
+  orderAmount: number
+  /** 환불 금액 */
+  refundAmount: number
+  /** 환불율 */
+  refundRate: number
+  /** 취소 사유 */
+  reason: string
+  /** 상세 사유 */
+  detailedReason: string | null
+  /** 요청 시간 */
+  requestedAt: string
+  /** 승인 기한 */
+  approvalDeadline: string
+  /** 남은 시간 (분) */
+  remainingMinutes: number
+}
+
+/**
+ * 승인/거절 결과
+ */
+export interface ApprovalActionResult {
+  /** 성공 여부 */
+  success: boolean
+  /** 취소 ID */
+  cancellationId: string | null
+  /** 주문 ID */
+  orderId: string | null
+  /** 메시지 */
+  message: string
+  /** 에러 메시지 (실패 시) */
+  errorMessage: string | null
+}
+
+/**
+ * 자동 승인 처리 결과
+ */
+export interface AutoApprovalResult {
+  /** 처리된 건수 */
+  processed: number
+  /** 자동 승인된 건수 */
+  autoApproved: number
+  /** 실패 건수 */
+  failed: number
+  /** 개별 결과 */
+  results: Array<{
+    cancellationId: string
+    success: boolean
+    errorMessage?: string
+  }>
+}
+
+/**
+ * 취소 상태 이력
+ */
+export interface CancellationStatusHistory {
+  /** 이력 ID */
+  id: string
+  /** 취소 ID */
+  cancellationId: string
+  /** 이전 상태 */
+  previousStatus: string | null
+  /** 새 상태 */
+  newStatus: string
+  /** 이전 점주 액션 */
+  previousOwnerAction: string | null
+  /** 새 점주 액션 */
+  newOwnerAction: string | null
+  /** 변경자 ID */
+  changedBy: string | null
+  /** 변경 사유 */
+  changeReason: string | null
+  /** 자동 변경 여부 */
+  isAutoChange: boolean
+  /** 생성 시간 */
+  createdAt: string
+}
+
+/**
+ * 확장된 주문 취소 정보 (점주 승인 필드 포함)
+ */
+export interface OrderCancellationExtended extends OrderCancellation {
+  /** 점주 액션 상태 */
+  ownerAction: OwnerActionType | null
+  /** 점주 액션 시간 */
+  ownerActionAt: string | null
+  /** 점주 액션 처리자 ID */
+  ownerActionBy: string | null
+  /** 점주 거절 사유 */
+  ownerRejectionReason: string | null
+  /** 승인 기한 */
+  approvalDeadline: string | null
+  /** 자동 승인 여부 */
+  autoApproved: boolean
+  /** 고객 알림 여부 */
+  customerNotified: boolean
+  /** 점주 알림 여부 */
+  ownerNotified: boolean
+}
+
+/**
+ * 취소 상세 정보 (조인 데이터 포함)
+ */
+export interface CancellationWithDetails extends OrderCancellationExtended {
+  /** 주문 정보 */
+  order: {
+    id: string
+    orderNumber: string
+    totalAmount: number
+    deliveryFee: number
+    status: string
+    createdAt: string
+  }
+  /** 고객 정보 */
+  customer: {
+    id: string
+    name: string
+    phone: string
+  } | null
+  /** 가게 정보 */
+  restaurant: {
+    id: string
+    name: string
+    ownerId: string
+  } | null
+  /** 상태 변경 이력 */
+  statusHistory: CancellationStatusHistory[]
+}
