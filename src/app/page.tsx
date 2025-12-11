@@ -2,36 +2,27 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Search, MapPin, Bell, ShoppingCart, ChevronDown, Bike, Store, SlidersHorizontal } from 'lucide-react'
+import { Search, MapPin, Bell, ShoppingCart, ChevronDown, SlidersHorizontal } from 'lucide-react'
 
-import { CategoryGrid } from '@/components/features/category'
-import { RestaurantList } from '@/components/features/restaurant'
 import { BottomNavBar } from '@/components/layouts/BottomNavBar'
 import { KakaoMap } from '@/components/features/map/KakaoMap'
 import { PickupStoreList } from '@/components/features/pickup/PickupStoreList'
 import { PickupFilters } from '@/components/features/pickup/PickupFilters'
 import { useLocationStore } from '@/stores/location.store'
 import { useCartStore } from '@/stores/cart.store'
-import { getRecommendedRestaurants, getPopularRestaurants } from '@/lib/mock/restaurants'
 
-type PlatformCategory = 'delivery' | 'pickup'
 type SortOption = 'distance' | 'rating' | 'discount'
 type CategoryFilter = 'all' | 'korean' | 'chinese' | 'japanese' | 'western' | 'cafe' | 'chicken' | 'pizza' | 'burger' | 'dessert'
 
 export default function HomePage() {
   const { selectedAddress } = useLocationStore()
   const cartItemCount = useCartStore((state) => state.getItemCount())
-  const [activeTab, setActiveTab] = useState<'recommend' | 'popular'>('recommend')
-  const [activePlatform, setActivePlatform] = useState<PlatformCategory>('delivery')
 
   // 픽업 페이지용 상태
   const [showPickupFilters, setShowPickupFilters] = useState(false)
   const [pickupSortBy, setPickupSortBy] = useState<SortOption>('distance')
   const [pickupCategoryFilter, setPickupCategoryFilter] = useState<CategoryFilter>('all')
   const [showDiscountOnly, setShowDiscountOnly] = useState(false)
-
-  const recommendedRestaurants = getRecommendedRestaurants()
-  const popularRestaurants = getPopularRestaurants()
 
   const displayAddress = selectedAddress?.address || '주소를 설정해주세요'
   const shortAddress = displayAddress.length > 20
@@ -95,187 +86,84 @@ export default function HomePage() {
         </header>
 
         <main className="bg-white rounded-t-[2.5rem] -mt-8 relative z-10">
-          {/* 플랫폼 카테고리 */}
-          <section className="px-4 pt-6 pb-4">
-            <div className="grid grid-cols-2 gap-4">
-              {/* 음식배달 */}
-              <button
-                onClick={() => setActivePlatform('delivery')}
-                className="flex items-center justify-center gap-2 p-4 rounded-2xl transition-all hover:shadow-md"
-              >
-                <div className={`w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center ${
-                  activePlatform === 'delivery'
-                    ? 'bg-[#df0012] shadow-lg shadow-[#df0012]/30'
-                    : 'bg-gray-100'
-                }`}>
-                  <Bike className={`w-6 h-6 ${
-                    activePlatform === 'delivery'
-                      ? 'text-white'
-                      : 'text-gray-500'
-                  }`} />
-                </div>
-                <span className={`text-base whitespace-nowrap ${
-                  activePlatform === 'delivery'
-                    ? 'font-bold text-[#df0012]'
-                    : 'font-medium text-gray-700'
-                }`}>음식배달</span>
-              </button>
+          {/* 필터 버튼들 */}
+          <section className="flex gap-2 px-4 pt-6 pb-0 overflow-x-auto hide-scrollbar bg-white">
+            <button
+              onClick={() => setShowPickupFilters(!showPickupFilters)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-300 bg-white text-sm font-medium whitespace-nowrap"
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              필터
+            </button>
 
-              {/* 직접수령 (포장) */}
-              <button
-                onClick={() => setActivePlatform('pickup')}
-                className="flex items-center justify-center gap-2 p-4 rounded-2xl transition-all hover:shadow-md"
-              >
-                <div className={`w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center ${
-                  activePlatform === 'pickup'
-                    ? 'bg-[#df0012] shadow-lg shadow-[#df0012]/30'
-                    : 'bg-gray-100'
-                }`}>
-                  <Store className={`w-6 h-6 ${
-                    activePlatform === 'pickup'
-                      ? 'text-white'
-                      : 'text-gray-500'
-                  }`} />
-                </div>
-                <span className={`text-base whitespace-nowrap ${
-                  activePlatform === 'pickup'
-                    ? 'font-bold text-[#df0012]'
-                    : 'font-medium text-gray-700'
-                }`}>직접수령 (포장)</span>
-              </button>
-            </div>
+            <button
+              onClick={() => {
+                const newValue = !showDiscountOnly
+                setShowDiscountOnly(newValue)
+                // 픽업 할인 켜면 자동으로 할인순 정렬, 끄면 거리순으로 복원
+                setPickupSortBy(newValue ? 'discount' : 'distance')
+              }}
+              className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                showDiscountOnly
+                  ? 'bg-[#df0012] text-white border border-[#df0012]'
+                  : 'bg-white text-gray-700 border border-gray-300'
+              }`}
+            >
+              픽업 할인
+            </button>
+
+            <button
+              onClick={() => setPickupSortBy('distance')}
+              className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                pickupSortBy === 'distance' && !showDiscountOnly
+                  ? 'bg-gray-900 text-white border border-gray-900'
+                  : 'bg-white text-gray-700 border border-gray-300'
+              }`}
+              disabled={showDiscountOnly}
+            >
+              가까운 순
+            </button>
+
+            <button
+              onClick={() => setPickupSortBy('rating')}
+              className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                pickupSortBy === 'rating' && !showDiscountOnly
+                  ? 'bg-gray-900 text-white border border-gray-900'
+                  : 'bg-white text-gray-700 border border-gray-300'
+              }`}
+              disabled={showDiscountOnly}
+            >
+              평점순
+            </button>
           </section>
 
-          {/* 플랫폼별 콘텐츠 */}
-          {activePlatform === 'delivery' && (
-            <>
-              {/* 음식 카테고리 */}
-              <section className="px-4 pt-0 pb-0">
-                <CategoryGrid />
-              </section>
+          {/* 지도 */}
+          <section className="h-[300px] bg-gray-100 relative">
+            <KakaoMap />
 
-              {/* 식당 리스트 */}
-              <section>
-                {/* 탭 */}
-                <div className="flex border-b border-[var(--color-neutral-100)]">
-                  <button
-                    onClick={() => setActiveTab('recommend')}
-                    className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
-                      activeTab === 'recommend'
-                        ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
-                        : 'text-[var(--color-neutral-400)] border-transparent'
-                    }`}
-                  >
-                    추천 맛집
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('popular')}
-                    className={`flex-1 py-4 text-center font-medium border-b-2 transition-colors ${
-                      activeTab === 'popular'
-                        ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
-                        : 'text-[var(--color-neutral-400)] border-transparent'
-                    }`}
-                  >
-                    인기 맛집
-                  </button>
-                </div>
+            {/* 현재 위치 버튼 */}
+            <button className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50">
+              <MapPin className="w-5 h-5 text-gray-700" />
+            </button>
+          </section>
 
-                {/* 리스트 */}
-                <div className="p-4">
-                  <RestaurantList
-                    restaurants={
-                      activeTab === 'recommend'
-                        ? recommendedRestaurants
-                        : popularRestaurants
-                    }
-                  />
-                </div>
-              </section>
-            </>
-          )}
+          {/* 가게 목록 */}
+          <section className="bg-white">
+            <PickupStoreList
+              searchQuery=""
+              sortBy={pickupSortBy}
+              categoryFilter={pickupCategoryFilter}
+              showDiscountOnly={showDiscountOnly}
+            />
+          </section>
 
-          {activePlatform === 'pickup' && (
-            <>
-              {/* 필터 버튼들 */}
-              <section className="flex gap-2 px-4 pt-6 pb-0 overflow-x-auto hide-scrollbar bg-white">
-                <button
-                  onClick={() => setShowPickupFilters(!showPickupFilters)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-gray-300 bg-white text-sm font-medium whitespace-nowrap"
-                >
-                  <SlidersHorizontal className="w-4 h-4" />
-                  필터
-                </button>
-
-                <button
-                  onClick={() => {
-                    const newValue = !showDiscountOnly
-                    setShowDiscountOnly(newValue)
-                    // 픽업 할인 켜면 자동으로 할인순 정렬, 끄면 거리순으로 복원
-                    setPickupSortBy(newValue ? 'discount' : 'distance')
-                  }}
-                  className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    showDiscountOnly
-                      ? 'bg-[#df0012] text-white border border-[#df0012]'
-                      : 'bg-white text-gray-700 border border-gray-300'
-                  }`}
-                >
-                  픽업 할인
-                </button>
-
-                <button
-                  onClick={() => setPickupSortBy('distance')}
-                  className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    pickupSortBy === 'distance' && !showDiscountOnly
-                      ? 'bg-gray-900 text-white border border-gray-900'
-                      : 'bg-white text-gray-700 border border-gray-300'
-                  }`}
-                  disabled={showDiscountOnly}
-                >
-                  가까운 순
-                </button>
-
-                <button
-                  onClick={() => setPickupSortBy('rating')}
-                  className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    pickupSortBy === 'rating' && !showDiscountOnly
-                      ? 'bg-gray-900 text-white border border-gray-900'
-                      : 'bg-white text-gray-700 border border-gray-300'
-                  }`}
-                  disabled={showDiscountOnly}
-                >
-                  평점순
-                </button>
-              </section>
-
-              {/* 지도 */}
-              <section className="h-[300px] bg-gray-100 relative">
-                <KakaoMap />
-
-                {/* 현재 위치 버튼 */}
-                <button className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50">
-                  <MapPin className="w-5 h-5 text-gray-700" />
-                </button>
-              </section>
-
-              {/* 가게 목록 */}
-              <section className="bg-white">
-                <PickupStoreList
-                  searchQuery=""
-                  sortBy={pickupSortBy}
-                  categoryFilter={pickupCategoryFilter}
-                  showDiscountOnly={showDiscountOnly}
-                />
-              </section>
-
-              {/* 필터 모달 */}
-              {showPickupFilters && (
-                <PickupFilters
-                  categoryFilter={pickupCategoryFilter}
-                  onCategoryChange={setPickupCategoryFilter}
-                  onClose={() => setShowPickupFilters(false)}
-                />
-              )}
-            </>
+          {/* 필터 모달 */}
+          {showPickupFilters && (
+            <PickupFilters
+              categoryFilter={pickupCategoryFilter}
+              onCategoryChange={setPickupCategoryFilter}
+              onClose={() => setShowPickupFilters(false)}
+            />
           )}
         </main>
 
