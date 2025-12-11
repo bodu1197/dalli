@@ -35,10 +35,10 @@ export default function HomePage() {
       <div className="max-w-[700px] mx-auto min-h-screen bg-white relative">
 
         {/* 헤더 - 고정 */}
-        <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[700px] z-50 bg-[#df0012] pb-8 before:content-[''] before:absolute before:bottom-[-20px] before:left-0 before:right-0 before:h-[20px] before:bg-[#df0012] before:z-40">
+        <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[700px] z-50 bg-[#df0012] pb-8 before:content-[''] before:absolute before:bottom-[-20px] before:left-0 before:right-0 before:h-[20px] before:bg-[#df0012] before:z-20">
           {/* 양쪽 모서리 뿔 효과 (radial-gradient로 패인 영역 투명) */}
-          <div className="absolute bottom-[-20px] left-0 w-[20px] h-[20px] header-horn-left z-[101]" />
-          <div className="absolute bottom-[-20px] right-0 w-[20px] h-[20px] header-horn-right z-[101]" />
+          <div className="absolute bottom-[-20px] left-0 w-[20px] h-[20px] header-horn-left z-30" />
+          <div className="absolute bottom-[-20px] right-0 w-[20px] h-[20px] header-horn-right z-30" />
 
           {/* 상단 바 */}
           <div className="flex items-center justify-between px-4 h-14">
