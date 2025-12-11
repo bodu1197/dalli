@@ -322,3 +322,147 @@ export interface RefundStatusBadgeProps {
   /** 추가 클래스명 */
   className?: string
 }
+
+// ============================================================================
+// 쿠폰/포인트 복구 타입
+// ============================================================================
+
+/**
+ * 쿠폰 복구 결과
+ */
+export interface CouponRecoveryResult {
+  /** 성공 여부 */
+  success: boolean
+  /** 복구된 사용자 쿠폰 ID */
+  userCouponId: string | null
+  /** 마스터 쿠폰 ID */
+  couponId: string | null
+  /** 에러 메시지 (실패 시) */
+  errorMessage: string | null
+}
+
+/**
+ * 쿠폰 복구 파라미터
+ */
+export interface RecoverCouponParams {
+  /** 주문 ID */
+  orderId: string
+  /** 취소 ID */
+  cancellationId: string
+  /** 사용자 쿠폰 ID */
+  userCouponId: string
+}
+
+/**
+ * 포인트 복구 결과
+ */
+export interface PointRecoveryResult {
+  /** 성공 여부 */
+  success: boolean
+  /** 복구된 포인트 */
+  recoveredPoints: number
+  /** 새로운 잔액 */
+  newBalance: number
+  /** 거래 내역 ID */
+  transactionId: string | null
+  /** 에러 메시지 (실패 시) */
+  errorMessage: string | null
+}
+
+/**
+ * 포인트 복구 파라미터
+ */
+export interface RecoverPointsParams {
+  /** 주문 ID */
+  orderId: string
+  /** 취소 ID */
+  cancellationId: string
+  /** 사용자 ID */
+  userId: string
+  /** 복구할 포인트 금액 */
+  usedPoints: number
+}
+
+/**
+ * 사용자 포인트 정보
+ */
+export interface UserPoints {
+  /** 포인트 ID */
+  id: string
+  /** 사용자 ID */
+  userId: string
+  /** 현재 잔액 */
+  balance: number
+  /** 총 적립 금액 */
+  totalEarned: number
+  /** 총 사용 금액 */
+  totalUsed: number
+  /** 생성 시간 */
+  createdAt: string
+  /** 수정 시간 */
+  updatedAt: string
+}
+
+/**
+ * 포인트 거래 유형
+ */
+export type PointTransactionType =
+  | 'earn' // 적립
+  | 'use' // 사용
+  | 'refund' // 환불
+  | 'expire' // 만료
+  | 'admin_adjust' // 관리자 조정
+
+/**
+ * 포인트 거래 내역
+ */
+export interface PointTransaction {
+  /** 거래 ID */
+  id: string
+  /** 사용자 ID */
+  userId: string
+  /** 주문 ID (관련 주문이 있는 경우) */
+  orderId: string | null
+  /** 취소 ID (환불인 경우) */
+  cancellationId: string | null
+  /** 거래 유형 */
+  type: PointTransactionType
+  /** 금액 (양수: 적립/환불, 음수: 사용) */
+  amount: number
+  /** 거래 후 잔액 */
+  balanceAfter: number
+  /** 설명 */
+  description: string | null
+  /** 만료일 (적립 시에만 사용) */
+  expiresAt: string | null
+  /** 생성 시간 */
+  createdAt: string
+}
+
+/**
+ * 통합 복구 결과 (쿠폰 + 포인트)
+ */
+export interface RecoveryResult {
+  /** 쿠폰 복구 결과 */
+  coupon: CouponRecoveryResult
+  /** 포인트 복구 결과 */
+  points: PointRecoveryResult
+}
+
+/**
+ * 취소 처리 전체 결과
+ */
+export interface CancellationProcessResult {
+  /** 성공 여부 */
+  success: boolean
+  /** 취소 정보 */
+  cancellation: OrderCancellation | null
+  /** 환불 정보 */
+  refund: Refund | null
+  /** 쿠폰 복구 결과 */
+  couponRecovery: CouponRecoveryResult | null
+  /** 포인트 복구 결과 */
+  pointsRecovery: PointRecoveryResult | null
+  /** 에러 메시지 */
+  errorMessage: string | null
+}
