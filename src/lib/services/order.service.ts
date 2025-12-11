@@ -5,6 +5,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { calculatePlatformFee } from '@/lib/utils/platform-fee'
+import type { Json } from '@/types/supabase'
 import type {
   Order,
   OrderItem,
@@ -12,6 +13,7 @@ import type {
   OrderListItem,
   OrderRecord,
   OrderItemRecord,
+  OrderStatus,
 } from '@/types/order.types'
 
 // ============================================================================
@@ -240,7 +242,7 @@ export async function createOrder(
       menu_image: item.menuImage,
       quantity: item.quantity,
       price: item.price,
-      options: item.options as unknown as any,
+      options: item.options as unknown as Json,
       special_instructions: item.specialInstructions,
     }))
 
@@ -333,7 +335,7 @@ export async function getOrderById(orderId: string): Promise<Order | null> {
     .select('*')
     .eq('order_id', orderId)
 
-  return transformOrderRecord(orderRecord as unknown as OrderRecord, itemsRecord as unknown as OrderItemRecord[] ?? [])
+  return transformOrderRecord(orderRecord as unknown as OrderRecord, (itemsRecord ?? []) as unknown as OrderItemRecord[])
 }
 
 /**
@@ -398,7 +400,7 @@ export async function getOrdersByUserId(
       restaurantId: order.restaurant_id,
       restaurantName: order.restaurant_name ?? '',
       restaurantImage: order.restaurant_image,
-      status: order.status as any,
+      status: order.status as OrderStatus,
       totalAmount: order.total_amount,
       itemCount,
       itemSummary: otherCount > 0 ? `${firstItem} 외 ${otherCount}개` : firstItem,

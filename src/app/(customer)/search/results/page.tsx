@@ -8,7 +8,10 @@ import { ArrowLeft, Search, SlidersHorizontal, X } from 'lucide-react'
 import { RestaurantList } from '@/components/features/restaurant'
 import { Spinner } from '@/components/ui/Spinner'
 import { createClient } from '@/lib/supabase/client'
-import type { Restaurant } from '@/types/restaurant.types'
+import type { Restaurant, BusinessHours } from '@/types/restaurant.types'
+import type { Database } from '@/types/supabase'
+
+type RestaurantRow = Database['public']['Tables']['restaurants']['Row']
 
 // 필터 옵션
 const SORT_OPTIONS = [
@@ -38,7 +41,7 @@ function SearchResultsContent() {
 
         if (error) throw new Error('식당 정보를 불러오는데 실패했습니다.')
 
-        const formattedRestaurants: Restaurant[] = data.map((item: any) => ({
+        const formattedRestaurants: Restaurant[] = data.map((item: RestaurantRow) => ({
           id: item.id,
           ownerId: item.owner_id,
           name: item.name,
@@ -51,7 +54,7 @@ function SearchResultsContent() {
           minOrderAmount: item.min_order_amount ?? 0,
           deliveryFee: item.delivery_fee ?? 0,
           estimatedDeliveryTime: item.estimated_delivery_time ?? 0,
-          businessHours: item.business_hours,
+          businessHours: item.business_hours as unknown as BusinessHours | null,
           isOpen: item.is_open ?? false,
           rating: item.rating ?? 0,
           reviewCount: item.review_count ?? 0,
@@ -73,8 +76,12 @@ function SearchResultsContent() {
 
         setRestaurants(sortedRestaurants)
 
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message)
+        } else {
+          setError('알 수 없는 오류가 발생했습니다.')
+        }
       } finally {
         setLoading(false)
       }
