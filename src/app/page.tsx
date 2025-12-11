@@ -30,7 +30,7 @@ export default function HomePage() {
     : displayAddress
 
   return (
-    <div className="min-h-screen bg-[#df0012]">
+    <div className="min-h-screen bg-gray-100">
       {/* 헤더 - 고정 (3층) */}
       <header className="fixed top-0 left-0 right-0 z-50">
         <div className="max-w-[700px] mx-auto bg-[#df0012] pb-8">
@@ -86,8 +86,8 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* 메인 컨텐츠 컨테이너 (2층: 보디) */}
-      <div className="max-w-[700px] mx-auto min-h-screen md:shadow-[0_0_20px_rgba(0,0,0,0.1)] pt-[120px]">
+      {/* 메인 컨텐츠 컨테이너 (2층: 빨간 배경) */}
+      <div className="max-w-[700px] mx-auto min-h-screen bg-[#df0012] md:shadow-[0_0_20px_rgba(0,0,0,0.1)] pt-[120px]">
         <main className="bg-white rounded-t-xl relative z-10 pb-20 min-h-screen">
           {/* 필터 버튼들 */}
           <section className="flex gap-2 px-4 pt-5 pb-5 overflow-x-auto hide-scrollbar bg-white">
