@@ -4,7 +4,7 @@ import { useEffect, useCallback, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthStore, type UserProfile, type UserRole } from '@/stores/auth.store'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database.types'
+import type { Database } from '@/types/supabase'
 
 export function useAuth() {
   const router = useRouter()
@@ -59,7 +59,7 @@ export function useAuth() {
         role: data.role as UserRole,
         avatarUrl: data.avatar_url,
         defaultAddressId: data.default_address_id,
-        createdAt: data.created_at,
+        createdAt: data.created_at ?? new Date().toISOString(),
       }
 
       setProfile(userProfile)

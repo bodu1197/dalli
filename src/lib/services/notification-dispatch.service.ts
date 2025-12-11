@@ -4,7 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Json } from '@/types/supabase'
 import type {
   NotificationType,
   NotificationChannel,
@@ -12,18 +12,7 @@ import type {
   NotificationPriority,
   PushPayload,
   SendPushResult,
-  NotificationLogRecord,
-  NotificationDatabase,
 } from '@/types/notification.types'
-
-// ============================================================================
-// 타입 정의
-// ============================================================================
-
-/**
- * 알림 시스템 전용 Supabase 클라이언트 타입
- */
-type NotificationSupabaseClient = SupabaseClient<NotificationDatabase>
 
 import {
   getTemplate,
@@ -68,13 +57,13 @@ async function logNotificationSend(
   providerResponse?: Record<string, unknown>,
   errorMessage?: string
 ): Promise<void> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   await supabase.from('notification_logs').insert({
     notification_id: notificationId,
     channel,
     status,
-    provider_response: providerResponse ?? null,
+    provider_response: (providerResponse ?? null) as Json,
     error_message: errorMessage ?? null,
     sent_at: status === 'sent' ? new Date().toISOString() : null,
     delivered_at: status === 'delivered' ? new Date().toISOString() : null,
@@ -91,14 +80,14 @@ async function updateLogStatus(
   providerResponse?: Record<string, unknown>,
   errorMessage?: string
 ): Promise<void> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
-  const updateData: Partial<NotificationLogRecord> = {
+  const updateData: Record<string, unknown> = {
     status,
   }
 
   if (providerResponse) {
-    updateData.provider_response = providerResponse
+    updateData.provider_response = providerResponse as Json
   }
 
   if (errorMessage) {
@@ -566,7 +555,7 @@ export async function dispatchUrgentNotification(
 export async function retryFailedNotification(
   logId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   // 로그 조회
   const { data: log, error: logError } = await supabase
@@ -654,7 +643,7 @@ export async function retryAllFailedNotifications(): Promise<{
   success: number
   failed: number
 }> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   // 실패한 로그 조회 (재시도 가능한 것만)
   const { data: logs, error } = await supabase

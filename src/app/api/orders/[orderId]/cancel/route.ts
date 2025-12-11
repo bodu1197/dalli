@@ -129,11 +129,14 @@ export async function POST(
     }
 
     // 9. 환불 금액 계산
+    const deliveryFee = order.delivery_fee ?? 0
     const refundAmount = calculateRefundAmount(
       order.total_amount,
-      order.delivery_fee,
+      deliveryFee,
       policy.refundRate
     )
+    const menuRefundAmount = Math.floor(order.total_amount * (policy.refundRate / 100))
+    const deliveryRefundAmount = deliveryFee
 
     // 10. 트랜잭션 시작 - 취소 유형에 따라 처리
     const cancelType = policy.cancelType
@@ -145,19 +148,21 @@ export async function POST(
       .insert({
         order_id: orderId,
         requested_by: user.id,
-        requested_by_type: 'customer',
         cancel_type: cancelType,
         status: isInstantCancel ? 'completed' : 'pending',
-        reason_category: reasonCategory,
+        reason: reasonCategory,
         reason_detail: reasonDetail ?? null,
         refund_amount: refundAmount,
         refund_rate: policy.refundRate / 100, // 0.00 - 1.00 형식으로 저장
+        menu_refund_amount: menuRefundAmount,
+        delivery_refund_amount: deliveryRefundAmount,
         can_refund_coupon: policy.canRefundCoupon,
         can_refund_points: policy.canRefundPoints,
         coupon_refunded: false,
         points_refunded: false,
-        processed_by: isInstantCancel ? user.id : null,
-        processed_at: isInstantCancel ? new Date().toISOString() : null,
+        approved_by: isInstantCancel ? user.id : null,
+        approved_at: isInstantCancel ? new Date().toISOString() : null,
+        completed_at: isInstantCancel ? new Date().toISOString() : null,
       })
       .select()
       .single()
@@ -205,7 +210,10 @@ export async function POST(
           .insert({
             order_id: orderId,
             cancellation_id: cancellation.id,
+            user_id: user.id,
             amount: refundAmount,
+            original_amount: order.total_amount + deliveryFee,
+            refund_rate: policy.refundRate / 100,
             payment_method: order.payment_method ?? 'card',
             payment_key: order.payment_key ?? null,
             refund_status: 'pending',
@@ -367,7 +375,7 @@ function transformCancellation(data: Record<string, unknown>): OrderCancellation
     id: data.id as string,
     orderId: data.order_id as string,
     requestedBy: data.requested_by as string,
-    requestedByType: data.requested_by_type as OrderCancellation['requestedByType'],
+    requestedByType: 'customer', // DB에는 없으므로 기본값
     cancelType: data.cancel_type as OrderCancellation['cancelType'],
     status: data.status as OrderCancellation['status'],
     reason: data.reason as OrderCancellation['reason'],
@@ -379,8 +387,8 @@ function transformCancellation(data: Record<string, unknown>): OrderCancellation
     couponRefunded: data.coupon_refunded as boolean,
     pointsRefunded: data.points_refunded as boolean,
     rejectedReason: data.rejected_reason as string | null,
-    processedBy: data.processed_by as string | null,
-    processedAt: data.processed_at as string | null,
+    processedBy: data.approved_by as string | null,
+    processedAt: data.approved_at as string | null,
     createdAt: data.created_at as string,
     updatedAt: data.updated_at as string,
   }
@@ -399,10 +407,10 @@ function transformRefund(data: Record<string, unknown>): Refund {
     paymentKey: data.payment_key as string | null,
     refundStatus: data.refund_status as Refund['refundStatus'],
     pgResponse: data.pg_response as Record<string, unknown> | null,
-    pgTransactionId: data.pg_transaction_id as string | null,
-    failedReason: data.failed_reason as string | null,
-    retryCount: data.retry_count as number,
-    lastRetryAt: data.last_retry_at as string | null,
+    pgTransactionId: data.pg_tid as string | null,
+    failedReason: data.error_message as string | null,
+    retryCount: (data.retry_count as number) ?? 0,
+    lastRetryAt: data.next_retry_at as string | null,
     completedAt: data.completed_at as string | null,
     createdAt: data.created_at as string,
     updatedAt: data.updated_at as string,

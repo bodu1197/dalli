@@ -4,23 +4,12 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   NotificationSettings,
   NotificationSettingsRecord,
   UpdateNotificationSettingsParams,
   GetNotificationSettingsResult,
-  NotificationDatabase,
 } from '@/types/notification.types'
-
-// ============================================================================
-// 타입 정의
-// ============================================================================
-
-/**
- * 알림 시스템 전용 Supabase 클라이언트 타입
- */
-type NotificationSupabaseClient = SupabaseClient<NotificationDatabase>
 
 // ============================================================================
 // 타입 변환 유틸리티
@@ -81,7 +70,7 @@ const DEFAULT_SETTINGS: Omit<NotificationSettings, 'id' | 'userId' | 'createdAt'
 export async function getNotificationSettings(
   userId: string
 ): Promise<GetNotificationSettingsResult> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('notification_settings')
@@ -113,7 +102,7 @@ export async function getNotificationSettings(
  * @returns 생성/조회된 알림 설정
  */
 export async function initNotificationSettings(userId: string): Promise<NotificationSettings> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   // DB 함수 호출로 초기화 (upsert)
   const { error } = await supabase.rpc('init_notification_settings', {
@@ -144,7 +133,7 @@ export async function updateNotificationSettings(
   params: UpdateNotificationSettingsParams
 ): Promise<NotificationSettings> {
   const { userId, ...updateFields } = params
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   // snake_case로 변환
   const updateData: Record<string, unknown> = {

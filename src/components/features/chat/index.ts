@@ -1,0 +1,1 @@
+export { ChatBadge } from './ChatBadge'

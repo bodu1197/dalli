@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth.store'
 import { useLocationStore } from '@/stores/location.store'
 import type { Address, AddressInput } from '@/types/address.types'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database.types'
+import type { Database } from '@/types/supabase'
 
 interface UseAddressReturn {
   addresses: Address[]
@@ -66,8 +66,8 @@ export function useAddress(): UseAddressReturn {
         detail: item.detail,
         lat: item.lat,
         lng: item.lng,
-        isDefault: item.is_default,
-        createdAt: item.created_at,
+        isDefault: item.is_default ?? false,
+        createdAt: item.created_at ?? new Date().toISOString(),
       }))
 
       setAddresses(formattedAddresses)
@@ -127,8 +127,8 @@ export function useAddress(): UseAddressReturn {
           detail: data.detail,
           lat: data.lat,
           lng: data.lng,
-          isDefault: data.is_default,
-          createdAt: data.created_at,
+          isDefault: data.is_default ?? false,
+          createdAt: data.created_at ?? new Date().toISOString(),
         }
 
         setAddresses((prev) => [newAddress, ...prev])

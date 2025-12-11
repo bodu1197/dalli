@@ -1,95 +1,43 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, TrendingUp, TrendingDown, Info } from 'lucide-react'
-
-interface PointHistory {
-  id: string
-  type: 'earn' | 'use' | 'expire'
-  amount: number
-  description: string
-  orderId?: string
-  restaurantName?: string
-  createdAt: string
-  expiresAt?: string
-}
-
-// Mock 포인트 데이터
-const MOCK_POINT_BALANCE = 1200
-
-const MOCK_POINT_HISTORY: PointHistory[] = [
-  {
-    id: '1',
-    type: 'earn',
-    amount: 300,
-    description: '주문 적립',
-    orderId: 'ORD001',
-    restaurantName: 'BBQ 치킨 강남점',
-    createdAt: '2024-12-08T14:30:00',
-    expiresAt: '2025-12-08T23:59:59',
-  },
-  {
-    id: '2',
-    type: 'use',
-    amount: -500,
-    description: '주문 시 사용',
-    orderId: 'ORD002',
-    restaurantName: '맥도날드 역삼점',
-    createdAt: '2024-12-07T12:00:00',
-  },
-  {
-    id: '3',
-    type: 'earn',
-    amount: 200,
-    description: '리뷰 작성 적립',
-    orderId: 'ORD001',
-    restaurantName: 'BBQ 치킨 강남점',
-    createdAt: '2024-12-06T16:45:00',
-    expiresAt: '2025-12-06T23:59:59',
-  },
-  {
-    id: '4',
-    type: 'earn',
-    amount: 1000,
-    description: '신규 가입 환영 포인트',
-    createdAt: '2024-12-01T10:00:00',
-    expiresAt: '2025-03-01T23:59:59',
-  },
-  {
-    id: '5',
-    type: 'expire',
-    amount: -200,
-    description: '포인트 소멸',
-    createdAt: '2024-11-30T23:59:59',
-  },
-]
+import { ArrowLeft, TrendingUp, TrendingDown, Info, Loader2, AlertCircle } from 'lucide-react'
+import { usePointInfo, usePointTransactions } from '@/hooks/usePoint'
+import { POINT_POLICY } from '@/types/point.types'
+import type { PointTransaction, PointTransactionType } from '@/types/point.types'
 
 type TabType = 'all' | 'earn' | 'use'
 
 export default function PointsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('all')
 
-  const filteredHistory =
+  const { pointInfo, isLoading: isLoadingInfo, error: infoError, refetch: refetchInfo } = usePointInfo()
+  const {
+    transactions,
+    isLoading: isLoadingTx,
+    error: txError,
+    hasMore,
+    loadMore,
+    refetch: refetchTx
+  } = usePointTransactions(20)
+
+  const filteredTransactions =
     activeTab === 'all'
-      ? MOCK_POINT_HISTORY
-      : MOCK_POINT_HISTORY.filter((h) =>
-          activeTab === 'earn' ? h.type === 'earn' : h.type === 'use'
+      ? transactions
+      : transactions.filter((tx) =>
+          activeTab === 'earn'
+            ? tx.type === 'earn' || tx.type === 'admin_add'
+            : tx.type === 'use' || tx.type === 'admin_deduct' || tx.type === 'expire'
         )
 
-  // 이번 달 적립/사용 계산
-  const thisMonth = new Date().getMonth()
-  const thisMonthHistory = MOCK_POINT_HISTORY.filter(
-    (h) => new Date(h.createdAt).getMonth() === thisMonth
-  )
-  const earnedThisMonth = thisMonthHistory
-    .filter((h) => h.type === 'earn')
-    .reduce((sum, h) => sum + h.amount, 0)
-  const usedThisMonth = Math.abs(
-    thisMonthHistory
-      .filter((h) => h.type === 'use')
-      .reduce((sum, h) => sum + h.amount, 0)
-  )
+  const handleRefresh = useCallback(() => {
+    refetchInfo()
+    refetchTx()
+  }, [refetchInfo, refetchTx])
+
+  const isLoading = isLoadingInfo || isLoadingTx
+  const error = infoError || txError
 
   return (
     <div className="min-h-screen bg-[var(--color-neutral-50)]">
@@ -111,23 +59,50 @@ export default function PointsPage() {
 
       {/* 포인트 잔액 카드 */}
       <section className="p-4 bg-white">
-        <div className="bg-gradient-to-r from-[var(--color-primary-500)] to-[var(--color-primary-600)] rounded-2xl p-6 text-white">
-          <p className="text-sm opacity-80 mb-2">사용 가능한 포인트</p>
-          <p className="text-3xl font-bold mb-4">
-            {MOCK_POINT_BALANCE.toLocaleString()}P
-          </p>
-
-          <div className="flex gap-4 text-sm">
-            <div>
-              <p className="opacity-70">이번 달 적립</p>
-              <p className="font-semibold">+{earnedThisMonth.toLocaleString()}P</p>
-            </div>
-            <div>
-              <p className="opacity-70">이번 달 사용</p>
-              <p className="font-semibold">-{usedThisMonth.toLocaleString()}P</p>
-            </div>
+        {isLoadingInfo ? (
+          <div className="bg-gradient-to-r from-[var(--color-primary-500)] to-[var(--color-primary-600)] rounded-2xl p-6 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
           </div>
-        </div>
+        ) : infoError ? (
+          <div className="bg-[var(--color-error-50)] rounded-2xl p-6 text-center">
+            <AlertCircle className="w-8 h-8 text-[var(--color-error-500)] mx-auto mb-2" />
+            <p className="text-[var(--color-error-600)] mb-3">{infoError}</p>
+            <button
+              onClick={handleRefresh}
+              className="px-4 py-2 bg-[var(--color-primary-500)] text-white rounded-lg"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : (
+          <div className="bg-gradient-to-r from-[var(--color-primary-500)] to-[var(--color-primary-600)] rounded-2xl p-6 text-white">
+            <p className="text-sm opacity-80 mb-2">사용 가능한 포인트</p>
+            <p className="text-3xl font-bold mb-4">
+              {(pointInfo?.balance ?? 0).toLocaleString()}P
+            </p>
+
+            <div className="flex gap-4 text-sm">
+              <div>
+                <p className="opacity-70">총 적립</p>
+                <p className="font-semibold">+{(pointInfo?.totalEarned ?? 0).toLocaleString()}P</p>
+              </div>
+              <div>
+                <p className="opacity-70">총 사용</p>
+                <p className="font-semibold">-{(pointInfo?.totalUsed ?? 0).toLocaleString()}P</p>
+              </div>
+            </div>
+
+            {/* 이번달 만료 예정 경고 */}
+            {(pointInfo?.expiringThisMonth ?? 0) > 0 && (
+              <div className="mt-4 p-3 bg-white/10 rounded-xl flex items-center gap-2">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm">
+                  이번 달 {pointInfo?.expiringThisMonth.toLocaleString()}P 소멸 예정
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 포인트 안내 */}
         <div className="mt-4 p-4 bg-[var(--color-neutral-50)] rounded-xl flex items-start gap-3">
@@ -137,9 +112,10 @@ export default function PointsPage() {
               포인트 적립 안내
             </p>
             <ul className="space-y-1 text-xs">
-              <li>• 주문 금액의 1% 포인트 적립</li>
-              <li>• 리뷰 작성 시 200P 추가 적립</li>
-              <li>• 포인트는 적립일로부터 1년간 유효</li>
+              <li>• 주문 금액의 {POINT_POLICY.EARN_RATE}% 포인트 적립</li>
+              <li>• 최소 {POINT_POLICY.MIN_USE_AMOUNT.toLocaleString()}P부터 사용 가능</li>
+              <li>• {POINT_POLICY.USE_UNIT}P 단위로 사용 가능</li>
+              <li>• 포인트는 적립일로부터 {POINT_POLICY.EXPIRY_DAYS}일간 유효</li>
             </ul>
           </div>
         </div>
@@ -181,35 +157,90 @@ export default function PointsPage() {
 
       {/* 포인트 내역 */}
       <main className="pb-20">
-        {filteredHistory.length === 0 ? (
+        {isLoadingTx && transactions.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[40vh]">
-            <span className="text-5xl mb-4">🅿️</span>
+            <Loader2 className="w-8 h-8 text-[var(--color-primary-500)] animate-spin mb-4" />
+            <p className="text-[var(--color-neutral-500)]">로딩 중...</p>
+          </div>
+        ) : txError ? (
+          <div className="flex flex-col items-center justify-center min-h-[40vh]">
+            <p className="text-[var(--color-error-500)] mb-4">{txError}</p>
+            <button
+              onClick={refetchTx}
+              className="px-4 py-2 bg-[var(--color-primary-500)] text-white rounded-lg"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : filteredTransactions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[40vh]">
+            <span className="text-5xl mb-4">P</span>
             <p className="text-[var(--color-neutral-500)]">
               포인트 내역이 없습니다
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-[var(--color-neutral-100)]">
-            {filteredHistory.map((history) => (
-              <PointHistoryItem key={history.id} history={history} />
-            ))}
-          </div>
+          <>
+            <div className="divide-y divide-[var(--color-neutral-100)]">
+              {filteredTransactions.map((tx) => (
+                <PointHistoryItem key={tx.id} transaction={tx} />
+              ))}
+            </div>
+
+            {/* 더 보기 버튼 */}
+            {hasMore && (
+              <div className="p-4">
+                <button
+                  onClick={loadMore}
+                  disabled={isLoadingTx}
+                  className="w-full py-3 bg-white border border-[var(--color-neutral-200)] rounded-xl text-[var(--color-neutral-700)] font-medium disabled:opacity-50"
+                >
+                  {isLoadingTx ? (
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                  ) : (
+                    '더 보기'
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>
   )
 }
 
-function PointHistoryItem({ history }: Readonly<{ history: PointHistory }>) {
-  const isEarn = history.type === 'earn'
-  const isExpire = history.type === 'expire'
+interface PointHistoryItemProps {
+  transaction: PointTransaction
+}
 
-  const formattedDate = new Date(history.createdAt).toLocaleDateString('ko-KR', {
+function PointHistoryItem({ transaction }: Readonly<PointHistoryItemProps>) {
+  const isEarn = transaction.type === 'earn' || transaction.type === 'admin_add'
+  const isExpire = transaction.type === 'expire'
+
+  const formattedDate = new Date(transaction.createdAt).toLocaleDateString('ko-KR', {
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   })
+
+  const getDescription = (type: PointTransactionType): string => {
+    switch (type) {
+      case 'earn':
+        return transaction.description ?? '주문 적립'
+      case 'use':
+        return transaction.description ?? '주문 사용'
+      case 'expire':
+        return '포인트 소멸'
+      case 'admin_add':
+        return transaction.description ?? '관리자 지급'
+      case 'admin_deduct':
+        return transaction.description ?? '관리자 차감'
+      default:
+        return transaction.description ?? '포인트'
+    }
+  }
 
   const getIconBgClass = (): string => {
     if (isEarn) return 'bg-[var(--color-success-50)]'
@@ -228,6 +259,8 @@ function PointHistoryItem({ history }: Readonly<{ history: PointHistory }>) {
     return 'text-[var(--color-error-500)]'
   }
 
+  const displayAmount = transaction.amount > 0 ? `+${transaction.amount.toLocaleString()}` : transaction.amount.toLocaleString()
+
   return (
     <div className="flex items-center gap-4 px-4 py-4 bg-white">
       {/* 아이콘 */}
@@ -242,23 +275,22 @@ function PointHistoryItem({ history }: Readonly<{ history: PointHistory }>) {
       {/* 내용 */}
       <div className="flex-1 min-w-0">
         <p className="font-medium text-[var(--color-neutral-900)]">
-          {history.description}
+          {getDescription(transaction.type)}
         </p>
-        {history.restaurantName && (
-          <p className="text-sm text-[var(--color-neutral-500)] truncate">
-            {history.restaurantName}
-          </p>
-        )}
         <p className="text-xs text-[var(--color-neutral-400)] mt-1">
           {formattedDate}
         </p>
       </div>
 
       {/* 포인트 금액 */}
-      <p className={`font-bold ${getAmountColorClass()}`}>
-        {isEarn ? '+' : ''}
-        {history.amount.toLocaleString()}P
-      </p>
+      <div className="text-right">
+        <p className={`font-bold ${getAmountColorClass()}`}>
+          {displayAmount}P
+        </p>
+        <p className="text-xs text-[var(--color-neutral-400)]">
+          잔액 {transaction.balanceAfter.toLocaleString()}P
+        </p>
+      </div>
     </div>
   )
 }

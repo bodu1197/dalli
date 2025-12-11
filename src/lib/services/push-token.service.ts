@@ -4,23 +4,12 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   PushToken,
   PushTokenRecord,
   DevicePlatform,
   RegisterPushTokenParams,
-  NotificationDatabase,
 } from '@/types/notification.types'
-
-// ============================================================================
-// 타입 정의
-// ============================================================================
-
-/**
- * 알림 시스템 전용 Supabase 클라이언트 타입
- */
-type NotificationSupabaseClient = SupabaseClient<NotificationDatabase>
 
 // ============================================================================
 // 타입 변환 유틸리티
@@ -56,15 +45,15 @@ function toPushToken(record: PushTokenRecord): PushToken {
  */
 export async function registerPushToken(params: RegisterPushTokenParams): Promise<PushToken> {
   const { userId, token, platform, deviceId, deviceName } = params
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   // DB 함수로 upsert 처리
-  const { data, error } = await supabase.rpc('upsert_push_token', {
+  const { error } = await supabase.rpc('upsert_push_token', {
     p_user_id: userId,
     p_token: token,
     p_platform: platform,
-    p_device_id: deviceId ?? null,
-    p_device_name: deviceName ?? null,
+    p_device_id: deviceId,
+    p_device_name: deviceName,
   })
 
   if (error) {
@@ -92,7 +81,7 @@ export async function registerPushToken(params: RegisterPushTokenParams): Promis
  * @returns 활성 푸시 토큰 목록
  */
 export async function getActiveTokens(userId: string): Promise<PushToken[]> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('push_tokens')
@@ -119,7 +108,7 @@ export async function getTokensByPlatform(
   userId: string,
   platform: DevicePlatform
 ): Promise<PushToken[]> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('push_tokens')
@@ -143,7 +132,7 @@ export async function getTokensByPlatform(
  * @returns 푸시 토큰 또는 null
  */
 export async function getTokenByValue(token: string): Promise<PushToken | null> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('push_tokens')
@@ -168,7 +157,7 @@ export async function getTokenByValue(token: string): Promise<PushToken | null> 
  * @returns 성공 여부
  */
 export async function deactivateToken(tokenId: string): Promise<boolean> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { error } = await supabase
     .from('push_tokens')
@@ -192,7 +181,7 @@ export async function deactivateToken(tokenId: string): Promise<boolean> {
  * @returns 성공 여부
  */
 export async function deactivateTokenByValue(token: string): Promise<boolean> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { error } = await supabase
     .from('push_tokens')
@@ -216,7 +205,7 @@ export async function deactivateTokenByValue(token: string): Promise<boolean> {
  * @returns 비활성화된 토큰 수
  */
 export async function deactivateAllUserTokens(userId: string): Promise<number> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('push_tokens')
@@ -242,7 +231,7 @@ export async function deactivateAllUserTokens(userId: string): Promise<number> {
  * @returns 성공 여부
  */
 export async function deleteToken(tokenId: string): Promise<boolean> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { error } = await supabase.from('push_tokens').delete().eq('id', tokenId)
 
@@ -260,7 +249,7 @@ export async function deleteToken(tokenId: string): Promise<boolean> {
  * @returns 성공 여부
  */
 export async function deleteTokenByValue(token: string): Promise<boolean> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { error } = await supabase.from('push_tokens').delete().eq('token', token)
 
@@ -278,7 +267,7 @@ export async function deleteTokenByValue(token: string): Promise<boolean> {
  * @returns 성공 여부
  */
 export async function updateTokenLastUsed(token: string): Promise<boolean> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { error } = await supabase
     .from('push_tokens')
@@ -304,7 +293,7 @@ export async function updateTokenLastUsed(token: string): Promise<boolean> {
 export async function updateTokensLastUsed(tokens: string[]): Promise<boolean> {
   if (tokens.length === 0) return true
 
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { error } = await supabase
     .from('push_tokens')
@@ -328,7 +317,7 @@ export async function updateTokensLastUsed(tokens: string[]): Promise<boolean> {
  * @returns 활성 토큰 수
  */
 export async function getActiveTokenCount(userId: string): Promise<number> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { count, error } = await supabase
     .from('push_tokens')
@@ -349,7 +338,7 @@ export async function getActiveTokenCount(userId: string): Promise<number> {
  * @returns 삭제된 토큰 수
  */
 export async function cleanupInactiveTokens(): Promise<number> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
@@ -374,7 +363,7 @@ export async function cleanupInactiveTokens(): Promise<number> {
  * @returns 삭제된 토큰 수
  */
 export async function cleanupUnusedTokens(): Promise<number> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const ninetyDaysAgo = new Date()
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
@@ -399,7 +388,7 @@ export async function cleanupUnusedTokens(): Promise<number> {
  * @returns 푸시 토큰 또는 null
  */
 export async function getTokenByDeviceId(deviceId: string): Promise<PushToken | null> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('push_tokens')
@@ -429,7 +418,7 @@ export async function getTokensForUsers(
 ): Promise<Map<string, PushToken[]>> {
   if (userIds.length === 0) return new Map()
 
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('push_tokens')

@@ -98,7 +98,7 @@ export default function OwnerDashboardPage() {
     { icon: <Store className="w-6 h-6" />, label: '가게관리', href: '/owner/store' },
     { icon: <BarChart3 className="w-6 h-6" />, label: '매출통계', href: '/owner/stats' },
     { icon: <Star className="w-6 h-6" />, label: '리뷰관리', href: '/owner/reviews', badge: MOCK_STATS.newReviews },
-    { icon: <Settings className="w-6 h-6" />, label: '설정', href: '/owner/settings' },
+    { icon: <TrendingUp className="w-6 h-6" />, label: '광고관리', href: '/owner/ads' },
   ]
 
   return (

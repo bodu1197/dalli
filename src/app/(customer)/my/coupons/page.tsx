@@ -2,73 +2,10 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Ticket, Clock, Store } from 'lucide-react'
-
-interface Coupon {
-  id: string
-  code: string
-  name: string
-  description: string
-  discountType: 'amount' | 'percentage'
-  discountValue: number
-  minOrderAmount: number
-  maxDiscountAmount?: number
-  restaurantId?: string
-  restaurantName?: string
-  expiresAt: string
-  isUsed: boolean
-}
-
-// Mock 쿠폰 데이터
-const MOCK_COUPONS: Coupon[] = [
-  {
-    id: '1',
-    code: 'WELCOME2024',
-    name: '신규 가입 축하 쿠폰',
-    description: '달리고 첫 주문 할인',
-    discountType: 'amount',
-    discountValue: 3000,
-    minOrderAmount: 15000,
-    expiresAt: '2024-12-31T23:59:59',
-    isUsed: false,
-  },
-  {
-    id: '2',
-    code: 'CHICKEN20',
-    name: '치킨 전문점 20% 할인',
-    description: '치킨 카테고리 전용',
-    discountType: 'percentage',
-    discountValue: 20,
-    minOrderAmount: 18000,
-    maxDiscountAmount: 5000,
-    expiresAt: '2024-12-25T23:59:59',
-    isUsed: false,
-  },
-  {
-    id: '3',
-    code: 'BBQSPECIAL',
-    name: 'BBQ 치킨 전용 쿠폰',
-    description: 'BBQ 치킨에서만 사용 가능',
-    discountType: 'amount',
-    discountValue: 2000,
-    minOrderAmount: 20000,
-    restaurantId: '1',
-    restaurantName: 'BBQ 치킨 강남점',
-    expiresAt: '2024-12-20T23:59:59',
-    isUsed: false,
-  },
-  {
-    id: '4',
-    code: 'USED001',
-    name: '사용된 쿠폰',
-    description: '이미 사용된 쿠폰입니다',
-    discountType: 'amount',
-    discountValue: 1000,
-    minOrderAmount: 10000,
-    expiresAt: '2024-11-30T23:59:59',
-    isUsed: true,
-  },
-]
+import { ArrowLeft, Ticket, Clock, Store, Loader2 } from 'lucide-react'
+import { useUserCoupons, useRegisterCoupon } from '@/hooks/useCoupon'
+import { calculateCouponDiscount } from '@/types/coupon.types'
+import type { UserCouponListItem } from '@/types/coupon.types'
 
 type TabType = 'available' | 'used'
 
@@ -76,27 +13,39 @@ export default function CouponsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('available')
   const [couponCode, setCouponCode] = useState('')
 
-  const availableCoupons = MOCK_COUPONS.filter((c) => !c.isUsed)
-  const usedCoupons = MOCK_COUPONS.filter((c) => c.isUsed)
+  const { coupons, isLoading, error, refetch } = useUserCoupons()
+  const { registerCoupon, isRegistering, error: registerError } = useRegisterCoupon()
 
-  const displayCoupons = activeTab === 'available' ? availableCoupons : usedCoupons
+  const now = new Date().toISOString()
+  const availableCoupons = coupons.filter(
+    (c) => !c.isUsed && c.endDate >= now
+  )
+  const usedOrExpiredCoupons = coupons.filter(
+    (c) => c.isUsed || c.endDate < now
+  )
 
-  const handleRegisterCoupon = () => {
+  const displayCoupons = activeTab === 'available' ? availableCoupons : usedOrExpiredCoupons
+
+  const handleRegisterCoupon = async () => {
     if (!couponCode.trim()) {
       alert('쿠폰 코드를 입력해주세요')
       return
     }
-    // Note: Register coupon via API (to be implemented with Supabase)
-    alert(`쿠폰 코드 "${couponCode}" 등록 시도 (개발 중)`)
-    setCouponCode('')
+
+    const success = await registerCoupon(couponCode)
+    if (success) {
+      alert('쿠폰이 등록되었습니다!')
+      setCouponCode('')
+      refetch()
+    } else if (registerError) {
+      alert(registerError)
+    }
   }
 
-  const getDaysRemaining = (expiresAt: string) => {
-    const now = new Date()
-    const expires = new Date(expiresAt)
-    const diff = expires.getTime() - now.getTime()
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
-    return days
+  const getDaysRemaining = (endDate: string): number => {
+    const end = new Date(endDate)
+    const diff = end.getTime() - Date.now()
+    return Math.ceil(diff / (1000 * 60 * 60 * 24))
   }
 
   return (
@@ -129,9 +78,14 @@ export default function CouponsPage() {
           />
           <button
             onClick={handleRegisterCoupon}
-            className="px-5 py-3 bg-[var(--color-primary-500)] text-white font-semibold rounded-xl whitespace-nowrap"
+            disabled={isRegistering}
+            className="px-5 py-3 bg-[var(--color-primary-500)] text-white font-semibold rounded-xl whitespace-nowrap disabled:bg-[var(--color-neutral-300)] disabled:cursor-not-allowed"
           >
-            등록
+            {isRegistering ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              '등록'
+            )}
           </button>
         </div>
       </section>
@@ -156,13 +110,28 @@ export default function CouponsPage() {
               : 'text-[var(--color-neutral-400)] border-transparent'
           }`}
         >
-          사용/만료
+          사용/만료 {usedOrExpiredCoupons.length > 0 && `(${usedOrExpiredCoupons.length})`}
         </button>
       </div>
 
       {/* 쿠폰 목록 */}
       <main className="p-4 pb-20">
-        {displayCoupons.length === 0 ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center min-h-[40vh]">
+            <Loader2 className="w-8 h-8 text-[var(--color-primary-500)] animate-spin mb-4" />
+            <p className="text-[var(--color-neutral-500)]">로딩 중...</p>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center min-h-[40vh]">
+            <p className="text-[var(--color-error-500)] mb-4">{error}</p>
+            <button
+              onClick={refetch}
+              className="px-4 py-2 bg-[var(--color-primary-500)] text-white rounded-lg"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : displayCoupons.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[40vh]">
             <Ticket className="w-16 h-16 text-[var(--color-neutral-300)] mb-4" />
             <p className="text-[var(--color-neutral-500)]">
@@ -177,7 +146,7 @@ export default function CouponsPage() {
               <CouponCard
                 key={coupon.id}
                 coupon={coupon}
-                daysRemaining={getDaysRemaining(coupon.expiresAt)}
+                daysRemaining={getDaysRemaining(coupon.endDate)}
               />
             ))}
           </div>
@@ -187,24 +156,25 @@ export default function CouponsPage() {
   )
 }
 
-function CouponCard({
-  coupon,
-  daysRemaining,
-}: Readonly<{
-  coupon: Coupon
+interface CouponCardProps {
+  coupon: UserCouponListItem
   daysRemaining: number
-}>) {
+}
+
+function CouponCard({ coupon, daysRemaining }: Readonly<CouponCardProps>) {
+  const isExpired = daysRemaining <= 0
   const isExpiringSoon = daysRemaining <= 7 && daysRemaining > 0
+  const isInactive = coupon.isUsed || isExpired
 
   const discountText =
-    coupon.discountType === 'amount'
+    coupon.discountType === 'fixed'
       ? `${coupon.discountValue.toLocaleString()}원`
       : `${coupon.discountValue}%`
 
   return (
     <div
       className={`bg-white rounded-2xl overflow-hidden shadow-sm ${
-        coupon.isUsed ? 'opacity-50' : ''
+        isInactive ? 'opacity-50' : ''
       }`}
     >
       {/* 쿠폰 상단 - 할인 금액 */}
@@ -223,15 +193,19 @@ function CouponCard({
           <h3 className="font-semibold text-[var(--color-neutral-900)] mb-1">
             {coupon.name}
           </h3>
-          <p className="text-sm text-[var(--color-neutral-500)] mb-2">
-            {coupon.description}
-          </p>
+          {coupon.description && (
+            <p className="text-sm text-[var(--color-neutral-500)] mb-2">
+              {coupon.description}
+            </p>
+          )}
 
           {/* 사용 조건 */}
           <div className="space-y-1">
-            <p className="text-xs text-[var(--color-neutral-400)]">
-              {coupon.minOrderAmount.toLocaleString()}원 이상 주문 시
-            </p>
+            {coupon.minOrderAmount && (
+              <p className="text-xs text-[var(--color-neutral-400)]">
+                {coupon.minOrderAmount.toLocaleString()}원 이상 주문 시
+              </p>
+            )}
             {coupon.restaurantName && (
               <div className="flex items-center gap-1 text-xs text-[var(--color-neutral-400)]">
                 <Store className="w-3 h-3" />
@@ -247,7 +221,7 @@ function CouponCard({
         <div className="flex items-center gap-1 text-sm text-[var(--color-neutral-500)]">
           <Clock className="w-4 h-4" />
           <span>
-            {new Date(coupon.expiresAt).toLocaleDateString('ko-KR')} 까지
+            {new Date(coupon.endDate).toLocaleDateString('ko-KR')} 까지
           </span>
         </div>
         {isExpiringSoon && !coupon.isUsed && (
@@ -258,6 +232,11 @@ function CouponCard({
         {coupon.isUsed && (
           <span className="text-xs font-medium text-[var(--color-neutral-400)]">
             사용완료
+          </span>
+        )}
+        {isExpired && !coupon.isUsed && (
+          <span className="text-xs font-medium text-[var(--color-neutral-400)]">
+            만료됨
           </span>
         )}
       </div>

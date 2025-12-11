@@ -87,7 +87,7 @@ export async function GET(
 
     // 6. 환불 금액 계산
     const refundAmount = policy.canCancel
-      ? calculateRefundAmount(order.total_amount, order.delivery_fee, policy.refundRate)
+      ? calculateRefundAmount(order.total_amount, order.delivery_fee ?? 0, policy.refundRate)
       : 0
 
     // 7. 응답 생성

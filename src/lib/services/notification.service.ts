@@ -4,7 +4,7 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Json } from '@/types/supabase'
 import type {
   Notification,
   NotificationRecord,
@@ -17,18 +17,8 @@ import type {
   GetNotificationsResult,
   CreateNotificationResult,
   MarkAsReadResult,
-  NotificationDatabase,
 } from '@/types/notification.types'
 import { getTemplate, renderTemplate } from './notification-template.service'
-
-// ============================================================================
-// 타입 정의
-// ============================================================================
-
-/**
- * 알림 시스템 전용 Supabase 클라이언트 타입
- */
-type NotificationSupabaseClient = SupabaseClient<NotificationDatabase>
 
 // ============================================================================
 // 타입 변환 유틸리티
@@ -93,7 +83,7 @@ export async function createNotification(
   params: CreateNotificationParams
 ): Promise<CreateNotificationResult> {
   const { userId, type, title, body, data, priority, expiresAt } = params
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   try {
     // DB 함수로 알림 생성
@@ -102,9 +92,9 @@ export async function createNotification(
       p_type: type,
       p_title: title,
       p_body: body,
-      p_data: data ?? {},
+      p_data: (data ?? {}) as Json,
       p_priority: priority ?? 'normal',
-      p_expires_at: expiresAt ?? null,
+      p_expires_at: expiresAt,
     })
 
     if (error) {
@@ -171,7 +161,7 @@ export async function createNotificationFromTemplate(
  * @returns 알림 또는 null
  */
 export async function getNotification(notificationId: string): Promise<Notification | null> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('notifications')
@@ -199,7 +189,7 @@ export async function getNotifications(
   params: GetNotificationsParams
 ): Promise<GetNotificationsResult> {
   const { userId, unreadOnly, types, page = 1, pageSize = 20 } = params
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   // 기본 쿼리
   let query = supabase
@@ -258,7 +248,7 @@ export async function getNotifications(
  * @returns 읽지 않은 알림 수
  */
 export async function getUnreadCount(userId: string): Promise<number> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase.rpc('get_unread_notification_count', {
     p_user_id: userId,
@@ -282,7 +272,7 @@ export async function getRecentNotifications(
   userId: string,
   limit: number = 5
 ): Promise<NotificationListItem[]> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('notifications')
@@ -310,9 +300,9 @@ export async function getRecentNotifications(
  * @returns 처리 결과
  */
 export async function markAsRead(notificationId: string): Promise<MarkAsReadResult> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
-  const { data, error } = await supabase.rpc('mark_notification_read', {
+  const { error } = await supabase.rpc('mark_notification_read', {
     p_notification_id: notificationId,
   })
 
@@ -340,7 +330,7 @@ export async function markMultipleAsRead(notificationIds: string[]): Promise<Mar
     return { success: true, message: '처리할 알림이 없습니다' }
   }
 
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { error } = await supabase
     .from('notifications')
@@ -371,7 +361,7 @@ export async function markMultipleAsRead(notificationIds: string[]): Promise<Mar
  * @returns 처리 결과
  */
 export async function markAllAsRead(userId: string): Promise<MarkAsReadResult> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase.rpc('mark_all_notifications_read', {
     p_user_id: userId,
@@ -401,7 +391,7 @@ export async function markAllAsRead(userId: string): Promise<MarkAsReadResult> {
  * @returns 성공 여부
  */
 export async function deleteNotification(notificationId: string): Promise<boolean> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { error } = await supabase.from('notifications').delete().eq('id', notificationId)
 
@@ -421,7 +411,7 @@ export async function deleteNotification(notificationId: string): Promise<boolea
 export async function deleteMultipleNotifications(notificationIds: string[]): Promise<number> {
   if (notificationIds.length === 0) return 0
 
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('notifications')
@@ -443,7 +433,7 @@ export async function deleteMultipleNotifications(notificationIds: string[]): Pr
  * @returns 삭제된 개수
  */
 export async function deleteReadNotifications(userId: string): Promise<number> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('notifications')
@@ -465,7 +455,7 @@ export async function deleteReadNotifications(userId: string): Promise<number> {
  * @returns 삭제된 개수
  */
 export async function cleanupExpiredNotifications(): Promise<number> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase.rpc('cleanup_expired_notifications')
 
@@ -482,7 +472,7 @@ export async function cleanupExpiredNotifications(): Promise<number> {
  * @returns 삭제된 개수
  */
 export async function cleanupOldNotifications(): Promise<number> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase.rpc('cleanup_old_notifications')
 
@@ -510,7 +500,7 @@ export async function getNotificationsByType(
   type: NotificationType,
   limit: number = 20
 ): Promise<NotificationListItem[]> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('notifications')
@@ -540,7 +530,7 @@ export async function getNotificationsByPriority(
   priority: NotificationPriority,
   limit: number = 20
 ): Promise<NotificationListItem[]> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('notifications')
@@ -584,7 +574,7 @@ export async function getNotificationStats(userId: string): Promise<{
   byType: Record<NotificationType, number>
   byPriority: Record<NotificationPriority, number>
 }> {
-  const supabase = (await createClient()) as unknown as NotificationSupabaseClient
+  const supabase = await createClient()
 
   // 전체 및 미읽음 수
   const { count: total } = await supabase

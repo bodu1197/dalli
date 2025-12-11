@@ -1,94 +1,96 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Bell, ShoppingBag, Ticket, Star, Megaphone, Trash2 } from 'lucide-react'
+import { ArrowLeft, Bell, ShoppingBag, Ticket, Star, Megaphone, Trash2, RefreshCw, Loader2 } from 'lucide-react'
+import { useNotifications, getNotificationCategory } from '@/hooks/useNotifications'
+import type { NotificationListItem, NotificationType } from '@/types/notification.types'
 
-interface Notification {
-  id: string
-  type: 'order' | 'coupon' | 'review' | 'event' | 'system'
-  title: string
-  message: string
-  link?: string
-  isRead: boolean
-  createdAt: string
+/**
+ * 알림 타입을 UI 타입으로 매핑
+ */
+function getUIType(type: NotificationType): 'order' | 'coupon' | 'review' | 'event' | 'system' {
+  const category = getNotificationCategory(type)
+  switch (category) {
+    case 'order':
+    case 'cancellation':
+    case 'refund':
+      return 'order'
+    case 'points':
+      return 'coupon'
+    case 'promotion':
+      return 'event'
+    case 'system':
+    default:
+      return 'system'
+  }
 }
 
-// Mock 알림 데이터
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    type: 'order',
-    title: '배달이 완료되었습니다',
-    message: 'BBQ 치킨 강남점에서 주문하신 음식이 도착했습니다.',
-    link: '/orders/ORD001',
-    isRead: false,
-    createdAt: '2024-12-09T10:45:00',
-  },
-  {
-    id: '2',
-    type: 'order',
-    title: '라이더가 출발했습니다',
-    message: '김라이더님이 음식을 픽업하여 배달 중입니다. 곧 도착 예정입니다!',
-    link: '/orders/ORD001/tracking',
-    isRead: false,
-    createdAt: '2024-12-09T10:30:00',
-  },
-  {
-    id: '3',
-    type: 'coupon',
-    title: '새 쿠폰이 도착했습니다!',
-    message: '첫 주문 3,000원 할인 쿠폰이 발급되었습니다.',
-    link: '/my/coupons',
-    isRead: true,
-    createdAt: '2024-12-08T14:00:00',
-  },
-  {
-    id: '4',
-    type: 'review',
-    title: '사장님이 답글을 남겼습니다',
-    message: 'BBQ 치킨 강남점 사장님이 회원님의 리뷰에 답글을 남겼습니다.',
-    link: '/my/reviews',
-    isRead: true,
-    createdAt: '2024-12-07T16:30:00',
-  },
-  {
-    id: '5',
-    type: 'event',
-    title: '12월 특별 이벤트!',
-    message: '12월 한 달간 전 메뉴 10% 할인! 놓치지 마세요.',
-    isRead: true,
-    createdAt: '2024-12-01T09:00:00',
-  },
-  {
-    id: '6',
-    type: 'system',
-    title: '달리고 앱 업데이트 안내',
-    message: '새로운 기능이 추가되었습니다. 지금 업데이트하세요!',
-    isRead: true,
-    createdAt: '2024-11-28T10:00:00',
-  },
-]
+/**
+ * 알림 타입에 따른 링크 생성
+ */
+function getNotificationLink(notification: NotificationListItem): string | undefined {
+  const data = notification.data as Record<string, unknown>
+  const orderId = data?.orderId as string | undefined
+
+  switch (notification.type) {
+    case 'order_created':
+    case 'order_confirmed':
+    case 'order_preparing':
+    case 'order_ready':
+    case 'order_picked_up':
+    case 'order_delivered':
+    case 'order_cancelled':
+      return orderId ? `/orders/${orderId}` : '/orders'
+    case 'cancellation_requested_customer':
+    case 'cancellation_requested_owner':
+    case 'cancellation_instant_completed':
+    case 'cancellation_approved':
+    case 'cancellation_rejected':
+    case 'cancellation_auto_approved':
+    case 'cancellation_withdrawn':
+      return orderId ? `/orders/${orderId}` : '/orders'
+    case 'refund_processing':
+    case 'refund_completed':
+    case 'refund_failed':
+      return orderId ? `/orders/${orderId}` : '/orders'
+    case 'points_earned':
+    case 'points_refunded':
+      return '/my/points'
+    case 'coupon_restored':
+    case 'coupon_expiring':
+      return '/my/coupons'
+    case 'promotion_new':
+      return '/'
+    case 'review_reminder':
+      return orderId ? `/orders/${orderId}/review` : '/my/reviews'
+    case 'system_notice':
+    default:
+      return undefined
+  }
+}
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS)
+  const {
+    notifications,
+    isLoading,
+    error,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    refetch,
+  } = useNotifications()
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length
-
-  const handleMarkAllRead = () => {
-    setNotifications((prev) =>
-      prev.map((n) => ({ ...n, isRead: true }))
-    )
+  const handleMarkAllRead = async () => {
+    await markAllAsRead()
   }
 
-  const handleDelete = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id))
+  const handleDelete = async (id: string) => {
+    await deleteNotification(id)
   }
 
-  const handleMarkRead = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    )
+  const handleMarkRead = async (id: string) => {
+    await markAsRead(id)
   }
 
   const getIcon = (type: string) => {
@@ -157,12 +159,22 @@ export default function NotificationsPage() {
           <h1 className="flex-1 text-center font-bold text-[var(--color-neutral-900)]">
             알림
           </h1>
-          <Link
-            href="/settings/notifications"
-            className="w-10 h-10 flex items-center justify-center -mr-2"
-          >
-            <Bell className="w-5 h-5 text-[var(--color-neutral-500)]" />
-          </Link>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => refetch()}
+              className="w-10 h-10 flex items-center justify-center"
+              disabled={isLoading}
+              aria-label="새로고침"
+            >
+              <RefreshCw className={`w-5 h-5 text-[var(--color-neutral-500)] ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+            <Link
+              href="/settings/notifications"
+              className="w-10 h-10 flex items-center justify-center -mr-2"
+            >
+              <Bell className="w-5 h-5 text-[var(--color-neutral-500)]" />
+            </Link>
+          </div>
         </div>
 
         {/* 모두 읽음 처리 */}
@@ -183,12 +195,32 @@ export default function NotificationsPage() {
 
       {/* 알림 목록 */}
       <main className="pb-20">
-        {notifications.length === 0 ? (
+        {/* 로딩 상태 */}
+        {isLoading && notifications.length === 0 ? (
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <Loader2 className="w-10 h-10 text-[var(--color-primary-500)] animate-spin mb-4" />
+            <p className="text-[var(--color-neutral-500)]">알림을 불러오는 중...</p>
+          </div>
+        ) : error ? (
+          /* 에러 상태 */
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <Bell className="w-16 h-16 text-[var(--color-neutral-300)] mb-4" />
+            <p className="text-[var(--color-neutral-500)] mb-4">{error}</p>
+            <button
+              onClick={() => refetch()}
+              className="px-4 py-2 bg-[var(--color-primary-500)] text-white rounded-lg font-medium"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : notifications.length === 0 ? (
+          /* 빈 상태 */
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <Bell className="w-16 h-16 text-[var(--color-neutral-300)] mb-4" />
             <p className="text-[var(--color-neutral-500)]">알림이 없습니다</p>
           </div>
         ) : (
+          /* 알림 목록 */
           <div className="divide-y divide-[var(--color-neutral-100)]">
             {notifications.map((notification) => (
               <NotificationItem
@@ -216,13 +248,16 @@ function NotificationItem({
   getIconBgColor,
   formatTime,
 }: {
-  notification: Notification
+  notification: NotificationListItem
   onDelete: () => void
   onMarkRead: () => void
   getIcon: (type: string) => React.ReactNode
   getIconBgColor: (type: string) => string
   formatTime: (date: string) => string
 }) {
+  const uiType = getUIType(notification.type)
+  const link = getNotificationLink(notification)
+
   const content = (
     <button
       type="button"
@@ -241,10 +276,10 @@ function NotificationItem({
       {/* 아이콘 */}
       <div
         className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${getIconBgColor(
-          notification.type
+          uiType
         )}`}
       >
-        {getIcon(notification.type)}
+        {getIcon(uiType)}
       </div>
 
       {/* 내용 */}
@@ -264,7 +299,7 @@ function NotificationItem({
           )}
         </div>
         <p className="text-sm text-[var(--color-neutral-500)] mt-1 line-clamp-2">
-          {notification.message}
+          {notification.body}
         </p>
         <p className="text-xs text-[var(--color-neutral-400)] mt-2">
           {formatTime(notification.createdAt)}
@@ -287,9 +322,9 @@ function NotificationItem({
     </button>
   )
 
-  if (notification.link) {
+  if (link) {
     return (
-      <Link href={notification.link} className="block">
+      <Link href={link} className="block">
         {content}
       </Link>
     )
