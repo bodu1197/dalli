@@ -31,7 +31,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[var(--color-neutral-100)]">
-      <div className="max-w-[700px] mx-auto min-h-screen bg-white md:shadow-[0_0_20px_rgba(0,0,0,0.1)] pb-20">
+      <div className="max-w-[700px] mx-auto min-h-screen bg-[#df0012] md:shadow-[0_0_20px_rgba(0,0,0,0.1)] pb-20">
         {/* 헤더 */}
         <header className="sticky top-0 z-30 bg-[#df0012] pb-8">
           {/* 상단 바 */}
