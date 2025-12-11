@@ -87,8 +87,8 @@ export default function HomePage() {
       </header>
 
       {/* 메인 컨텐츠 */}
-      <div className="max-w-[700px] mx-auto min-h-screen bg-[#df0012] md:shadow-[0_0_20px_rgba(0,0,0,0.1)] pb-20">
-        <main className="bg-white rounded-t-xl relative z-10 overflow-hidden mt-[110px]">
+      <div className="max-w-[700px] mx-auto min-h-screen bg-[#df0012] md:shadow-[0_0_20px_rgba(0,0,0,0.1)]">
+        <main className="bg-white rounded-t-xl relative z-10 mt-[110px] pb-20">
           {/* 필터 버튼들 */}
           <section className="flex gap-2 px-4 pt-5 pb-5 overflow-x-auto hide-scrollbar bg-white">
             <button
