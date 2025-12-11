@@ -92,7 +92,7 @@ export default function HomePage() {
         </section>
 
         {/* 필터 버튼 영역 - 둥근 모서리 */}
-        <div className="bg-white rounded-t-xl relative z-20 mt-[160px]">
+        <div className="bg-white rounded-t-xl relative z-20 mt-[110px]">
           {/* 필터 버튼들 */}
           <section className="flex gap-2 px-4 pt-5 pb-5 overflow-x-auto hide-scrollbar">
             <button
