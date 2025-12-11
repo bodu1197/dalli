@@ -491,12 +491,12 @@ body {
    헤더 뿔 효과 (Horn Effect)
 =================================== */
 
-/* 왼쪽 뿔: 우하단 모서리를 중심으로 원형 투명 영역 */
+/* 왼쪽 뿔: 좌하단(0% 100%)을 중심으로 원형 투명 영역 */
 .header-horn-left {
-  background: radial-gradient(circle at 100% 100%, transparent 20px, #df0012 20px);
+  background: radial-gradient(circle at 0% 100%, transparent 20px, #df0012 20px);
 }
 
-/* 오른쪽 뿔: 좌하단 모서리를 중심으로 원형 투명 영역 */
+/* 오른쪽 뿔: 우하단(100% 100%)을 중심으로 원형 투명 영역 */
 .header-horn-right {
-  background: radial-gradient(circle at 0% 100%, transparent 20px, #df0012 20px);
+  background: radial-gradient(circle at 100% 100%, transparent 20px, #df0012 20px);
 }
