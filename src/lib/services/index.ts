@@ -88,3 +88,105 @@ export {
   getCancellationStats,
   getPendingApprovalCount,
 } from './cancellation-approval.service'
+
+// ============================================================================
+// Phase 5: 알림 시스템
+// ============================================================================
+
+// Notification Template Service (알림 템플릿)
+export {
+  getTemplate,
+  getAllTemplates,
+  renderTemplate,
+  renderNotificationMessage,
+  validateTemplateData,
+  getDefaultPriority,
+  getDefaultChannels,
+  renderCancellationMessage,
+  renderRefundMessage,
+  renderPointsCouponMessage,
+} from './notification-template.service'
+
+// Notification Settings Service (알림 설정)
+export {
+  getNotificationSettings,
+  initNotificationSettings,
+  updateNotificationSettings,
+  setQuietHours,
+  isQuietHours,
+  canSendNotification,
+  toggleChannelNotification,
+  toggleCategoryNotification,
+  disableAllNotifications,
+  resetNotificationSettings,
+  getDefaultSettings,
+} from './notification-settings.service'
+
+// Push Token Service (푸시 토큰)
+export {
+  registerPushToken,
+  getActiveTokens,
+  getTokensByPlatform,
+  getTokenByValue,
+  deactivateToken,
+  deactivateTokenByValue,
+  deactivateAllUserTokens,
+  deleteToken,
+  deleteTokenByValue,
+  updateTokenLastUsed,
+  updateTokensLastUsed,
+  getActiveTokenCount,
+  cleanupInactiveTokens,
+  cleanupUnusedTokens,
+  getTokenByDeviceId,
+  getTokensForUsers,
+  isValidFCMToken,
+} from './push-token.service'
+
+// Notification Service (핵심 알림)
+export {
+  createNotification,
+  createNotificationFromTemplate,
+  getNotification,
+  getNotifications,
+  getUnreadCount,
+  getRecentNotifications,
+  markAsRead,
+  markMultipleAsRead,
+  markAllAsRead,
+  deleteNotification,
+  deleteMultipleNotifications,
+  deleteReadNotifications,
+  cleanupExpiredNotifications,
+  cleanupOldNotifications,
+  getNotificationsByType,
+  getNotificationsByPriority,
+  getUrgentNotifications,
+  getNotificationStats,
+} from './notification.service'
+
+// Notification Dispatch Service (알림 발송)
+export {
+  dispatchNotification,
+  dispatchBulkNotification,
+  dispatchUrgentNotification,
+  retryFailedNotification,
+  retryAllFailedNotifications,
+} from './notification-dispatch.service'
+
+// Cancellation Notification Service (취소 전용 알림)
+export {
+  notifyCustomerCancellationRequested,
+  notifyCustomerInstantCancellation,
+  notifyCustomerCancellationApproved,
+  notifyCustomerCancellationRejected,
+  notifyCustomerAutoApproved,
+  notifyOwnerCancellationRequested,
+  notifyOwnerCancellationWithdrawn,
+  notifyRefundProcessing,
+  notifyRefundCompleted,
+  notifyRefundFailed,
+  notifyPointsRefunded,
+  notifyCouponRestored,
+  sendCancellationNotifications,
+} from './cancellation-notification.service'
