@@ -87,8 +87,8 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* 노란색 섹션 - 고정 */}
-        <section className="fixed top-[110px] left-1/2 -translate-x-1/2 w-full max-w-[700px] h-[200px] bg-yellow-400 z-10">
+        {/* 빨간색 섹션 - 고정 */}
+        <section className="fixed top-[110px] left-1/2 -translate-x-1/2 w-full max-w-[700px] h-[200px] bg-[#df0012] z-10">
         </section>
 
         {/* 필터 버튼 영역 - 둥근 모서리 */}
