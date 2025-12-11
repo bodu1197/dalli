@@ -240,7 +240,7 @@ export async function createOrder(
       menu_image: item.menuImage,
       quantity: item.quantity,
       price: item.price,
-      options: item.options,
+      options: item.options as unknown as any,
       special_instructions: item.specialInstructions,
     }))
 
@@ -283,7 +283,7 @@ export async function createOrder(
     // 15. 주문 상태 이력 기록
     await supabase.from('order_status_history').insert({
       order_id: orderData.id,
-      status: 'pending',
+      new_status: 'pending',
       note: '주문이 생성되었습니다',
       changed_by: 'customer',
       changed_by_user_id: userId,
@@ -333,7 +333,7 @@ export async function getOrderById(orderId: string): Promise<Order | null> {
     .select('*')
     .eq('order_id', orderId)
 
-  return transformOrderRecord(orderRecord as OrderRecord, itemsRecord as OrderItemRecord[] ?? [])
+  return transformOrderRecord(orderRecord as unknown as OrderRecord, itemsRecord as unknown as OrderItemRecord[] ?? [])
 }
 
 /**
@@ -394,15 +394,15 @@ export async function getOrdersByUserId(
 
     return {
       id: order.id,
-      orderNumber: order.order_number,
+      orderNumber: order.order_number ?? '',
       restaurantId: order.restaurant_id,
-      restaurantName: order.restaurant_name,
+      restaurantName: order.restaurant_name ?? '',
       restaurantImage: order.restaurant_image,
-      status: order.status,
+      status: order.status as any,
       totalAmount: order.total_amount,
       itemCount,
       itemSummary: otherCount > 0 ? `${firstItem} 외 ${otherCount}개` : firstItem,
-      createdAt: order.created_at,
+      createdAt: order.created_at ?? '',
     }
   })
 }
@@ -444,7 +444,7 @@ export async function getOrdersByRestaurantId(
     return []
   }
 
-  return data as OrderRecord[]
+  return data as unknown as OrderRecord[]
 }
 
 // ============================================================================

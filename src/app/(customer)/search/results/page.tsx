@@ -24,7 +24,7 @@ function SearchResultsContent() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+
   useEffect(() => {
     const supabase = createClient()
     const fetchData = async () => {
@@ -37,13 +37,38 @@ function SearchResultsContent() {
           .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
 
         if (error) throw new Error('식당 정보를 불러오는데 실패했습니다.')
-        
+
+        const formattedRestaurants: Restaurant[] = data.map((item: any) => ({
+          id: item.id,
+          ownerId: item.owner_id,
+          name: item.name,
+          description: item.description,
+          phone: item.phone,
+          address: item.address,
+          lat: item.lat,
+          lng: item.lng,
+          categoryId: item.category_id,
+          minOrderAmount: item.min_order_amount ?? 0,
+          deliveryFee: item.delivery_fee ?? 0,
+          estimatedDeliveryTime: item.estimated_delivery_time ?? 0,
+          businessHours: item.business_hours,
+          isOpen: item.is_open ?? false,
+          rating: item.rating ?? 0,
+          reviewCount: item.review_count ?? 0,
+          imageUrl: item.image_url,
+          isAdvertised: item.is_advertised ?? false,
+          adPriority: item.ad_priority ?? 0,
+          adExpiresAt: item.ad_expires_at,
+          createdAt: item.created_at ?? '',
+          updatedAt: item.updated_at ?? '',
+        }))
+
         // 정렬
-        const sortedRestaurants = [...data].sort((a, b) => {
-            // 기본: 광고 우선 + 평점순
-            if (a.is_advertised && !b.is_advertised) return -1
-            if (!a.is_advertised && b.is_advertised) return 1
-            return b.rating - a.rating
+        const sortedRestaurants = formattedRestaurants.sort((a, b) => {
+          // 기본: 광고 우선 + 평점순
+          if (a.isAdvertised && !b.isAdvertised) return -1
+          if (!a.isAdvertised && b.isAdvertised) return 1
+          return (b.rating ?? 0) - (a.rating ?? 0)
         })
 
         setRestaurants(sortedRestaurants)
@@ -56,9 +81,9 @@ function SearchResultsContent() {
     }
 
     if (query) {
-        fetchData()
+      fetchData()
     } else {
-        setLoading(false)
+      setLoading(false)
     }
   }, [query])
 
@@ -104,32 +129,32 @@ function SearchResultsContent() {
 
       <main className="p-4">
         {loading && (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <p className="text-[var(--color-neutral-500)]">
-                검색 중...
-                </p>
-            </div>
+          <div className="min-h-screen bg-white flex items-center justify-center">
+            <p className="text-[var(--color-neutral-500)]">
+              검색 중...
+            </p>
+          </div>
         )}
         {error && (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <p className="text-red-500">
-                {error}
-                </p>
-            </div>
+          <div className="min-h-screen bg-white flex items-center justify-center">
+            <p className="text-red-500">
+              {error}
+            </p>
+          </div>
         )}
         {!loading && !error && (
-            <>
-                {/* 검색 결과 수 */}
-                <p className="text-sm text-[var(--color-neutral-500)] mb-4">
-                &quot;{query}&quot; 검색 결과 {restaurants.length}개
-                </p>
+          <>
+            {/* 검색 결과 수 */}
+            <p className="text-sm text-[var(--color-neutral-500)] mb-4">
+              &quot;{query}&quot; 검색 결과 {restaurants.length}개
+            </p>
 
-                {/* 검색 결과 */}
-                <RestaurantList
-                restaurants={restaurants}
-                emptyMessage={`"${query}"에 대한 검색 결과가 없습니다`}
-                />
-            </>
+            {/* 검색 결과 */}
+            <RestaurantList
+              restaurants={restaurants}
+              emptyMessage={`"${query}"에 대한 검색 결과가 없습니다`}
+            />
+          </>
         )}
       </main>
     </div>

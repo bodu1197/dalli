@@ -9,7 +9,7 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 } from '@/types/order.types'
-import type { Order } from '@/types/order.types'
+import type { Order, PaymentMethod, OrderStatus, OrderRejectionReason } from '@/types/order.types'
 import { useAuthStore } from '@/stores/auth.store'
 
 type TabType = 'active' | 'completed'
@@ -24,8 +24,8 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (!user) {
-        setLoading(false)
-        return
+      setLoading(false)
+      return
     }
 
     const supabase = createClient()
@@ -35,133 +35,135 @@ export default function OrdersPage() {
 
         // Fetch active orders
         const { data: activeOrdersData, error: activeOrdersError } = await supabase
-            .from('orders')
-            .select('*, restaurants(name), order_items(menu_name)')
-            .eq('user_id', user.id)
-            .in('status', ['pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'delivering'])
-            .order('created_at', { ascending: false })
+          .from('orders')
+          .select('*, restaurants(name), order_items(menu_name)')
+          .eq('user_id', user.id)
+          .in('status', ['pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'delivering'])
+          .order('created_at', { ascending: false })
 
         if (activeOrdersError) throw new Error('진행 중인 주문을 불러오는데 실패했습니다.')
-        
+
         const formattedActiveOrders: Order[] = activeOrdersData.map(order => ({
-            ...order,
-            orderNumber: order.order_number,
-            userId: order.user_id,
-            restaurantId: order.restaurant_id,
-            restaurantName: order.restaurants.name,
-            restaurantImage: null,
-            restaurantPhone: null,
-            riderId: order.rider_id,
-            riderName: null,
-            riderPhone: null,
-            menuAmount: order.menu_amount,
-            discountAmount: order.discount_amount,
-            pointsUsed: order.points_used,
-            deliveryFee: order.delivery_fee,
-            platformFee: order.platform_fee,
-            totalAmount: order.total_amount,
-            deliveryAddress: order.delivery_address,
-            deliveryDetail: order.delivery_detail,
-            deliveryLat: order.delivery_lat,
-            deliveryLng: order.delivery_lng,
-            specialInstructions: order.special_instructions,
-            deliveryInstructions: order.delivery_instructions,
-            disposableItems: order.disposable_items,
-            estimatedPrepTime: order.estimated_prep_time,
-            estimatedDeliveryTime: order.estimated_delivery_time,
-            actualDeliveryTime: order.actual_delivery_time,
-            confirmedAt: order.confirmed_at,
-            preparedAt: order.prepared_at,
-            pickedUpAt: order.picked_up_at,
-            deliveredAt: order.delivered_at,
-            rejectionReason: order.rejection_reason,
-            rejectionDetail: order.rejection_detail,
-            cancelledReason: order.cancelled_reason,
-            cancelledAt: order.cancelled_at,
-            cancelledBy: order.cancelled_by,
-            paymentMethod: order.payment_method,
-            paymentId: order.payment_id,
-            couponId: order.coupon_id,
-            couponName: order.coupon_name,
-            items: order.order_items.map(item => ({
-                id: '',
-                orderId: order.id,
-                menuId: '',
-                menuName: item.menu_name,
-                menuImage: null,
-                quantity: 0,
-                price: 0,
-                options: [],
-                specialInstructions: null,
-            })),
-            createdAt: order.created_at,
-            updatedAt: order.updated_at,
+          id: order.id,
+          orderNumber: order.order_number ?? '',
+          userId: order.user_id ?? '',
+          restaurantId: order.restaurant_id ?? '',
+          restaurantName: order.restaurants?.name ?? '',
+          restaurantImage: null,
+          restaurantPhone: null,
+          riderId: order.rider_id,
+          riderName: null,
+          riderPhone: null,
+          status: order.status as OrderStatus,
+          menuAmount: order.menu_amount ?? 0,
+          discountAmount: order.discount_amount ?? 0,
+          pointsUsed: order.points_used ?? 0,
+          deliveryFee: order.delivery_fee ?? 0,
+          platformFee: order.platform_fee ?? 0,
+          totalAmount: order.total_amount ?? 0,
+          deliveryAddress: order.delivery_address,
+          deliveryDetail: order.delivery_detail,
+          deliveryLat: order.delivery_lat,
+          deliveryLng: order.delivery_lng,
+          specialInstructions: order.special_instructions,
+          deliveryInstructions: order.delivery_instructions,
+          disposableItems: order.disposable_items ?? false,
+          estimatedPrepTime: order.estimated_prep_time,
+          estimatedDeliveryTime: order.estimated_delivery_time,
+          actualDeliveryTime: order.actual_delivery_time,
+          confirmedAt: order.confirmed_at,
+          preparedAt: order.prepared_at,
+          pickedUpAt: order.picked_up_at,
+          deliveredAt: (order as any).delivered_at,
+          rejectionReason: order.rejection_reason as OrderRejectionReason | null,
+          rejectionDetail: order.rejection_detail,
+          cancelledReason: order.cancelled_reason,
+          cancelledAt: order.cancelled_at,
+          cancelledBy: order.cancelled_by as 'customer' | 'owner' | 'system' | null,
+          paymentMethod: order.payment_method as PaymentMethod,
+          paymentId: (order as any).payment_id,
+          couponId: order.coupon_id,
+          couponName: order.coupon_name,
+          items: order.order_items.map((item: any) => ({
+            id: '',
+            orderId: order.id,
+            menuId: '',
+            menuName: item.menu_name,
+            menuImage: null,
+            quantity: 0,
+            price: 0,
+            options: [],
+            specialInstructions: null,
+          })),
+          createdAt: order.created_at ?? '',
+          updatedAt: order.updated_at ?? '',
         }))
         setActiveOrders(formattedActiveOrders)
 
         // Fetch completed orders
         const { data: completedOrdersData, error: completedOrdersError } = await supabase
-            .from('orders')
-            .select('*, restaurants(name), order_items(menu_name)')
-            .eq('user_id', user.id)
-            .in('status', ['delivered', 'cancelled'])
-            .order('created_at', { ascending: false })
+          .from('orders')
+          .select('*, restaurants(name), order_items(menu_name)')
+          .eq('user_id', user.id)
+          .in('status', ['delivered', 'cancelled'])
+          .order('created_at', { ascending: false })
 
         if (completedOrdersError) throw new Error('완료된 주문을 불러오는데 실패했습니다.')
 
         const formattedCompletedOrders: Order[] = completedOrdersData.map(order => ({
-            ...order,
-            orderNumber: order.order_number,
-            userId: order.user_id,
-            restaurantId: order.restaurant_id,
-            restaurantName: order.restaurants.name,
-            restaurantImage: null,
-            restaurantPhone: null,
-            riderId: order.rider_id,
-            riderName: null,
-            riderPhone: null,
-            menuAmount: order.menu_amount,
-            discountAmount: order.discount_amount,
-            pointsUsed: order.points_used,
-            deliveryFee: order.delivery_fee,
-            platformFee: order.platform_fee,
-            totalAmount: order.total_amount,
-            deliveryAddress: order.delivery_address,
-            deliveryDetail: order.delivery_detail,
-            deliveryLat: order.delivery_lat,
-            deliveryLng: order.delivery_lng,
-            specialInstructions: order.special_instructions,
-            deliveryInstructions: order.delivery_instructions,
-            disposableItems: order.disposable_items,
-            estimatedPrepTime: order.estimated_prep_time,
-            estimatedDeliveryTime: order.estimated_delivery_time,
-            actualDeliveryTime: order.actual_delivery_time,
-            confirmedAt: order.confirmed_at,
-            preparedAt: order.prepared_at,
-            pickedUpAt: order.picked_up_at,
-            deliveredAt: order.delivered_at,
-            rejectionReason: order.rejection_reason,
-            rejectionDetail: order.rejection_detail,
-            cancelledReason: order.cancelled_reason,
-            cancelledAt: order.cancelled_at,
-            cancelledBy: order.cancelled_by,
-            paymentMethod: order.payment_method,
-            paymentId: order.payment_id,
-            couponId: order.coupon_id,
-            couponName: order.coupon_name,
-            items: order.order_items.map(item => ({
-                id: '',
-                orderId: order.id,
-                menuId: '',
-                menuName: item.menu_name,
-                menuImage: null,
-                quantity: 0,
-                price: 0,
-                options: [],
-                specialInstructions: null,
-            })),
-            createdAt: order.created_at,
-            updatedAt: order.updated_at,
+          id: order.id,
+          orderNumber: order.order_number ?? '',
+          userId: order.user_id ?? '',
+          restaurantId: order.restaurant_id ?? '',
+          restaurantName: order.restaurants?.name ?? '',
+          restaurantImage: null,
+          restaurantPhone: null,
+          riderId: order.rider_id,
+          riderName: null,
+          riderPhone: null,
+          status: order.status as OrderStatus,
+          menuAmount: order.menu_amount ?? 0,
+          discountAmount: order.discount_amount ?? 0,
+          pointsUsed: order.points_used ?? 0,
+          deliveryFee: order.delivery_fee ?? 0,
+          platformFee: order.platform_fee ?? 0,
+          totalAmount: order.total_amount ?? 0,
+          deliveryAddress: order.delivery_address,
+          deliveryDetail: order.delivery_detail,
+          deliveryLat: order.delivery_lat,
+          deliveryLng: order.delivery_lng,
+          specialInstructions: order.special_instructions,
+          deliveryInstructions: order.delivery_instructions,
+          disposableItems: order.disposable_items ?? false,
+          estimatedPrepTime: order.estimated_prep_time,
+          estimatedDeliveryTime: order.estimated_delivery_time,
+          actualDeliveryTime: order.actual_delivery_time,
+          confirmedAt: order.confirmed_at,
+          preparedAt: order.prepared_at,
+          pickedUpAt: order.picked_up_at,
+          deliveredAt: (order as any).delivered_at,
+          rejectionReason: order.rejection_reason as OrderRejectionReason | null,
+          rejectionDetail: order.rejection_detail,
+          cancelledReason: order.cancelled_reason,
+          cancelledAt: order.cancelled_at,
+          cancelledBy: order.cancelled_by as 'customer' | 'owner' | 'system' | null,
+          paymentMethod: order.payment_method as PaymentMethod,
+          paymentId: (order as any).payment_id,
+          couponId: order.coupon_id,
+          couponName: order.coupon_name,
+          items: order.order_items.map((item: any) => ({
+            id: '',
+            orderId: order.id,
+            menuId: '',
+            menuName: item.menu_name,
+            menuImage: null,
+            quantity: 0,
+            price: 0,
+            options: [],
+            specialInstructions: null,
+          })),
+          createdAt: order.created_at ?? '',
+          updatedAt: order.updated_at ?? '',
         }))
         setCompletedOrders(formattedCompletedOrders)
 
@@ -199,21 +201,19 @@ export default function OrdersPage() {
         <div className="flex border-b border-[var(--color-neutral-100)]">
           <button
             onClick={() => setActiveTab('active')}
-            className={`flex-1 py-3 text-center font-medium border-b-2 transition-colors ${
-              activeTab === 'active'
-                ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
-                : 'text-[var(--color-neutral-400)] border-transparent'
-            }`}
+            className={`flex-1 py-3 text-center font-medium border-b-2 transition-colors ${activeTab === 'active'
+              ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
+              : 'text-[var(--color-neutral-400)] border-transparent'
+              }`}
           >
             진행중 {activeOrders.length > 0 && `(${activeOrders.length})`}
           </button>
           <button
             onClick={() => setActiveTab('completed')}
-            className={`flex-1 py-3 text-center font-medium border-b-2 transition-colors ${
-              activeTab === 'completed'
-                ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
-                : 'text-[var(--color-neutral-400)] border-transparent'
-            }`}
+            className={`flex-1 py-3 text-center font-medium border-b-2 transition-colors ${activeTab === 'completed'
+              ? 'text-[var(--color-neutral-900)] border-[var(--color-neutral-900)]'
+              : 'text-[var(--color-neutral-400)] border-transparent'
+              }`}
           >
             완료
           </button>
@@ -222,18 +222,18 @@ export default function OrdersPage() {
 
       <main className="pb-20">
         {loading && (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <p className="text-[var(--color-neutral-500)]">
-                로딩 중...
-                </p>
-            </div>
+          <div className="min-h-screen bg-white flex items-center justify-center">
+            <p className="text-[var(--color-neutral-500)]">
+              로딩 중...
+            </p>
+          </div>
         )}
         {error && (
-            <div className="min-h-screen bg-white flex items-center justify-center">
-                <p className="text-red-500">
-                {error}
-                </p>
-            </div>
+          <div className="min-h-screen bg-white flex items-center justify-center">
+            <p className="text-red-500">
+              {error}
+            </p>
+          </div>
         )}
         {!loading && !error && displayOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">

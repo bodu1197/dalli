@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Order, OrderStatus } from '@/types/order.types'
+import type { Order, OrderStatus, PaymentMethod, OrderRejectionReason } from '@/types/order.types'
 
 interface PageProps {
   readonly params: Promise<{ orderId: string }>
@@ -58,50 +58,51 @@ export default function OrderTrackingPage({ params }: Readonly<PageProps>) {
           .single()
 
         if (orderError) throw new Error('주문 정보를 불러오는데 실패했습니다.')
-        
+
         const formattedOrder: Order = {
-            ...orderData,
-            orderNumber: orderData.order_number,
-            userId: orderData.user_id,
-            restaurantId: orderData.restaurant_id,
-            restaurantName: orderData.restaurants.name,
-            restaurantImage: null,
-            restaurantPhone: null,
-            riderId: orderData.rider_id,
-            riderName: null,
-            riderPhone: null,
-            menuAmount: orderData.menu_amount,
-            discountAmount: orderData.discount_amount,
-            pointsUsed: orderData.points_used,
-            deliveryFee: orderData.delivery_fee,
-            platformFee: orderData.platform_fee,
-            totalAmount: orderData.total_amount,
-            deliveryAddress: orderData.delivery_address,
-            deliveryDetail: orderData.delivery_detail,
-            deliveryLat: orderData.delivery_lat,
-            deliveryLng: orderData.delivery_lng,
-            specialInstructions: orderData.special_instructions,
-            deliveryInstructions: orderData.delivery_instructions,
-            disposableItems: orderData.disposable_items,
-            estimatedPrepTime: orderData.estimated_prep_time,
-            estimatedDeliveryTime: orderData.estimated_delivery_time,
-            actualDeliveryTime: orderData.actual_delivery_time,
-            confirmedAt: orderData.confirmed_at,
-            preparedAt: orderData.prepared_at,
-            pickedUpAt: orderData.picked_up_at,
-            deliveredAt: orderData.delivered_at,
-            rejectionReason: orderData.rejection_reason,
-            rejectionDetail: orderData.rejection_detail,
-            cancelledReason: orderData.cancelled_reason,
-            cancelledAt: orderData.cancelled_at,
-            cancelledBy: orderData.cancelled_by,
-            paymentMethod: orderData.payment_method,
-            paymentId: orderData.payment_id,
-            couponId: orderData.coupon_id,
-            couponName: orderData.coupon_name,
-            items: [],
-            createdAt: orderData.created_at,
-            updatedAt: orderData.updated_at,
+          id: orderData.id,
+          orderNumber: orderData.order_number ?? '',
+          userId: orderData.user_id ?? '',
+          restaurantId: orderData.restaurant_id ?? '',
+          restaurantName: orderData.restaurants?.name ?? '',
+          restaurantImage: null,
+          restaurantPhone: null,
+          riderId: orderData.rider_id,
+          riderName: null,
+          riderPhone: null,
+          status: orderData.status as OrderStatus,
+          menuAmount: orderData.menu_amount ?? 0,
+          discountAmount: orderData.discount_amount ?? 0,
+          pointsUsed: orderData.points_used ?? 0,
+          deliveryFee: orderData.delivery_fee ?? 0,
+          platformFee: orderData.platform_fee ?? 0,
+          totalAmount: orderData.total_amount ?? 0,
+          deliveryAddress: orderData.delivery_address,
+          deliveryDetail: orderData.delivery_detail,
+          deliveryLat: orderData.delivery_lat,
+          deliveryLng: orderData.delivery_lng,
+          specialInstructions: orderData.special_instructions,
+          deliveryInstructions: orderData.delivery_instructions,
+          disposableItems: orderData.disposable_items ?? false,
+          estimatedPrepTime: orderData.estimated_prep_time,
+          estimatedDeliveryTime: orderData.estimated_delivery_time,
+          actualDeliveryTime: orderData.actual_delivery_time,
+          confirmedAt: orderData.confirmed_at,
+          preparedAt: orderData.prepared_at,
+          pickedUpAt: orderData.picked_up_at,
+          deliveredAt: (orderData as any).delivered_at,
+          rejectionReason: orderData.rejection_reason as OrderRejectionReason | null,
+          rejectionDetail: orderData.rejection_detail,
+          cancelledReason: orderData.cancelled_reason,
+          cancelledAt: orderData.cancelled_at,
+          cancelledBy: orderData.cancelled_by as 'customer' | 'owner' | 'system' | null,
+          paymentMethod: orderData.payment_method as PaymentMethod,
+          paymentId: (orderData as any).payment_id,
+          couponId: orderData.coupon_id,
+          couponName: orderData.coupon_name,
+          items: [],
+          createdAt: orderData.created_at ?? '',
+          updatedAt: orderData.updated_at ?? '',
         }
 
         setOrder(formattedOrder)
@@ -144,7 +145,7 @@ export default function OrderTrackingPage({ params }: Readonly<PageProps>) {
       </div>
     )
   }
-  
+
   if (error) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -254,27 +255,24 @@ export default function OrderTrackingPage({ params }: Readonly<PageProps>) {
                   <div key={step.status} className="relative flex items-center gap-4">
                     {/* 아이콘 */}
                     <div
-                      className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center ${
-                        isCompleted
-                          ? 'bg-[var(--color-primary-500)]'
-                          : 'bg-[var(--color-neutral-200)]'
-                      }`}
+                      className={`relative z-10 w-10 h-10 rounded-full flex items-center justify-center ${isCompleted
+                        ? 'bg-[var(--color-primary-500)]'
+                        : 'bg-[var(--color-neutral-200)]'
+                        }`}
                     >
                       <step.icon
-                        className={`w-5 h-5 ${
-                          isCompleted ? 'text-white' : 'text-[var(--color-neutral-400)]'
-                        }`}
+                        className={`w-5 h-5 ${isCompleted ? 'text-white' : 'text-[var(--color-neutral-400)]'
+                          }`}
                       />
                     </div>
 
                     {/* 텍스트 */}
                     <div className="flex-1">
                       <p
-                        className={`font-medium ${
-                          isCompleted
-                            ? 'text-[var(--color-neutral-900)]'
-                            : 'text-[var(--color-neutral-400)]'
-                        }`}
+                        className={`font-medium ${isCompleted
+                          ? 'text-[var(--color-neutral-900)]'
+                          : 'text-[var(--color-neutral-400)]'
+                          }`}
                       >
                         {step.label}
                       </p>

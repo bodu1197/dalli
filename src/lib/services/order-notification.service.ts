@@ -31,7 +31,7 @@ interface OrderNotificationContext {
 // ============================================================================
 
 const STATUS_TO_NOTIFICATION_TYPE: Record<OrderStatus, NotificationType | null> = {
-  pending: 'order_new',
+  pending: 'order_created',
   confirmed: 'order_confirmed',
   rejected: 'order_rejected',
   preparing: 'order_preparing',
@@ -717,8 +717,7 @@ export async function notifyNewCancellationRequest(
     actionUrl: `/owner/cancellations`,
   }
 
-  // 점주에게 푸시 포함 긴급 알림
-  await dispatchNotification(ownerId, 'cancellation_request', variables, data, [
+  await dispatchNotification(ownerId, 'cancellation_requested_owner', variables, data, [
     'in_app',
     'push',
   ])

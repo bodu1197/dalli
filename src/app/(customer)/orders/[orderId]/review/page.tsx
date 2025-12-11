@@ -12,7 +12,7 @@ import {
 
 import { Button } from '@/components/ui/Button'
 import { createClient } from '@/lib/supabase/client'
-import type { Order } from '@/types/order.types'
+import type { Order, PaymentMethod, OrderStatus, OrderRejectionReason } from '@/types/order.types'
 import { useAuthStore } from '@/stores/auth.store'
 
 interface PageProps {
@@ -45,50 +45,51 @@ export default function ReviewWritePage({ params }: Readonly<PageProps>) {
           .single()
 
         if (orderError) throw new Error('주문 정보를 불러오는데 실패했습니다.')
-        
+
         const formattedOrder: Order = {
-            ...orderData,
-            orderNumber: orderData.order_number,
-            userId: orderData.user_id,
-            restaurantId: orderData.restaurant_id,
-            restaurantName: orderData.restaurants.name,
-            restaurantImage: orderData.restaurants.image_url,
-            restaurantPhone: null, // Not needed for this page
-            riderId: orderData.rider_id,
-            riderName: null, // Not needed
-            riderPhone: null, // Not needed
-            menuAmount: orderData.menu_amount,
-            discountAmount: orderData.discount_amount,
-            pointsUsed: orderData.points_used,
-            deliveryFee: orderData.delivery_fee,
-            platformFee: orderData.platform_fee,
-            totalAmount: orderData.total_amount,
-            deliveryAddress: orderData.delivery_address,
-            deliveryDetail: orderData.delivery_detail,
-            deliveryLat: orderData.delivery_lat,
-            deliveryLng: orderData.delivery_lng,
-            specialInstructions: orderData.special_instructions,
-            deliveryInstructions: orderData.delivery_instructions,
-            disposableItems: orderData.disposable_items,
-            estimatedPrepTime: orderData.estimated_prep_time,
-            estimatedDeliveryTime: orderData.estimated_delivery_time,
-            actualDeliveryTime: orderData.actual_delivery_time,
-            confirmedAt: orderData.confirmed_at,
-            preparedAt: orderData.prepared_at,
-            pickedUpAt: orderData.picked_up_at,
-            deliveredAt: orderData.delivered_at,
-            rejectionReason: orderData.rejection_reason,
-            rejectionDetail: orderData.rejection_detail,
-            cancelledReason: orderData.cancelled_reason,
-            cancelledAt: orderData.cancelled_at,
-            cancelledBy: orderData.cancelled_by,
-            paymentMethod: orderData.payment_method,
-            paymentId: orderData.payment_id,
-            couponId: orderData.coupon_id,
-            couponName: orderData.coupon_name,
-            items: [], // Not needed for this page
-            createdAt: orderData.created_at,
-            updatedAt: orderData.updated_at,
+          id: orderData.id,
+          orderNumber: orderData.order_number ?? '',
+          userId: orderData.user_id ?? '',
+          restaurantId: orderData.restaurant_id ?? '',
+          restaurantName: orderData.restaurants?.name ?? '',
+          restaurantImage: orderData.restaurants?.image_url,
+          restaurantPhone: null, // Not needed for this page
+          riderId: orderData.rider_id,
+          riderName: null, // Not needed
+          riderPhone: null, // Not needed
+          status: orderData.status as OrderStatus,
+          menuAmount: orderData.menu_amount ?? 0,
+          discountAmount: orderData.discount_amount ?? 0,
+          pointsUsed: orderData.points_used ?? 0,
+          deliveryFee: orderData.delivery_fee ?? 0,
+          platformFee: orderData.platform_fee ?? 0,
+          totalAmount: orderData.total_amount ?? 0,
+          deliveryAddress: orderData.delivery_address,
+          deliveryDetail: orderData.delivery_detail,
+          deliveryLat: orderData.delivery_lat,
+          deliveryLng: orderData.delivery_lng,
+          specialInstructions: orderData.special_instructions,
+          deliveryInstructions: orderData.delivery_instructions,
+          disposableItems: orderData.disposable_items ?? false,
+          estimatedPrepTime: orderData.estimated_prep_time,
+          estimatedDeliveryTime: orderData.estimated_delivery_time,
+          actualDeliveryTime: orderData.actual_delivery_time,
+          confirmedAt: orderData.confirmed_at,
+          preparedAt: orderData.prepared_at,
+          pickedUpAt: orderData.picked_up_at,
+          deliveredAt: (orderData as any).delivered_at,
+          rejectionReason: orderData.rejection_reason as OrderRejectionReason | null,
+          rejectionDetail: orderData.rejection_detail,
+          cancelledReason: orderData.cancelled_reason,
+          cancelledAt: orderData.cancelled_at,
+          cancelledBy: orderData.cancelled_by as 'customer' | 'owner' | 'system' | null,
+          paymentMethod: orderData.payment_method as PaymentMethod,
+          paymentId: (orderData as any).payment_id,
+          couponId: orderData.coupon_id,
+          couponName: orderData.coupon_name,
+          items: [], // Not needed for this page
+          createdAt: orderData.created_at ?? '',
+          updatedAt: orderData.updated_at ?? '',
         }
 
         setOrder(formattedOrder)
@@ -141,11 +142,11 @@ export default function ReviewWritePage({ params }: Readonly<PageProps>) {
           content,
           images,
         })
-      
+
       if (reviewError) throw reviewError
 
       // Add points for review
-      await supabase.rpc('increment_user_points', { user_id: user.id, amount: 100 })
+      await supabase.rpc('increment_user_points' as any, { user_id: user.id, amount: 100 })
 
       alert('리뷰가 등록되었습니다')
       router.push(`/orders/${orderId}`)
@@ -155,7 +156,7 @@ export default function ReviewWritePage({ params }: Readonly<PageProps>) {
       setIsSubmitting(false)
     }
   }
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -165,7 +166,7 @@ export default function ReviewWritePage({ params }: Readonly<PageProps>) {
       </div>
     )
   }
-  
+
   if (error) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -254,11 +255,10 @@ export default function ReviewWritePage({ params }: Readonly<PageProps>) {
                 className="p-1 transition-transform active:scale-90"
               >
                 <Star
-                  className={`w-10 h-10 ${
-                    star <= rating
-                      ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-[var(--color-neutral-200)]'
-                  }`}
+                  className={`w-10 h-10 ${star <= rating
+                    ? 'fill-yellow-400 text-yellow-400'
+                    : 'text-[var(--color-neutral-200)]'
+                    }`}
                 />
               </button>
             ))}

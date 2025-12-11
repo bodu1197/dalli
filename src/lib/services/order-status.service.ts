@@ -101,7 +101,7 @@ async function changeOrderStatus(
     // 5. 상태 이력 기록
     await supabase.from('order_status_history').insert({
       order_id: orderId,
-      status: newStatus,
+      new_status: newStatus,
       note: note ?? getDefaultStatusNote(newStatus),
       changed_by: role,
       changed_by_user_id: userId,
@@ -432,11 +432,11 @@ export async function getOrderStatusHistory(orderId: string): Promise<
 
   return data.map((record) => ({
     id: record.id,
-    status: record.status as OrderStatus,
+    status: record.new_status as OrderStatus,
     note: record.note,
-    changedBy: record.changed_by as OrderStatusChangeRole,
+    changedBy: (record.changed_by as OrderStatusChangeRole) ?? 'system',
     changedByUserId: record.changed_by_user_id,
-    createdAt: record.created_at,
+    createdAt: record.created_at ?? new Date().toISOString(),
   }))
 }
 

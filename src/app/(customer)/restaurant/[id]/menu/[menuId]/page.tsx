@@ -8,7 +8,7 @@ import { ArrowLeft, Minus, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { createClient } from '@/lib/supabase/client'
 import type { Restaurant } from '@/types/restaurant.types'
-import type { Menu, MenuOption } from '@/types/menu.types'
+import type { Menu, MenuOption } from '@/types/restaurant.types'
 
 interface MenuDetailPageProps {
   readonly params: Promise<{ id: string; menuId: string }>
@@ -38,7 +38,32 @@ export default function MenuDetailPage({ params }: Readonly<MenuDetailPageProps>
           .single()
 
         if (restaurantError) throw new Error('식당 정보를 불러오는데 실패했습니다.')
-        setRestaurant(restaurantData)
+
+        const formattedRestaurant: Restaurant = {
+          id: restaurantData.id,
+          ownerId: restaurantData.owner_id,
+          name: restaurantData.name,
+          description: restaurantData.description,
+          phone: restaurantData.phone,
+          address: restaurantData.address,
+          lat: restaurantData.lat,
+          lng: restaurantData.lng,
+          categoryId: restaurantData.category_id,
+          minOrderAmount: restaurantData.min_order_amount ?? 0,
+          deliveryFee: restaurantData.delivery_fee ?? 0,
+          estimatedDeliveryTime: restaurantData.estimated_delivery_time ?? 0,
+          businessHours: restaurantData.business_hours as any,
+          isOpen: restaurantData.is_open ?? false,
+          rating: restaurantData.rating ?? 0,
+          reviewCount: restaurantData.review_count ?? 0,
+          imageUrl: restaurantData.image_url,
+          isAdvertised: restaurantData.is_advertised ?? false,
+          adPriority: restaurantData.ad_priority ?? 0,
+          adExpiresAt: restaurantData.ad_expires_at,
+          createdAt: restaurantData.created_at ?? '',
+          updatedAt: restaurantData.updated_at ?? '',
+        }
+        setRestaurant(formattedRestaurant)
 
         // Fetch menu data
         const { data: menuData, error: menuError } = await supabase
@@ -48,7 +73,20 @@ export default function MenuDetailPage({ params }: Readonly<MenuDetailPageProps>
           .single()
 
         if (menuError) throw new Error('메뉴 정보를 불러오는데 실패했습니다.')
-        setMenu(menuData)
+
+        const formattedMenu: Menu = {
+          id: menuData.id,
+          restaurantId: menuData.restaurant_id,
+          name: menuData.name,
+          description: menuData.description,
+          price: menuData.price ?? 0,
+          imageUrl: menuData.image_url,
+          isAvailable: menuData.is_available ?? false,
+          isPopular: menuData.is_popular ?? false,
+          sortOrder: menuData.sort_order ?? 0,
+          createdAt: menuData.created_at ?? '',
+        }
+        setMenu(formattedMenu)
 
         // Fetch menu options
         const { data: optionsData, error: optionsError } = await supabase
@@ -58,7 +96,13 @@ export default function MenuDetailPage({ params }: Readonly<MenuDetailPageProps>
 
         if (optionsError) throw new Error('메뉴 옵션을 불러오는데 실패했습니다.')
 
-        const allOptions = optionsData.flatMap(group => group.menu_options)
+        const allOptions = optionsData.flatMap(group => group.menu_options.map((opt: any) => ({
+          id: opt.id,
+          menuId: opt.menu_id,
+          name: opt.name,
+          price: opt.price ?? 0,
+          isRequired: opt.is_required ?? false,
+        })))
         setOptions(allOptions)
 
       } catch (err: any) {
@@ -129,9 +173,9 @@ export default function MenuDetailPage({ params }: Readonly<MenuDetailPageProps>
     <div className="min-h-screen bg-white pb-24">
       {/* 메뉴 이미지 */}
       <div className="relative h-72 bg-[var(--color-neutral-100)]">
-        {menu.image_url ? (
+        {menu.imageUrl ? (
           <Image
-            src={menu.image_url}
+            src={menu.imageUrl}
             alt={menu.name}
             fill
             className="object-cover"
@@ -154,7 +198,7 @@ export default function MenuDetailPage({ params }: Readonly<MenuDetailPageProps>
       {/* 메뉴 정보 */}
       <div className="p-4">
         {/* 인기 배지 */}
-        {menu.is_popular && (
+        {menu.isPopular && (
           <span className="inline-block bg-[var(--color-neutral-800)] text-white text-xs font-medium px-2 py-1 rounded mb-3">
             인기
           </span>

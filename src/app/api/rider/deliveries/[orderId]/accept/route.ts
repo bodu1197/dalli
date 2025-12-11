@@ -169,7 +169,7 @@ export async function POST(
     // 11. 배달 수락 기록
     await supabase.from('order_status_history').insert({
       order_id: orderId,
-      old_status: order.status,
+      previous_status: order.status,
       new_status: 'picked_up',
       note: `라이더 ${riderName}님이 배달을 수락했습니다`,
       changed_by: 'rider',

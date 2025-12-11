@@ -20,6 +20,12 @@ export type NotificationType =
   | 'order_picked_up'
   | 'order_delivered'
   | 'order_cancelled'
+  | 'order_rejected'
+  | 'order_delivering'
+  | 'order_reminder'
+  | 'pickup_reminder'
+  | 'delivery_eta_update'
+  | 'rider_nearby'
   // 취소 관련
   | 'cancellation_requested_customer'
   | 'cancellation_requested_owner'
@@ -521,6 +527,12 @@ export const NOTIFICATION_TYPE_CATEGORY: Record<
   order_picked_up: 'order',
   order_delivered: 'order',
   order_cancelled: 'order',
+  order_rejected: 'order',
+  order_delivering: 'order',
+  order_reminder: 'system',
+  pickup_reminder: 'system',
+  delivery_eta_update: 'order',
+  rider_nearby: 'order',
   // 취소
   cancellation_requested_customer: 'cancellation',
   cancellation_requested_owner: 'cancellation',

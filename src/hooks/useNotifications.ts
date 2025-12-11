@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuthStore } from '@/stores/auth.store'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
-import type {
-  NotificationListItem,
-  NotificationType,
-  NotificationCategory,
+import {
+  type NotificationListItem,
+  type NotificationType,
+  type NotificationCategory,
   NOTIFICATION_TYPE_CATEGORY,
 } from '@/types/notification.types'
 
@@ -109,9 +109,9 @@ export function useNotifications(
             unreadMinutes: item.is_read
               ? null
               : Math.floor(
-                  (Date.now() - new Date(item.created_at ?? '').getTime()) /
-                    (1000 * 60)
-                ),
+                (Date.now() - new Date(item.created_at ?? '').getTime()) /
+                (1000 * 60)
+              ),
           })
         )
 
@@ -421,38 +421,5 @@ export function useUnreadNotificationCount(): {
 export function getNotificationCategory(
   type: NotificationType
 ): NotificationCategory {
-  const categoryMap: Record<NotificationType, NotificationCategory> = {
-    // 주문
-    order_created: 'order',
-    order_confirmed: 'order',
-    order_preparing: 'order',
-    order_ready: 'order',
-    order_picked_up: 'order',
-    order_delivered: 'order',
-    order_cancelled: 'order',
-    // 취소
-    cancellation_requested_customer: 'cancellation',
-    cancellation_requested_owner: 'cancellation',
-    cancellation_instant_completed: 'cancellation',
-    cancellation_approved: 'cancellation',
-    cancellation_rejected: 'cancellation',
-    cancellation_auto_approved: 'cancellation',
-    cancellation_withdrawn: 'cancellation',
-    // 환불
-    refund_processing: 'refund',
-    refund_completed: 'refund',
-    refund_failed: 'refund',
-    // 포인트/쿠폰
-    points_earned: 'points',
-    points_refunded: 'points',
-    coupon_restored: 'points',
-    coupon_expiring: 'promotion',
-    // 프로모션
-    promotion_new: 'promotion',
-    // 시스템
-    system_notice: 'system',
-    review_reminder: 'system',
-  }
-
-  return categoryMap[type] ?? 'system'
+  return NOTIFICATION_TYPE_CATEGORY[type] ?? 'system'
 }
