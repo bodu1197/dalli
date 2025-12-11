@@ -37,8 +37,8 @@ export default function HomePage() {
         {/* 헤더 - 고정 */}
         <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[700px] z-50 bg-[#df0012] pb-8">
           {/* 양쪽 모서리 뿔 효과 (radial-gradient로 패인 영역 투명) */}
-          <div className="absolute bottom-[-20px] left-0 w-[20px] h-[20px] header-horn-right z-30" />
-          <div className="absolute bottom-[-20px] right-0 w-[20px] h-[20px] header-horn-left z-30" />
+          <div className="absolute bottom-[-20px] left-0 w-[20px] h-[20px] header-horn-left z-30" />
+          <div className="absolute bottom-[-20px] right-0 w-[20px] h-[20px] header-horn-right z-30" />
 
           {/* 중앙 패인 부분 (투명, 둥근 상단) */}
           <div className="absolute bottom-[-20px] left-[20px] right-[20px] h-[20px] rounded-t-[20px] z-20" />
