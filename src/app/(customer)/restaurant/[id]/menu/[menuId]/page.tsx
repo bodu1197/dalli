@@ -1,13 +1,14 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ArrowLeft, Minus, Plus } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { MOCK_RESTAURANTS } from '@/lib/mock/restaurants'
-import { getMenuById, getMenuOptions } from '@/lib/mock/menus'
+import { createClient } from '@/lib/supabase/client'
+import type { Restaurant } from '@/types/restaurant.types'
+import type { Menu, MenuOption } from '@/types/menu.types'
 
 interface MenuDetailPageProps {
   readonly params: Promise<{ id: string; menuId: string }>
@@ -17,11 +18,78 @@ export default function MenuDetailPage({ params }: Readonly<MenuDetailPageProps>
   const { id, menuId } = use(params)
   const [quantity, setQuantity] = useState(1)
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
+  const [menu, setMenu] = useState<Menu | null>(null)
+  const [options, setOptions] = useState<MenuOption[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // 데이터 가져오기
-  const restaurant = MOCK_RESTAURANTS.find((r) => r.id === id)
-  const menu = getMenuById(id, menuId)
-  const options = getMenuOptions(menuId)
+  useEffect(() => {
+    const supabase = createClient()
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch restaurant data
+        const { data: restaurantData, error: restaurantError } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('id', id)
+          .single()
+
+        if (restaurantError) throw new Error('식당 정보를 불러오는데 실패했습니다.')
+        setRestaurant(restaurantData)
+
+        // Fetch menu data
+        const { data: menuData, error: menuError } = await supabase
+          .from('menus')
+          .select('*')
+          .eq('id', menuId)
+          .single()
+
+        if (menuError) throw new Error('메뉴 정보를 불러오는데 실패했습니다.')
+        setMenu(menuData)
+
+        // Fetch menu options
+        const { data: optionsData, error: optionsError } = await supabase
+          .from('menu_option_groups')
+          .select('*, menu_options(*)')
+          .eq('menu_id', menuId)
+
+        if (optionsError) throw new Error('메뉴 옵션을 불러오는데 실패했습니다.')
+
+        const allOptions = optionsData.flatMap(group => group.menu_options)
+        setOptions(allOptions)
+
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [id, menuId])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-[var(--color-neutral-500)]">
+          로딩 중...
+        </p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-red-500">
+          {error}
+        </p>
+      </div>
+    )
+  }
 
   if (!restaurant || !menu) {
     return (
@@ -61,9 +129,9 @@ export default function MenuDetailPage({ params }: Readonly<MenuDetailPageProps>
     <div className="min-h-screen bg-white pb-24">
       {/* 메뉴 이미지 */}
       <div className="relative h-72 bg-[var(--color-neutral-100)]">
-        {menu.imageUrl ? (
+        {menu.image_url ? (
           <Image
-            src={menu.imageUrl}
+            src={menu.image_url}
             alt={menu.name}
             fill
             className="object-cover"
@@ -86,9 +154,9 @@ export default function MenuDetailPage({ params }: Readonly<MenuDetailPageProps>
       {/* 메뉴 정보 */}
       <div className="p-4">
         {/* 인기 배지 */}
-        {menu.rank && (
+        {menu.is_popular && (
           <span className="inline-block bg-[var(--color-neutral-800)] text-white text-xs font-medium px-2 py-1 rounded mb-3">
-            인기 {menu.rank}위
+            인기
           </span>
         )}
 

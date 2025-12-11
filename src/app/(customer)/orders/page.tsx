@@ -1,23 +1,180 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, ChevronRight } from 'lucide-react'
 
-import { getActiveOrders, getCompletedOrders } from '@/lib/mock/orders'
+import { createClient } from '@/lib/supabase/client'
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 } from '@/types/order.types'
 import type { Order } from '@/types/order.types'
+import { useAuthStore } from '@/stores/auth.store'
 
 type TabType = 'active' | 'completed'
 
 export default function OrdersPage() {
   const [activeTab, setActiveTab] = useState<TabType>('active')
+  const [activeOrders, setActiveOrders] = useState<Order[]>([])
+  const [completedOrders, setCompletedOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { user } = useAuthStore()
 
-  const activeOrders = getActiveOrders()
-  const completedOrders = getCompletedOrders()
+  useEffect(() => {
+    if (!user) {
+        setLoading(false)
+        return
+    }
+
+    const supabase = createClient()
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch active orders
+        const { data: activeOrdersData, error: activeOrdersError } = await supabase
+            .from('orders')
+            .select('*, restaurants(name), order_items(menu_name)')
+            .eq('user_id', user.id)
+            .in('status', ['pending', 'confirmed', 'preparing', 'ready', 'picked_up', 'delivering'])
+            .order('created_at', { ascending: false })
+
+        if (activeOrdersError) throw new Error('진행 중인 주문을 불러오는데 실패했습니다.')
+        
+        const formattedActiveOrders: Order[] = activeOrdersData.map(order => ({
+            ...order,
+            orderNumber: order.order_number,
+            userId: order.user_id,
+            restaurantId: order.restaurant_id,
+            restaurantName: order.restaurants.name,
+            restaurantImage: null,
+            restaurantPhone: null,
+            riderId: order.rider_id,
+            riderName: null,
+            riderPhone: null,
+            menuAmount: order.menu_amount,
+            discountAmount: order.discount_amount,
+            pointsUsed: order.points_used,
+            deliveryFee: order.delivery_fee,
+            platformFee: order.platform_fee,
+            totalAmount: order.total_amount,
+            deliveryAddress: order.delivery_address,
+            deliveryDetail: order.delivery_detail,
+            deliveryLat: order.delivery_lat,
+            deliveryLng: order.delivery_lng,
+            specialInstructions: order.special_instructions,
+            deliveryInstructions: order.delivery_instructions,
+            disposableItems: order.disposable_items,
+            estimatedPrepTime: order.estimated_prep_time,
+            estimatedDeliveryTime: order.estimated_delivery_time,
+            actualDeliveryTime: order.actual_delivery_time,
+            confirmedAt: order.confirmed_at,
+            preparedAt: order.prepared_at,
+            pickedUpAt: order.picked_up_at,
+            deliveredAt: order.delivered_at,
+            rejectionReason: order.rejection_reason,
+            rejectionDetail: order.rejection_detail,
+            cancelledReason: order.cancelled_reason,
+            cancelledAt: order.cancelled_at,
+            cancelledBy: order.cancelled_by,
+            paymentMethod: order.payment_method,
+            paymentId: order.payment_id,
+            couponId: order.coupon_id,
+            couponName: order.coupon_name,
+            items: order.order_items.map(item => ({
+                id: '',
+                orderId: order.id,
+                menuId: '',
+                menuName: item.menu_name,
+                menuImage: null,
+                quantity: 0,
+                price: 0,
+                options: [],
+                specialInstructions: null,
+            })),
+            createdAt: order.created_at,
+            updatedAt: order.updated_at,
+        }))
+        setActiveOrders(formattedActiveOrders)
+
+        // Fetch completed orders
+        const { data: completedOrdersData, error: completedOrdersError } = await supabase
+            .from('orders')
+            .select('*, restaurants(name), order_items(menu_name)')
+            .eq('user_id', user.id)
+            .in('status', ['delivered', 'cancelled'])
+            .order('created_at', { ascending: false })
+
+        if (completedOrdersError) throw new Error('완료된 주문을 불러오는데 실패했습니다.')
+
+        const formattedCompletedOrders: Order[] = completedOrdersData.map(order => ({
+            ...order,
+            orderNumber: order.order_number,
+            userId: order.user_id,
+            restaurantId: order.restaurant_id,
+            restaurantName: order.restaurants.name,
+            restaurantImage: null,
+            restaurantPhone: null,
+            riderId: order.rider_id,
+            riderName: null,
+            riderPhone: null,
+            menuAmount: order.menu_amount,
+            discountAmount: order.discount_amount,
+            pointsUsed: order.points_used,
+            deliveryFee: order.delivery_fee,
+            platformFee: order.platform_fee,
+            totalAmount: order.total_amount,
+            deliveryAddress: order.delivery_address,
+            deliveryDetail: order.delivery_detail,
+            deliveryLat: order.delivery_lat,
+            deliveryLng: order.delivery_lng,
+            specialInstructions: order.special_instructions,
+            deliveryInstructions: order.delivery_instructions,
+            disposableItems: order.disposable_items,
+            estimatedPrepTime: order.estimated_prep_time,
+            estimatedDeliveryTime: order.estimated_delivery_time,
+            actualDeliveryTime: order.actual_delivery_time,
+            confirmedAt: order.confirmed_at,
+            preparedAt: order.prepared_at,
+            pickedUpAt: order.picked_up_at,
+            deliveredAt: order.delivered_at,
+            rejectionReason: order.rejection_reason,
+            rejectionDetail: order.rejection_detail,
+            cancelledReason: order.cancelled_reason,
+            cancelledAt: order.cancelled_at,
+            cancelledBy: order.cancelled_by,
+            paymentMethod: order.payment_method,
+            paymentId: order.payment_id,
+            couponId: order.coupon_id,
+            couponName: order.coupon_name,
+            items: order.order_items.map(item => ({
+                id: '',
+                orderId: order.id,
+                menuId: '',
+                menuName: item.menu_name,
+                menuImage: null,
+                quantity: 0,
+                price: 0,
+                options: [],
+                specialInstructions: null,
+            })),
+            createdAt: order.created_at,
+            updatedAt: order.updated_at,
+        }))
+        setCompletedOrders(formattedCompletedOrders)
+
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [user])
+
 
   const displayOrders = activeTab === 'active' ? activeOrders : completedOrders
 
@@ -64,7 +221,21 @@ export default function OrdersPage() {
       </header>
 
       <main className="pb-20">
-        {displayOrders.length === 0 ? (
+        {loading && (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <p className="text-[var(--color-neutral-500)]">
+                로딩 중...
+                </p>
+            </div>
+        )}
+        {error && (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <p className="text-red-500">
+                {error}
+                </p>
+            </div>
+        )}
+        {!loading && !error && displayOrders.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <div className="text-6xl mb-4">
               {activeTab === 'active' ? '🛵' : '📋'}

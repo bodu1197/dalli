@@ -103,11 +103,12 @@ export async function createOrder(
     }, 0)
 
     // 4. 최소 주문 금액 확인
-    if (menuAmount < restaurant.min_order_amount) {
+    const minOrderAmount = restaurant.min_order_amount ?? 0
+    if (menuAmount < minOrderAmount) {
       return {
         success: false,
         order: null,
-        error: `최소 주문 금액은 ${restaurant.min_order_amount.toLocaleString()}원입니다`,
+        error: `최소 주문 금액은 ${minOrderAmount.toLocaleString()}원입니다`,
       }
     }
 
@@ -169,13 +170,13 @@ export async function createOrder(
     // 6. 포인트 사용 확인
     let pointsUsed = 0
     if (input.pointsToUse > 0) {
-      const { data: pointInfo } = await supabase
-        .from('user_points')
-        .select('balance')
-        .eq('user_id', userId)
+      const { data: userInfo } = await supabase
+        .from('users')
+        .select('point_balance')
+        .eq('id', userId)
         .single()
 
-      if (pointInfo && pointInfo.balance >= input.pointsToUse) {
+      if (userInfo && (userInfo.point_balance ?? 0) >= input.pointsToUse) {
         pointsUsed = input.pointsToUse
       }
     }

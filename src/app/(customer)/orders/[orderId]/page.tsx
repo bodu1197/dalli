@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useCallback } from 'react'
+import { use, useCallback, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -14,7 +14,8 @@ import {
   CreditCard,
 } from 'lucide-react'
 
-import { getOrderById } from '@/lib/mock/orders'
+import { createClient } from '@/lib/supabase/client'
+import type { Order, OrderItem } from '@/types/order.types'
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
@@ -30,7 +31,96 @@ interface PageProps {
 export default function OrderDetailPage({ params }: Readonly<PageProps>) {
   const { orderId } = use(params)
   const router = useRouter()
-  const order = getOrderById(orderId)
+  const [order, setOrder] = useState<Order | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch order data
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .select('*, restaurants(*), order_items(*, menus(*, menu_option_groups(*, menu_options(*)))))')
+          .eq('id', orderId)
+          .single()
+
+        if (orderError || !orderData) throw new Error('주문 정보를 불러오는데 실패했습니다.')
+        
+        const formattedOrder: Order = {
+            id: orderData.id,
+            orderNumber: orderData.order_number,
+            userId: orderData.user_id,
+            restaurantId: orderData.restaurant_id,
+            restaurantName: orderData.restaurants.name,
+            restaurantImage: orderData.restaurants.image_url,
+            restaurantPhone: orderData.restaurants.phone,
+            riderId: orderData.rider_id,
+            riderName: orderData.rider_name,
+            riderPhone: orderData.rider_phone,
+            status: orderData.status,
+            menuAmount: orderData.menu_amount,
+            discountAmount: orderData.discount_amount,
+            pointsUsed: orderData.points_used,
+            deliveryFee: orderData.delivery_fee,
+            platformFee: orderData.platform_fee,
+            totalAmount: orderData.total_amount,
+            deliveryAddress: orderData.delivery_address,
+            deliveryDetail: orderData.delivery_detail,
+            deliveryLat: orderData.delivery_lat,
+            deliveryLng: orderData.delivery_lng,
+            specialInstructions: orderData.special_instructions,
+            deliveryInstructions: orderData.delivery_instructions,
+            disposableItems: orderData.disposable_items,
+            estimatedPrepTime: orderData.estimated_prep_time,
+            estimatedDeliveryTime: orderData.estimated_delivery_time,
+            actualDeliveryTime: orderData.actual_delivery_time,
+            confirmedAt: orderData.confirmed_at,
+            preparedAt: orderData.prepared_at,
+            pickedUpAt: orderData.picked_up_at,
+            deliveredAt: orderData.delivered_at,
+            rejectionReason: orderData.rejection_reason,
+            rejectionDetail: orderData.rejection_detail,
+            cancelledReason: orderData.cancelled_reason,
+            cancelledAt: orderData.cancelled_at,
+            cancelledBy: orderData.cancelled_by,
+            paymentMethod: orderData.payment_method,
+            paymentId: orderData.payment_id,
+            couponId: orderData.coupon_id,
+            couponName: orderData.coupon_name,
+            items: orderData.order_items.map((item: any) => ({
+                id: item.id,
+                orderId: item.order_id,
+                menuId: item.menu_id,
+                menuName: item.menu_name,
+                menuImage: item.menu_image,
+                quantity: item.quantity,
+                price: item.price,
+                specialInstructions: item.special_instructions,
+                options: item.menus.menu_option_groups.flatMap((group: any) => group.menu_options).map((option: any) => ({
+                    id: option.id,
+                    name: option.name,
+                    price: option.price,
+                }))
+            })),
+            createdAt: orderData.created_at,
+            updatedAt: orderData.updated_at,
+        }
+
+        setOrder(formattedOrder)
+
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [orderId])
 
   // 취소 완료 시 페이지 새로고침
   const handleCancelComplete = useCallback(() => {
@@ -40,6 +130,26 @@ export default function OrderDetailPage({ params }: Readonly<PageProps>) {
   // 취소 사유 라벨 가져오기
   const getCancelReasonLabel = (reason: string): string => {
     return CANCEL_REASON_LABELS[reason as CancelReasonCategory] ?? reason
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-[var(--color-neutral-500)]">
+          로딩 중...
+        </p>
+      </div>
+    )
+  }
+  
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-red-500">
+          {error}
+        </p>
+      </div>
+    )
   }
 
   if (!order) {

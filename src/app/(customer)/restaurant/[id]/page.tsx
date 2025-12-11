@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -18,8 +18,9 @@ import {
 import { Badge } from '@/components/ui/Badge'
 import { MenuList } from '@/components/features/menu/MenuList'
 import { BottomNavBar } from '@/components/layouts/BottomNavBar'
-import { MOCK_RESTAURANTS } from '@/lib/mock/restaurants'
-import { getMenusByRestaurantId, getPopularMenus } from '@/lib/mock/menus'
+import { createClient } from '@/lib/supabase/client'
+import type { Restaurant } from '@/types/restaurant.types'
+import type { Menu } from '@/types/menu.types'
 
 interface RestaurantDetailPageProps {
   readonly params: Promise<{ id: string }>
@@ -33,9 +34,72 @@ export default function RestaurantDetailPage({
   const { id } = use(params)
   const [activeTab, setActiveTab] = useState<TabType>('menu')
   const [isFavorite, setIsFavorite] = useState(false)
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
+  const [allMenus, setAllMenus] = useState<Menu[]>([])
+  const [popularMenus, setPopularMenus] = useState<Menu[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // 식당 정보 가져오기
-  const restaurant = MOCK_RESTAURANTS.find((r) => r.id === id)
+  useEffect(() => {
+    const supabase = createClient()
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch restaurant data
+        const { data: restaurantData, error: restaurantError } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('id', id)
+          .single()
+
+        if (restaurantError) throw new Error('식당 정보를 불러오는데 실패했습니다.')
+        setRestaurant(restaurantData)
+
+        // Fetch all menus
+        const { data: allMenusData, error: allMenusError } = await supabase
+          .from('menus')
+          .select('*')
+          .eq('restaurant_id', id)
+          .order('sort_order', { ascending: true })
+
+
+        if (allMenusError) throw new Error('메뉴 정보를 불러오는데 실패했습니다.')
+        setAllMenus(allMenusData)
+
+        // Fetch popular menus
+        const popularMenusData = allMenusData.filter(menu => menu.is_popular)
+        setPopularMenus(popularMenusData)
+
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [id])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-[var(--color-neutral-500)]">
+          로딩 중...
+        </p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-red-500">
+          {error}
+        </p>
+      </div>
+    )
+  }
 
   if (!restaurant) {
     return (
@@ -47,18 +111,14 @@ export default function RestaurantDetailPage({
     )
   }
 
-  // 메뉴 가져오기
-  const allMenus = getMenusByRestaurantId(id)
-  const popularMenus = getPopularMenus(id)
-
   // 영업 상태 표시
   const getStatusText = () => {
-    if (!restaurant.isOpen) return '준비중'
+    if (!restaurant.is_open) return '준비중'
     return '영업중'
   }
 
   const getStatusColor = () => {
-    if (!restaurant.isOpen) return 'text-[var(--color-neutral-400)]'
+    if (!restaurant.is_open) return 'text-[var(--color-neutral-400)]'
     return 'text-green-500'
   }
 
@@ -66,9 +126,9 @@ export default function RestaurantDetailPage({
     <div className="min-h-screen bg-[var(--color-neutral-50)] pb-20">
       {/* 헤더 이미지 */}
       <div className="relative h-56 bg-[var(--color-neutral-100)]">
-        {restaurant.imageUrl ? (
+        {restaurant.image_url ? (
           <Image
-            src={restaurant.imageUrl}
+            src={restaurant.image_url}
             alt={restaurant.name}
             fill
             className="object-cover"
@@ -114,16 +174,12 @@ export default function RestaurantDetailPage({
           <span className={`text-sm font-medium ${getStatusColor()}`}>
             {getStatusText()}
           </span>
-          {restaurant.deliveryFee === 0 && (
+          {restaurant.delivery_fee === 0 && (
             <Badge variant="delivery" size="sm">
               배달팁 무료
             </Badge>
           )}
-          {restaurant.isNew && (
-            <Badge variant="new" size="sm">
-              신규
-            </Badge>
-          )}
+          {/* restaurant.isNew is not in the db schema, so I will remove it */}
         </div>
 
         {/* 가게명 */}
@@ -141,7 +197,7 @@ export default function RestaurantDetailPage({
             href={`/restaurant/${id}/reviews`}
             className="text-sm text-[var(--color-neutral-500)] underline"
           >
-            리뷰 {restaurant.reviewCount.toLocaleString()}개
+            리뷰 {restaurant.review_count.toLocaleString()}개
           </Link>
         </div>
 
@@ -149,18 +205,18 @@ export default function RestaurantDetailPage({
         <div className="flex items-center gap-4 text-sm text-[var(--color-neutral-600)]">
           <div className="flex items-center gap-1">
             <Clock className="w-4 h-4" />
-            <span>약 {restaurant.estimatedDeliveryTime}분</span>
+            <span>약 {restaurant.estimated_delivery_time}분</span>
           </div>
           <span>·</span>
           <span>
-            최소주문 {restaurant.minOrderAmount.toLocaleString()}원
+            최소주문 {restaurant.min_order_amount.toLocaleString()}원
           </span>
           <span>·</span>
           <span>
             배달팁{' '}
-            {restaurant.deliveryFee === 0
+            {restaurant.delivery_fee === 0
               ? '무료'
-              : `${restaurant.deliveryFee.toLocaleString()}원`}
+              : `${restaurant.delivery_fee.toLocaleString()}원`}
           </span>
         </div>
 
@@ -250,9 +306,9 @@ export default function RestaurantDetailPage({
               <h3 className="font-semibold text-[var(--color-neutral-900)] mb-2">
                 영업 시간
               </h3>
-              {restaurant.businessHours ? (
+              {restaurant.business_hours ? (
                 <div className="space-y-1 text-sm text-[var(--color-neutral-600)]">
-                  {Object.entries(restaurant.businessHours).map(
+                  {Object.entries(restaurant.business_hours).map(
                     ([day, hours]) => (
                       <div key={day} className="flex justify-between">
                         <span>

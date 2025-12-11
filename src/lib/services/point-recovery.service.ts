@@ -71,16 +71,16 @@ export async function recoverPoints(
     // 이미 복구된 경우
     if (cancellation?.points_refunded) {
       // 현재 잔액 조회
-      const { data: userPoints } = await supabase
-        .from('user_points')
-        .select('balance')
-        .eq('user_id', userId)
+      const { data: userInfo } = await supabase
+        .from('users')
+        .select('point_balance')
+        .eq('id', userId)
         .single()
 
       return {
         success: true,
         recoveredPoints: usedPoints,
-        newBalance: userPoints?.balance ?? 0,
+        newBalance: userInfo?.point_balance ?? 0,
         transactionId: null,
         errorMessage: ERROR_MESSAGES.ALREADY_RECOVERED,
       }
@@ -225,16 +225,16 @@ export async function getUserPointBalance(
 ): Promise<number> {
   try {
     const { data, error } = await supabase
-      .from('user_points')
-      .select('balance')
-      .eq('user_id', userId)
+      .from('users')
+      .select('point_balance')
+      .eq('id', userId)
       .single()
 
     if (error || !data) {
       return 0
     }
 
-    return data.balance
+    return data.point_balance ?? 0
   } catch {
     return 0
   }

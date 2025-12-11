@@ -64,7 +64,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           id,
           order_number,
           status,
-          restaurant_name,
           delivery_address,
           delivery_detail,
           delivery_lat,
@@ -92,9 +91,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         throw activeError
       }
 
+      // 식당 이름 추가
+      const activeWithRestaurantName = (activeDeliveries ?? []).map((delivery) => ({
+        ...delivery,
+        restaurant_name: (delivery.restaurants as { name: string } | null)?.name ?? null,
+      }))
+
       return NextResponse.json({
         success: true,
-        data: activeDeliveries ?? [],
+        data: activeWithRestaurantName,
         pagination: {
           page,
           limit,
@@ -109,25 +114,35 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           id,
           order_number,
           status,
-          restaurant_name,
           delivery_address,
           total_amount,
           delivery_fee,
-          delivered_at,
-          created_at
+          actual_delivery_time,
+          created_at,
+          restaurants (
+            id,
+            name
+          )
         `)
         .eq('rider_id', user.id)
         .eq('status', 'delivered')
-        .order('delivered_at', { ascending: false })
+        .order('actual_delivery_time', { ascending: false })
         .range(offset, offset + limit - 1)
 
       if (completedError) {
         throw completedError
       }
 
+      // 식당 이름 추가
+      const completedWithRestaurantName = (completedDeliveries ?? []).map((delivery) => ({
+        ...delivery,
+        restaurant_name: (delivery.restaurants as { name: string } | null)?.name ?? null,
+        delivered_at: delivery.actual_delivery_time,
+      }))
+
       return NextResponse.json({
         success: true,
-        data: completedDeliveries ?? [],
+        data: completedWithRestaurantName,
         pagination: {
           page,
           limit,
@@ -142,7 +157,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           id,
           order_number,
           status,
-          restaurant_name,
           delivery_address,
           delivery_detail,
           delivery_lat,
@@ -175,22 +189,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         let estimatedDistance = null
 
         // 식당 위치와 라이더 현재 위치 사이의 거리 계산
-        if (rider.current_lat && rider.current_lng) {
-          const restaurant = delivery.restaurants as { lat: number; lng: number } | null
-          if (restaurant) {
-            estimatedDistance = calculateDistance(
-              rider.current_lat,
-              rider.current_lng,
-              restaurant.lat,
-              restaurant.lng
-            )
-          }
+        const restaurant = delivery.restaurants as { lat: number; lng: number; name: string } | null
+        if (rider.current_lat && rider.current_lng && restaurant) {
+          estimatedDistance = calculateDistance(
+            rider.current_lat,
+            rider.current_lng,
+            restaurant.lat,
+            restaurant.lng
+          )
         }
 
         return {
           ...delivery,
+          restaurant_name: restaurant?.name ?? null,
           estimatedDistance,
-          estimatedEarnings: calculateEarnings(delivery.delivery_fee),
+          estimatedEarnings: calculateEarnings(delivery.delivery_fee ?? 0),
         }
       })
 

@@ -80,6 +80,14 @@ export const CANCELLATION_POLICIES: Record<OrderStatus, CancellationPolicy> = {
     canRefundPoints: false,
     message: '배달이 완료되어 취소가 불가능합니다.',
   },
+  rejected: {
+    canCancel: false,
+    cancelType: null,
+    refundRate: 0,
+    canRefundCoupon: false,
+    canRefundPoints: false,
+    message: '이미 거절된 주문입니다.',
+  },
   cancelled: {
     canCancel: false,
     cancelType: null,

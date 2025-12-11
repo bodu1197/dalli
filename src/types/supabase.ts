@@ -108,6 +108,60 @@ export type Database = {
           },
         ]
       }
+      cancellation_status_history: {
+        Row: {
+          cancellation_id: string
+          change_reason: string | null
+          changed_by: string | null
+          created_at: string | null
+          id: string
+          is_auto_change: boolean | null
+          new_owner_action: string | null
+          new_status: string
+          previous_owner_action: string | null
+          previous_status: string | null
+        }
+        Insert: {
+          cancellation_id: string
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          is_auto_change?: boolean | null
+          new_owner_action?: string | null
+          new_status: string
+          previous_owner_action?: string | null
+          previous_status?: string | null
+        }
+        Update: {
+          cancellation_id?: string
+          change_reason?: string | null
+          changed_by?: string | null
+          created_at?: string | null
+          id?: string
+          is_auto_change?: boolean | null
+          new_owner_action?: string | null
+          new_status?: string
+          previous_owner_action?: string | null
+          previous_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cancellation_status_history_cancellation_id_fkey"
+            columns: ["cancellation_id"]
+            isOneToOne: false
+            referencedRelation: "order_cancellations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cancellation_status_history_changed_by_fkey"
+            columns: ["changed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -631,109 +685,12 @@ export type Database = {
           },
         ]
       }
-      cancellation_policies: {
-        Row: {
-          id: string
-          order_status: string
-          cancellation_type: string
-          refund_rate: number
-          can_refund_coupon: boolean
-          can_refund_points: boolean
-          approval_timeout_minutes: number | null
-          description: string | null
-          message_for_customer: string | null
-          is_active: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          order_status: string
-          cancellation_type: string
-          refund_rate?: number
-          can_refund_coupon?: boolean
-          can_refund_points?: boolean
-          approval_timeout_minutes?: number | null
-          description?: string | null
-          message_for_customer?: string | null
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          order_status?: string
-          cancellation_type?: string
-          refund_rate?: number
-          can_refund_coupon?: boolean
-          can_refund_points?: boolean
-          approval_timeout_minutes?: number | null
-          description?: string | null
-          message_for_customer?: string | null
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      cancellation_status_history: {
-        Row: {
-          id: string
-          cancellation_id: string
-          previous_status: string | null
-          new_status: string
-          previous_owner_action: string | null
-          new_owner_action: string | null
-          changed_by: string | null
-          change_reason: string | null
-          is_auto_change: boolean
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          cancellation_id: string
-          previous_status?: string | null
-          new_status: string
-          previous_owner_action?: string | null
-          new_owner_action?: string | null
-          changed_by?: string | null
-          change_reason?: string | null
-          is_auto_change?: boolean
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          cancellation_id?: string
-          previous_status?: string | null
-          new_status?: string
-          previous_owner_action?: string | null
-          new_owner_action?: string | null
-          changed_by?: string | null
-          change_reason?: string | null
-          is_auto_change?: boolean
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cancellation_status_history_cancellation_id_fkey"
-            columns: ["cancellation_id"]
-            isOneToOne: false
-            referencedRelation: "order_cancellations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cancellation_status_history_changed_by_fkey"
-            columns: ["changed_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       order_cancellations: {
         Row: {
+          approval_deadline: string | null
           approved_at: string | null
           approved_by: string | null
+          auto_approved: boolean | null
           can_refund_coupon: boolean | null
           can_refund_points: boolean | null
           cancel_type: string
@@ -744,6 +701,10 @@ export type Database = {
           id: string
           menu_refund_amount: number
           order_id: string
+          owner_action: string | null
+          owner_action_at: string | null
+          owner_action_by: string | null
+          owner_rejection_reason: string | null
           points_refunded: boolean | null
           reason: string
           reason_detail: string | null
@@ -753,18 +714,12 @@ export type Database = {
           requested_by: string
           status: string
           updated_at: string | null
-          owner_action: string | null
-          owner_action_at: string | null
-          owner_action_by: string | null
-          owner_rejection_reason: string | null
-          approval_deadline: string | null
-          auto_approved: boolean
-          customer_notified: boolean | null
-          owner_notified: boolean | null
         }
         Insert: {
+          approval_deadline?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          auto_approved?: boolean | null
           can_refund_coupon?: boolean | null
           can_refund_points?: boolean | null
           cancel_type: string
@@ -775,6 +730,10 @@ export type Database = {
           id?: string
           menu_refund_amount?: number
           order_id: string
+          owner_action?: string | null
+          owner_action_at?: string | null
+          owner_action_by?: string | null
+          owner_rejection_reason?: string | null
           points_refunded?: boolean | null
           reason: string
           reason_detail?: string | null
@@ -784,18 +743,12 @@ export type Database = {
           requested_by: string
           status?: string
           updated_at?: string | null
-          owner_action?: string | null
-          owner_action_at?: string | null
-          owner_action_by?: string | null
-          owner_rejection_reason?: string | null
-          approval_deadline?: string | null
-          auto_approved?: boolean
-          customer_notified?: boolean | null
-          owner_notified?: boolean | null
         }
         Update: {
+          approval_deadline?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          auto_approved?: boolean | null
           can_refund_coupon?: boolean | null
           can_refund_points?: boolean | null
           cancel_type?: string
@@ -806,6 +759,10 @@ export type Database = {
           id?: string
           menu_refund_amount?: number
           order_id?: string
+          owner_action?: string | null
+          owner_action_at?: string | null
+          owner_action_by?: string | null
+          owner_rejection_reason?: string | null
           points_refunded?: boolean | null
           reason?: string
           reason_detail?: string | null
@@ -815,14 +772,6 @@ export type Database = {
           requested_by?: string
           status?: string
           updated_at?: string | null
-          owner_action?: string | null
-          owner_action_at?: string | null
-          owner_action_by?: string | null
-          owner_rejection_reason?: string | null
-          approval_deadline?: string | null
-          auto_approved?: boolean
-          customer_notified?: boolean | null
-          owner_notified?: boolean | null
         }
         Relationships: [
           {
@@ -840,15 +789,15 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "order_cancellations_requested_by_fkey"
-            columns: ["requested_by"]
+            foreignKeyName: "order_cancellations_owner_action_by_fkey"
+            columns: ["owner_action_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "order_cancellations_owner_action_by_fkey"
-            columns: ["owner_action_by"]
+            foreignKeyName: "order_cancellations_requested_by_fkey"
+            columns: ["requested_by"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -857,31 +806,34 @@ export type Database = {
       }
       order_delivery_notifications: {
         Row: {
+          created_at: string | null
           id: string
-          order_id: string
-          notified_500m: boolean
-          notified_100m: boolean
-          notified_500m_at: string | null
+          notified_100m: boolean | null
           notified_100m_at: string | null
-          created_at: string
+          notified_500m: boolean | null
+          notified_500m_at: string | null
+          order_id: string
+          updated_at: string | null
         }
         Insert: {
+          created_at?: string | null
           id?: string
-          order_id: string
-          notified_500m?: boolean
-          notified_100m?: boolean
-          notified_500m_at?: string | null
+          notified_100m?: boolean | null
           notified_100m_at?: string | null
-          created_at?: string
+          notified_500m?: boolean | null
+          notified_500m_at?: string | null
+          order_id: string
+          updated_at?: string | null
         }
         Update: {
+          created_at?: string | null
           id?: string
-          order_id?: string
-          notified_500m?: boolean
-          notified_100m?: boolean
-          notified_500m_at?: string | null
+          notified_100m?: boolean | null
           notified_100m_at?: string | null
-          created_at?: string
+          notified_500m?: boolean | null
+          notified_500m_at?: string | null
+          order_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -949,34 +901,40 @@ export type Database = {
       }
       order_status_history: {
         Row: {
+          change_reason: string | null
+          changed_by: string | null
+          changed_by_user_id: string | null
+          created_at: string | null
           id: string
+          new_status: string
+          note: string | null
           order_id: string
           previous_status: string | null
-          new_status: string
-          changed_by: string | null
-          change_reason: string | null
-          metadata: Json | null
-          created_at: string
+          status: string | null
         }
         Insert: {
+          change_reason?: string | null
+          changed_by?: string | null
+          changed_by_user_id?: string | null
+          created_at?: string | null
           id?: string
+          new_status: string
+          note?: string | null
           order_id: string
           previous_status?: string | null
-          new_status: string
-          changed_by?: string | null
-          change_reason?: string | null
-          metadata?: Json | null
-          created_at?: string
+          status?: string | null
         }
         Update: {
+          change_reason?: string | null
+          changed_by?: string | null
+          changed_by_user_id?: string | null
+          created_at?: string | null
           id?: string
+          new_status?: string
+          note?: string | null
           order_id?: string
           previous_status?: string | null
-          new_status?: string
-          changed_by?: string | null
-          change_reason?: string | null
-          metadata?: Json | null
-          created_at?: string
+          status?: string | null
         }
         Relationships: [
           {
@@ -986,13 +944,6 @@ export type Database = {
             referencedRelation: "orders"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "order_status_history_changed_by_fkey"
-            columns: ["changed_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       orders: {
@@ -1000,78 +951,144 @@ export type Database = {
           actual_delivery_time: string | null
           cancel_requested_at: string | null
           cancelled_at: string | null
+          cancelled_by: string | null
           cancelled_reason: string | null
+          confirmed_at: string | null
+          coupon_id: string | null
+          coupon_name: string | null
           created_at: string | null
           delivery_address: string
           delivery_detail: string | null
           delivery_fee: number | null
+          delivery_instructions: string | null
           delivery_lat: number
           delivery_lng: number
+          discount_amount: number | null
+          disposable_items: boolean | null
           estimated_delivery_time: string | null
+          estimated_prep_time: number | null
           id: string
+          menu_amount: number | null
+          order_number: string | null
           payment_key: string | null
           payment_method: string | null
           payment_status: string | null
+          picked_up_at: string | null
           platform_fee: number | null
+          points_used: number | null
+          prepared_at: string | null
           refunded_amount: number | null
+          rejection_detail: string | null
+          rejection_reason: string | null
           restaurant_id: string
+          restaurant_image: string | null
+          restaurant_name: string | null
+          restaurant_phone: string | null
+          rider_assigned_at: string | null
           rider_id: string | null
+          rider_name: string | null
+          rider_phone: string | null
           special_instructions: string | null
           status: string
           total_amount: number
           updated_at: string | null
+          used_points: number | null
           user_id: string
         }
         Insert: {
           actual_delivery_time?: string | null
           cancel_requested_at?: string | null
           cancelled_at?: string | null
+          cancelled_by?: string | null
           cancelled_reason?: string | null
+          confirmed_at?: string | null
+          coupon_id?: string | null
+          coupon_name?: string | null
           created_at?: string | null
           delivery_address: string
           delivery_detail?: string | null
           delivery_fee?: number | null
+          delivery_instructions?: string | null
           delivery_lat: number
           delivery_lng: number
+          discount_amount?: number | null
+          disposable_items?: boolean | null
           estimated_delivery_time?: string | null
+          estimated_prep_time?: number | null
           id?: string
+          menu_amount?: number | null
+          order_number?: string | null
           payment_key?: string | null
           payment_method?: string | null
           payment_status?: string | null
+          picked_up_at?: string | null
           platform_fee?: number | null
+          points_used?: number | null
+          prepared_at?: string | null
           refunded_amount?: number | null
+          rejection_detail?: string | null
+          rejection_reason?: string | null
           restaurant_id: string
+          restaurant_image?: string | null
+          restaurant_name?: string | null
+          restaurant_phone?: string | null
+          rider_assigned_at?: string | null
           rider_id?: string | null
+          rider_name?: string | null
+          rider_phone?: string | null
           special_instructions?: string | null
           status?: string
           total_amount: number
           updated_at?: string | null
+          used_points?: number | null
           user_id: string
         }
         Update: {
           actual_delivery_time?: string | null
           cancel_requested_at?: string | null
           cancelled_at?: string | null
+          cancelled_by?: string | null
           cancelled_reason?: string | null
+          confirmed_at?: string | null
+          coupon_id?: string | null
+          coupon_name?: string | null
           created_at?: string | null
           delivery_address?: string
           delivery_detail?: string | null
           delivery_fee?: number | null
+          delivery_instructions?: string | null
           delivery_lat?: number
           delivery_lng?: number
+          discount_amount?: number | null
+          disposable_items?: boolean | null
           estimated_delivery_time?: string | null
+          estimated_prep_time?: number | null
           id?: string
+          menu_amount?: number | null
+          order_number?: string | null
           payment_key?: string | null
           payment_method?: string | null
           payment_status?: string | null
+          picked_up_at?: string | null
           platform_fee?: number | null
+          points_used?: number | null
+          prepared_at?: string | null
           refunded_amount?: number | null
+          rejection_detail?: string | null
+          rejection_reason?: string | null
           restaurant_id?: string
+          restaurant_image?: string | null
+          restaurant_name?: string | null
+          restaurant_phone?: string | null
+          rider_assigned_at?: string | null
           rider_id?: string | null
+          rider_name?: string | null
+          rider_phone?: string | null
           special_instructions?: string | null
           status?: string
           total_amount?: number
           updated_at?: string | null
+          used_points?: number | null
           user_id?: string
         }
         Relationships: [
@@ -1091,6 +1108,57 @@ export type Database = {
           },
           {
             foreignKeyName: "orders_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      point_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string | null
+          description: string | null
+          expires_at: string | null
+          id: string
+          order_id: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string | null
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          order_id?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "point_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "point_transactions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -1390,6 +1458,50 @@ export type Database = {
           },
         ]
       }
+      rider_locations: {
+        Row: {
+          accuracy: number | null
+          created_at: string | null
+          heading: number | null
+          id: string
+          lat: number
+          lng: number
+          rider_id: string
+          speed: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          accuracy?: number | null
+          created_at?: string | null
+          heading?: number | null
+          id?: string
+          lat: number
+          lng: number
+          rider_id: string
+          speed?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          accuracy?: number | null
+          created_at?: string | null
+          heading?: number | null
+          id?: string
+          lat?: number
+          lng?: number
+          rider_id?: string
+          speed?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rider_locations_rider_id_fkey"
+            columns: ["rider_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       riders: {
         Row: {
           created_at: string | null
@@ -1437,50 +1549,6 @@ export type Database = {
           {
             foreignKeyName: "riders_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      rider_locations: {
-        Row: {
-          id: string
-          rider_id: string
-          lat: number
-          lng: number
-          heading: number | null
-          speed: number | null
-          accuracy: number | null
-          updated_at: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          rider_id: string
-          lat: number
-          lng: number
-          heading?: number | null
-          speed?: number | null
-          accuracy?: number | null
-          updated_at?: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          rider_id?: string
-          lat?: number
-          lng?: number
-          heading?: number | null
-          speed?: number | null
-          accuracy?: number | null
-          updated_at?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "rider_locations_rider_id_fkey"
-            columns: ["rider_id"]
             isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -1618,6 +1686,7 @@ export type Database = {
           id: string
           name: string
           phone: string | null
+          point_balance: number | null
           role: string
           updated_at: string | null
         }
@@ -1629,6 +1698,7 @@ export type Database = {
           id?: string
           name: string
           phone?: string | null
+          point_balance?: number | null
           role?: string
           updated_at?: string | null
         }
@@ -1640,6 +1710,7 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
+          point_balance?: number | null
           role?: string
           updated_at?: string | null
         }
@@ -1669,9 +1740,26 @@ export type Database = {
         }
         Returns: string
       }
+      earn_points: {
+        Args: {
+          p_amount: number
+          p_description: string
+          p_order_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
       get_unread_notification_count: {
         Args: { p_user_id: string }
         Returns: number
+      }
+      increment_coupon_usage: {
+        Args: { coupon_id: string }
+        Returns: undefined
+      }
+      increment_rider_deliveries: {
+        Args: { p_rider_id: string }
+        Returns: undefined
       }
       init_notification_settings: {
         Args: { p_user_id: string }
@@ -1694,6 +1782,19 @@ export type Database = {
         }
         Returns: Json
       }
+      refund_user_points: {
+        Args: {
+          p_amount: number
+          p_cancellation_id: string
+          p_description: string
+          p_order_id: string
+          p_user_id: string
+        }
+        Returns: {
+          new_balance: number
+          transaction_id: string
+        }[]
+      }
       upsert_push_token: {
         Args: {
           p_device_id?: string
@@ -1703,6 +1804,15 @@ export type Database = {
           p_user_id: string
         }
         Returns: string
+      }
+      use_points: {
+        Args: {
+          p_amount: number
+          p_description: string
+          p_order_id: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

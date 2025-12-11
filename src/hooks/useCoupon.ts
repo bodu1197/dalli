@@ -350,6 +350,7 @@ export function useValidateCoupon(): UseValidateCouponReturn {
         // 4. 수량 체크
         if (
           couponData.total_quantity !== null &&
+          couponData.used_quantity !== null &&
           couponData.used_quantity >= couponData.total_quantity
         ) {
           return { isValid: false, errorCode: 'COUPON_OUT_OF_STOCK', message: '소진된 쿠폰입니다' }
@@ -399,7 +400,7 @@ export function useValidateCoupon(): UseValidateCouponReturn {
           startDate: couponData.start_date,
           endDate: couponData.end_date,
           totalQuantity: couponData.total_quantity,
-          usedQuantity: couponData.used_quantity,
+          usedQuantity: couponData.used_quantity ?? 0,
           isActive: couponData.is_active ?? false,
           createdAt: couponData.created_at ?? new Date().toISOString(),
         }
@@ -566,6 +567,7 @@ export function useRegisterCoupon(): UseRegisterCouponReturn {
         // 4. 수량 체크
         if (
           couponData.total_quantity !== null &&
+          couponData.used_quantity !== null &&
           couponData.used_quantity >= couponData.total_quantity
         ) {
           setError('소진된 쿠폰입니다')
@@ -676,7 +678,7 @@ export function useCreateCoupon(): UseCreateCouponReturn {
           startDate: data.start_date,
           endDate: data.end_date,
           totalQuantity: data.total_quantity,
-          usedQuantity: data.used_quantity,
+          usedQuantity: data.used_quantity ?? 0,
           isActive: data.is_active ?? false,
           createdAt: data.created_at ?? new Date().toISOString(),
         }

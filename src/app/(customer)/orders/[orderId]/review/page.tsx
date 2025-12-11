@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -11,7 +11,9 @@ import {
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
-import { getOrderById } from '@/lib/mock/orders'
+import { createClient } from '@/lib/supabase/client'
+import type { Order } from '@/types/order.types'
+import { useAuthStore } from '@/stores/auth.store'
 
 interface PageProps {
   readonly params: Promise<{ orderId: string }>
@@ -20,12 +22,159 @@ interface PageProps {
 export default function ReviewWritePage({ params }: Readonly<PageProps>) {
   const { orderId } = use(params)
   const router = useRouter()
-  const order = getOrderById(orderId)
-
+  const { user } = useAuthStore()
+  const [order, setOrder] = useState<Order | null>(null)
   const [rating, setRating] = useState(5)
   const [content, setContent] = useState('')
   const [images, setImages] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch order data
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .select('*, restaurants(name, image_url)')
+          .eq('id', orderId)
+          .single()
+
+        if (orderError) throw new Error('주문 정보를 불러오는데 실패했습니다.')
+        
+        const formattedOrder: Order = {
+            ...orderData,
+            orderNumber: orderData.order_number,
+            userId: orderData.user_id,
+            restaurantId: orderData.restaurant_id,
+            restaurantName: orderData.restaurants.name,
+            restaurantImage: orderData.restaurants.image_url,
+            restaurantPhone: null, // Not needed for this page
+            riderId: orderData.rider_id,
+            riderName: null, // Not needed
+            riderPhone: null, // Not needed
+            menuAmount: orderData.menu_amount,
+            discountAmount: orderData.discount_amount,
+            pointsUsed: orderData.points_used,
+            deliveryFee: orderData.delivery_fee,
+            platformFee: orderData.platform_fee,
+            totalAmount: orderData.total_amount,
+            deliveryAddress: orderData.delivery_address,
+            deliveryDetail: orderData.delivery_detail,
+            deliveryLat: orderData.delivery_lat,
+            deliveryLng: orderData.delivery_lng,
+            specialInstructions: orderData.special_instructions,
+            deliveryInstructions: orderData.delivery_instructions,
+            disposableItems: orderData.disposable_items,
+            estimatedPrepTime: orderData.estimated_prep_time,
+            estimatedDeliveryTime: orderData.estimated_delivery_time,
+            actualDeliveryTime: orderData.actual_delivery_time,
+            confirmedAt: orderData.confirmed_at,
+            preparedAt: orderData.prepared_at,
+            pickedUpAt: orderData.picked_up_at,
+            deliveredAt: orderData.delivered_at,
+            rejectionReason: orderData.rejection_reason,
+            rejectionDetail: orderData.rejection_detail,
+            cancelledReason: orderData.cancelled_reason,
+            cancelledAt: orderData.cancelled_at,
+            cancelledBy: orderData.cancelled_by,
+            paymentMethod: orderData.payment_method,
+            paymentId: orderData.payment_id,
+            couponId: orderData.coupon_id,
+            couponName: orderData.coupon_name,
+            items: [], // Not needed for this page
+            createdAt: orderData.created_at,
+            updatedAt: orderData.updated_at,
+        }
+
+        setOrder(formattedOrder)
+
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [orderId])
+
+  // 이미지 추가 핸들러 (실제로는 파일 업로드 구현 필요)
+  const handleAddImage = () => {
+    if (images.length >= 5) {
+      alert('최대 5장까지 첨부할 수 있습니다')
+      return
+    }
+    // Note: 이미지 업로드 기능 (Supabase Storage 연동 예정)
+    alert('이미지 업로드 기능 준비 중입니다')
+  }
+
+  // 이미지 제거 핸들러
+  const handleRemoveImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // 리뷰 제출
+  const handleSubmit = async () => {
+    if (content.trim().length < 10) {
+      alert('리뷰는 10자 이상 작성해주세요')
+      return
+    }
+
+    if (!user || !order) return
+
+    setIsSubmitting(true)
+
+    try {
+      const supabase = createClient()
+      const { error: reviewError } = await supabase
+        .from('reviews')
+        .insert({
+          user_id: user.id,
+          restaurant_id: order.restaurantId,
+          order_id: order.id,
+          rating,
+          content,
+          images,
+        })
+      
+      if (reviewError) throw reviewError
+
+      // Add points for review
+      await supabase.rpc('increment_user_points', { user_id: user.id, amount: 100 })
+
+      alert('리뷰가 등록되었습니다')
+      router.push(`/orders/${orderId}`)
+    } catch {
+      alert('리뷰 등록에 실패했습니다')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-[var(--color-neutral-500)]">
+          로딩 중...
+        </p>
+      </div>
+    )
+  }
+  
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-red-500">
+          {error}
+        </p>
+      </div>
+    )
+  }
 
   if (!order) {
     return (
@@ -60,43 +209,6 @@ export default function ReviewWritePage({ params }: Readonly<PageProps>) {
         </Link>
       </div>
     )
-  }
-
-  // 이미지 추가 핸들러 (실제로는 파일 업로드 구현 필요)
-  const handleAddImage = () => {
-    if (images.length >= 5) {
-      alert('최대 5장까지 첨부할 수 있습니다')
-      return
-    }
-    // Note: 이미지 업로드 기능 (Supabase Storage 연동 예정)
-    alert('이미지 업로드 기능 준비 중입니다')
-  }
-
-  // 이미지 제거 핸들러
-  const handleRemoveImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index))
-  }
-
-  // 리뷰 제출
-  const handleSubmit = async () => {
-    if (content.trim().length < 10) {
-      alert('리뷰는 10자 이상 작성해주세요')
-      return
-    }
-
-    setIsSubmitting(true)
-
-    try {
-      // Note: 리뷰 등록 API 호출 (현재 목업 데이터 사용)
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      alert('리뷰가 등록되었습니다')
-      router.push(`/orders/${orderId}`)
-    } catch {
-      alert('리뷰 등록에 실패했습니다')
-    } finally {
-      setIsSubmitting(false)
-    }
   }
 
   return (

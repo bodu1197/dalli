@@ -292,7 +292,7 @@ export function useRiderLocation(riderId: string | null): UseRiderLocationReturn
             lng: data.lng,
             heading: data.heading,
             speed: data.speed,
-            updatedAt: data.updated_at,
+            updatedAt: data.updated_at ?? new Date().toISOString(),
           })
         }
       } catch (err) {

@@ -15,8 +15,8 @@ import {
   Package,
 } from 'lucide-react'
 
-import { getOrderById } from '@/lib/mock/orders'
-import type { OrderStatus } from '@/types/order.types'
+import { createClient } from '@/lib/supabase/client'
+import type { Order, OrderStatus } from '@/types/order.types'
 
 interface PageProps {
   readonly params: Promise<{ orderId: string }>
@@ -40,7 +40,81 @@ function getStatusIndex(status: OrderStatus): number {
 export default function OrderTrackingPage({ params }: Readonly<PageProps>) {
   const { orderId } = use(params)
   const router = useRouter()
-  const order = getOrderById(orderId)
+  const [order, setOrder] = useState<Order | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+
+        // Fetch order data
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .select('*, restaurants(name)')
+          .eq('id', orderId)
+          .single()
+
+        if (orderError) throw new Error('주문 정보를 불러오는데 실패했습니다.')
+        
+        const formattedOrder: Order = {
+            ...orderData,
+            orderNumber: orderData.order_number,
+            userId: orderData.user_id,
+            restaurantId: orderData.restaurant_id,
+            restaurantName: orderData.restaurants.name,
+            restaurantImage: null,
+            restaurantPhone: null,
+            riderId: orderData.rider_id,
+            riderName: null,
+            riderPhone: null,
+            menuAmount: orderData.menu_amount,
+            discountAmount: orderData.discount_amount,
+            pointsUsed: orderData.points_used,
+            deliveryFee: orderData.delivery_fee,
+            platformFee: orderData.platform_fee,
+            totalAmount: orderData.total_amount,
+            deliveryAddress: orderData.delivery_address,
+            deliveryDetail: orderData.delivery_detail,
+            deliveryLat: orderData.delivery_lat,
+            deliveryLng: orderData.delivery_lng,
+            specialInstructions: orderData.special_instructions,
+            deliveryInstructions: orderData.delivery_instructions,
+            disposableItems: orderData.disposable_items,
+            estimatedPrepTime: orderData.estimated_prep_time,
+            estimatedDeliveryTime: orderData.estimated_delivery_time,
+            actualDeliveryTime: orderData.actual_delivery_time,
+            confirmedAt: orderData.confirmed_at,
+            preparedAt: orderData.prepared_at,
+            pickedUpAt: orderData.picked_up_at,
+            deliveredAt: orderData.delivered_at,
+            rejectionReason: orderData.rejection_reason,
+            rejectionDetail: orderData.rejection_detail,
+            cancelledReason: orderData.cancelled_reason,
+            cancelledAt: orderData.cancelled_at,
+            cancelledBy: orderData.cancelled_by,
+            paymentMethod: orderData.payment_method,
+            paymentId: orderData.payment_id,
+            couponId: orderData.coupon_id,
+            couponName: orderData.coupon_name,
+            items: [],
+            createdAt: orderData.created_at,
+            updatedAt: orderData.updated_at,
+        }
+
+        setOrder(formattedOrder)
+
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [orderId])
 
   // 예상 도착 시간 카운트다운
   const [remainingTime, setRemainingTime] = useState<number | null>(null)
@@ -60,6 +134,26 @@ export default function OrderTrackingPage({ params }: Readonly<PageProps>) {
 
     return () => clearInterval(interval)
   }, [order?.estimatedDeliveryTime])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-[var(--color-neutral-500)]">
+          로딩 중...
+        </p>
+      </div>
+    )
+  }
+  
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-red-500">
+          {error}
+        </p>
+      </div>
+    )
+  }
 
   if (!order) {
     return (

@@ -1,13 +1,14 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Search, SlidersHorizontal, X } from 'lucide-react'
 
 import { RestaurantList } from '@/components/features/restaurant'
 import { Spinner } from '@/components/ui/Spinner'
-import { MOCK_RESTAURANTS } from '@/lib/mock/restaurants'
+import { createClient } from '@/lib/supabase/client'
+import type { Restaurant } from '@/types/restaurant.types'
 
 // 필터 옵션
 const SORT_OPTIONS = [
@@ -20,22 +21,47 @@ const SORT_OPTIONS = [
 function SearchResultsContent() {
   const searchParams = useSearchParams()
   const query = searchParams.get('q') || ''
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  
+  useEffect(() => {
+    const supabase = createClient()
+    const fetchData = async () => {
+      try {
+        setLoading(true)
 
-  // 검색 결과 필터링 (실제로는 서버에서 처리)
-  const filteredRestaurants = MOCK_RESTAURANTS.filter(
-    (restaurant) =>
-      restaurant.name.includes(query) ||
-      restaurant.description?.includes(query) ||
-      restaurant.categoryId?.includes(query.toLowerCase())
-  )
+        const { data, error } = await supabase
+          .from('restaurants')
+          .select('*')
+          .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
 
-  // 정렬
-  const sortedRestaurants = [...filteredRestaurants].sort((a, b) => {
-    // 기본: 광고 우선 + 평점순
-    if (a.isAdvertised && !b.isAdvertised) return -1
-    if (!a.isAdvertised && b.isAdvertised) return 1
-    return b.rating - a.rating
-  })
+        if (error) throw new Error('식당 정보를 불러오는데 실패했습니다.')
+        
+        // 정렬
+        const sortedRestaurants = [...data].sort((a, b) => {
+            // 기본: 광고 우선 + 평점순
+            if (a.is_advertised && !b.is_advertised) return -1
+            if (!a.is_advertised && b.is_advertised) return 1
+            return b.rating - a.rating
+        })
+
+        setRestaurants(sortedRestaurants)
+
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (query) {
+        fetchData()
+    } else {
+        setLoading(false)
+    }
+  }, [query])
+
 
   return (
     <div className="min-h-screen bg-[var(--color-neutral-50)]">
@@ -77,16 +103,34 @@ function SearchResultsContent() {
       </header>
 
       <main className="p-4">
-        {/* 검색 결과 수 */}
-        <p className="text-sm text-[var(--color-neutral-500)] mb-4">
-          &quot;{query}&quot; 검색 결과 {sortedRestaurants.length}개
-        </p>
+        {loading && (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <p className="text-[var(--color-neutral-500)]">
+                검색 중...
+                </p>
+            </div>
+        )}
+        {error && (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <p className="text-red-500">
+                {error}
+                </p>
+            </div>
+        )}
+        {!loading && !error && (
+            <>
+                {/* 검색 결과 수 */}
+                <p className="text-sm text-[var(--color-neutral-500)] mb-4">
+                &quot;{query}&quot; 검색 결과 {restaurants.length}개
+                </p>
 
-        {/* 검색 결과 */}
-        <RestaurantList
-          restaurants={sortedRestaurants}
-          emptyMessage={`"${query}"에 대한 검색 결과가 없습니다`}
-        />
+                {/* 검색 결과 */}
+                <RestaurantList
+                restaurants={restaurants}
+                emptyMessage={`"${query}"에 대한 검색 결과가 없습니다`}
+                />
+            </>
+        )}
       </main>
     </div>
   )

@@ -1,12 +1,13 @@
 'use client'
 
-import { use } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, SlidersHorizontal, ChevronDown } from 'lucide-react'
 
 import { RestaurantList } from '@/components/features/restaurant'
 import { DEFAULT_CATEGORIES } from '@/lib/constants/categories'
-import { getRestaurantsByCategory } from '@/lib/mock/restaurants'
+import { createClient } from '@/lib/supabase/client'
+import type { Restaurant, BusinessHours } from '@/types/restaurant.types'
 
 interface CategoryPageProps {
   readonly params: Promise<{ slug: string }>
@@ -22,13 +23,65 @@ const SORT_OPTIONS = [
 
 export default function CategoryPage({ params }: Readonly<CategoryPageProps>) {
   const { slug } = use(params)
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // 카테고리 정보 가져오기
   const category = DEFAULT_CATEGORIES.find((c) => c.id === slug)
   const categoryName = category?.name || '카테고리'
 
-  // 해당 카테고리 식당 가져오기
-  const restaurants = getRestaurantsByCategory(slug)
+  useEffect(() => {
+    const supabase = createClient()
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+
+        const { data, error } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('category_id', slug)
+
+        if (error) throw new Error('식당 정보를 불러오는데 실패했습니다.')
+        
+        const formattedRestaurants: Restaurant[] = data.map(r => ({
+            id: r.id,
+            ownerId: r.owner_id,
+            name: r.name,
+            description: r.description ?? '',
+            phone: r.phone,
+            address: r.address,
+            lat: r.lat,
+            lng: r.lng,
+            categoryId: r.category_id ?? '',
+            minOrderAmount: r.min_order_amount ?? 0,
+            deliveryFee: r.delivery_fee ?? 0,
+            estimatedDeliveryTime: r.estimated_delivery_time ?? 0,
+            businessHours: r.business_hours as BusinessHours,
+            isOpen: r.is_open ?? false,
+            rating: r.rating ?? 0,
+            reviewCount: r.review_count ?? 0,
+            imageUrl: r.image_url ?? '',
+            isAdvertised: r.is_advertised ?? false,
+            adPriority: r.ad_priority ?? 0,
+            adExpiresAt: r.ad_expires_at ?? '',
+            createdAt: r.created_at ?? '',
+            updatedAt: r.updated_at ?? '',
+        }))
+
+        setRestaurants(formattedRestaurants)
+
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (slug) {
+        fetchData()
+    }
+  }, [slug])
 
   return (
     <div className="min-h-screen bg-[var(--color-neutral-50)]">
@@ -85,16 +138,34 @@ export default function CategoryPage({ params }: Readonly<CategoryPageProps>) {
       </header>
 
       <main className="p-4">
-        {/* 검색 결과 수 */}
-        <p className="text-sm text-[var(--color-neutral-500)] mb-4">
-          {categoryName} {restaurants.length}개
-        </p>
+        {loading && (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <p className="text-[var(--color-neutral-500)]">
+                로딩 중...
+                </p>
+            </div>
+        )}
+        {error && (
+            <div className="min-h-screen bg-white flex items-center justify-center">
+                <p className="text-red-500">
+                {error}
+                </p>
+            </div>
+        )}
+        {!loading && !error && (
+            <>
+                {/* 검색 결과 수 */}
+                <p className="text-sm text-[var(--color-neutral-500)] mb-4">
+                {categoryName} {restaurants.length}개
+                </p>
 
-        {/* 식당 목록 */}
-        <RestaurantList
-          restaurants={restaurants}
-          emptyMessage={`${categoryName} 카테고리에 등록된 가게가 없습니다`}
-        />
+                {/* 식당 목록 */}
+                <RestaurantList
+                restaurants={restaurants}
+                emptyMessage={`${categoryName} 카테고리에 등록된 가게가 없습니다`}
+                />
+            </>
+        )}
       </main>
     </div>
   )

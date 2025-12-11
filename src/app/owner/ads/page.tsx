@@ -356,7 +356,7 @@ export default function OwnerAdsPage() {
                 <p className="text-sm text-[var(--color-neutral-500)]">
                   {AD_PLANS[selectedPlan].name} · {selectedMonths}개월
                 </p>
-                {monthOptions.find((o) => o.value === selectedMonths)?.discount ?? 0 > 0 && (
+                {(monthOptions.find((o) => o.value === selectedMonths)?.discount ?? 0) > 0 && (
                   <p className="text-sm text-[var(--color-error-500)] line-through">
                     {(AD_PLANS[selectedPlan].price * selectedMonths).toLocaleString()}원
                   </p>
