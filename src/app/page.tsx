@@ -103,7 +103,7 @@ export default function HomePage() {
                 onClick={() => setActivePlatform('delivery')}
                 className="flex items-center justify-center gap-2 p-4 rounded-2xl transition-all hover:shadow-md"
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                <div className={`w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center ${
                   activePlatform === 'delivery'
                     ? 'bg-[#df0012] shadow-lg shadow-[#df0012]/30'
                     : 'bg-gray-100'
@@ -126,7 +126,7 @@ export default function HomePage() {
                 onClick={() => setActivePlatform('pickup')}
                 className="flex items-center justify-center gap-2 p-4 rounded-2xl transition-all hover:shadow-md"
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                <div className={`w-12 h-12 flex-shrink-0 rounded-full flex items-center justify-center ${
                   activePlatform === 'pickup'
                     ? 'bg-[#df0012] shadow-lg shadow-[#df0012]/30'
                     : 'bg-gray-100'
@@ -207,7 +207,12 @@ export default function HomePage() {
                 </button>
 
                 <button
-                  onClick={() => setShowDiscountOnly(!showDiscountOnly)}
+                  onClick={() => {
+                    const newValue = !showDiscountOnly
+                    setShowDiscountOnly(newValue)
+                    // 픽업 할인 켜면 자동으로 할인순 정렬, 끄면 거리순으로 복원
+                    setPickupSortBy(newValue ? 'discount' : 'distance')
+                  }}
                   className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
                     showDiscountOnly
                       ? 'bg-[#df0012] text-white border border-[#df0012]'
@@ -220,10 +225,11 @@ export default function HomePage() {
                 <button
                   onClick={() => setPickupSortBy('distance')}
                   className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    pickupSortBy === 'distance'
+                    pickupSortBy === 'distance' && !showDiscountOnly
                       ? 'bg-gray-900 text-white border border-gray-900'
                       : 'bg-white text-gray-700 border border-gray-300'
                   }`}
+                  disabled={showDiscountOnly}
                 >
                   가까운 순
                 </button>
@@ -231,23 +237,13 @@ export default function HomePage() {
                 <button
                   onClick={() => setPickupSortBy('rating')}
                   className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    pickupSortBy === 'rating'
+                    pickupSortBy === 'rating' && !showDiscountOnly
                       ? 'bg-gray-900 text-white border border-gray-900'
                       : 'bg-white text-gray-700 border border-gray-300'
                   }`}
+                  disabled={showDiscountOnly}
                 >
                   평점순
-                </button>
-
-                <button
-                  onClick={() => setPickupSortBy('discount')}
-                  className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    pickupSortBy === 'discount'
-                      ? 'bg-gray-900 text-white border border-gray-900'
-                      : 'bg-white text-gray-700 border border-gray-300'
-                  }`}
-                >
-                  할인순
                 </button>
               </section>
 
