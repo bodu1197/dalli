@@ -15,6 +15,7 @@ import {
   validateCancelReasonForRequester,
   safeParseWithErrors,
 } from '@/lib/validations/order-cancel'
+import { processPGRefund } from '@/lib/services/pg-refund.service'
 import type {
   OrderCancellation,
   Refund,
@@ -207,7 +208,7 @@ export async function POST(
             amount: refundAmount,
             payment_method: order.payment_method ?? 'card',
             payment_key: order.payment_key ?? null,
-            refund_status: 'pending', // Phase 2에서 PG 연동 후 처리
+            refund_status: 'pending',
             retry_count: 0,
           })
           .select()
@@ -217,7 +218,29 @@ export async function POST(
           console.error('Failed to create refund record:', refundError)
           // 환불 레코드 생성 실패해도 취소는 진행됨
         } else {
-          refund = transformRefund(refundData)
+          // PG 환불 처리 실행
+          const pgRefundResult = await processPGRefund(supabase, refundData.id)
+
+          // 환불 결과에 따라 환불 레코드 다시 조회
+          const { data: updatedRefund } = await supabase
+            .from('refunds')
+            .select('*')
+            .eq('id', refundData.id)
+            .single()
+
+          if (updatedRefund) {
+            refund = transformRefund(updatedRefund)
+          } else {
+            refund = transformRefund(refundData)
+          }
+
+          // PG 환불 실패 시 로그 기록 (취소 자체는 성공으로 처리)
+          if (!pgRefundResult.success) {
+            console.error(
+              'PG refund failed, will retry later:',
+              pgRefundResult.errorMessage
+            )
+          }
         }
       }
     }
