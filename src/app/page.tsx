@@ -35,7 +35,7 @@ export default function HomePage() {
       <div className="max-w-[700px] mx-auto min-h-screen bg-white relative">
 
         {/* 헤더 - 고정 */}
-        <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[700px] z-50 bg-[#df0012] pb-8">
+        <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[700px] z-50 bg-[#df0012] pb-8 rounded-b-xl">
           {/* 상단 바 */}
           <div className="flex items-center justify-between px-4 h-14">
             {/* 위치 선택 */}
