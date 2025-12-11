@@ -16,9 +16,11 @@ const baseNavItems = [
 export function BottomNavBar() {
   const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const supabase = createClient()
+  const [supabase] = useState(() => typeof window !== 'undefined' ? createClient() : null)
 
   useEffect(() => {
+    if (!supabase) return
+
     // 초기 인증 상태 확인
     supabase.auth.getUser().then(({ data: { user } }) => {
       setIsLoggedIn(!!user)
@@ -32,7 +34,7 @@ export function BottomNavBar() {
     })
 
     return () => subscription.unsubscribe()
-  }, [supabase.auth])
+  }, [supabase])
 
   // 마이 항목을 로그인 상태에 따라 동적으로 설정
   const myNavItem = {

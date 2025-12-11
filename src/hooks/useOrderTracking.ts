@@ -81,7 +81,7 @@ export function useOrderTracking(
   const [error, setError] = useState<Error | null>(null)
   const [isConnected, setIsConnected] = useState(false)
 
-  const supabaseRef = useRef(createClient())
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
 
@@ -129,6 +129,7 @@ export function useOrderTracking(
   const setupRealtimeSubscription = useCallback((): void => {
     if (!orderId || channelRef.current) return
 
+    if (!supabaseRef.current) supabaseRef.current = createClient()
     const supabase = supabaseRef.current
 
     // 주문 상태 변경 구독
@@ -182,7 +183,7 @@ export function useOrderTracking(
    */
   const disconnect = useCallback((): void => {
     // 채널 구독 해제
-    if (channelRef.current) {
+    if (channelRef.current && supabaseRef.current) {
       supabaseRef.current.removeChannel(channelRef.current)
       channelRef.current = null
     }
@@ -261,7 +262,7 @@ export function useRiderLocation(riderId: string | null): UseRiderLocationReturn
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  const supabaseRef = useRef(createClient())
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
@@ -271,6 +272,7 @@ export function useRiderLocation(riderId: string | null): UseRiderLocationReturn
       return
     }
 
+    if (!supabaseRef.current) supabaseRef.current = createClient()
     const supabase = supabaseRef.current
 
     // 초기 위치 가져오기
@@ -366,7 +368,7 @@ export function useOrderStatus(orderId: string): UseOrderStatusReturn {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  const supabaseRef = useRef(createClient())
+  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null)
   const channelRef = useRef<RealtimeChannel | null>(null)
 
   useEffect(() => {
@@ -376,6 +378,7 @@ export function useOrderStatus(orderId: string): UseOrderStatusReturn {
       return
     }
 
+    if (!supabaseRef.current) supabaseRef.current = createClient()
     const supabase = supabaseRef.current
 
     // 초기 상태 가져오기
