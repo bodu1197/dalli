@@ -88,7 +88,7 @@ export default function HomePage() {
         </header>
 
         {/* 보디 - 스크롤 가능 */}
-        <main className="bg-white rounded-t-xl relative z-10 pb-20 min-h-screen pt-[500px]">
+        <main className="bg-white rounded-t-xl relative z-10 pb-20 min-h-screen mt-[500px]">
           {/* 필터 버튼들 */}
           <section className="flex gap-2 px-4 pt-5 pb-5 overflow-x-auto hide-scrollbar bg-white">
             <button
