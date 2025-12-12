@@ -35,6 +35,14 @@ export interface TaxInvoiceStats {
     failedCount: number
 }
 
+// 빌드 시 DB 연결 실패 대비 기본값
+const DEFAULT_TAX_INVOICE_STATS: TaxInvoiceStats = {
+    draftCount: 0,
+    draftAmount: 0,
+    issuedCount: 0,
+    failedCount: 0
+}
+
 // 플랫폼 정보 (상수)
 const PLATFORM_INFO = {
     bizNumber: '123-45-67890',
@@ -53,73 +61,83 @@ export const taxInvoiceService = {
         page?: number
         limit?: number
     }) {
-        const supabase = await createClient()
-        const page = params?.page || 1
-        const limit = params?.limit || 50
-        const offset = (page - 1) * limit
+        try {
+            const supabase = await createClient()
+            const page = params?.page || 1
+            const limit = params?.limit || 50
+            const offset = (page - 1) * limit
 
-        let query = supabase
-            .from('tax_invoices')
-            .select('*', { count: 'exact' })
-            .order('write_date', { ascending: false })
-            .range(offset, offset + limit - 1)
+            let query = supabase
+                .from('tax_invoices')
+                .select('*', { count: 'exact' })
+                .order('write_date', { ascending: false })
+                .range(offset, offset + limit - 1)
 
-        if (params?.status && params.status !== 'all') {
-            query = query.eq('status', params.status)
-        }
+            if (params?.status && params.status !== 'all') {
+                query = query.eq('status', params.status)
+            }
 
-        if (params?.month) {
-            // month format: "2024-12"
-            const startDate = `${params.month}-01`
-            const [year, month] = params.month.split('-').map(Number)
-            const endDate = new Date(year, month, 0).toISOString().split('T')[0]
-            query = query.gte('write_date', startDate).lte('write_date', endDate)
-        }
+            if (params?.month) {
+                // month format: "2024-12"
+                const startDate = `${params.month}-01`
+                const [year, month] = params.month.split('-').map(Number)
+                const endDate = new Date(year, month, 0).toISOString().split('T')[0]
+                query = query.gte('write_date', startDate).lte('write_date', endDate)
+            }
 
-        const { data, error, count } = await query
+            const { data, error, count } = await query
 
-        if (error) {
-            console.error('Error fetching tax invoices:', error)
-            throw new Error('세금계산서 목록 조회 실패')
-        }
+            if (error) {
+                console.error('Error fetching tax invoices:', error)
+                return { data: [] as TaxInvoice[], count: 0, page: params?.page || 1, limit: params?.limit || 50 }
+            }
 
-        return {
-            data: data as TaxInvoice[],
-            count: count || 0,
-            page,
-            limit
+            return {
+                data: data as TaxInvoice[],
+                count: count || 0,
+                page,
+                limit
+            }
+        } catch (error) {
+            console.warn('getTaxInvoices: DB 연결 실패, 기본값 반환')
+            return { data: [] as TaxInvoice[], count: 0, page: params?.page || 1, limit: params?.limit || 50 }
         }
     },
 
     // 2. 통계 조회
     async getStats(): Promise<TaxInvoiceStats> {
-        const supabase = await createClient()
+        try {
+            const supabase = await createClient()
 
-        // Draft 통계
-        const { data: draftData, count: draftCount } = await supabase
-            .from('tax_invoices')
-            .select('total_amount', { count: 'exact' })
-            .eq('status', 'draft')
+            // Draft 통계
+            const { data: draftData, count: draftCount } = await supabase
+                .from('tax_invoices')
+                .select('total_amount', { count: 'exact' })
+                .eq('status', 'draft')
 
-        const draftAmount = draftData?.reduce((acc, inv) => acc + (inv.total_amount || 0), 0) || 0
+            const draftAmount = draftData?.reduce((acc, inv) => acc + (inv.total_amount || 0), 0) || 0
 
-        // Issued 통계
-        const { count: issuedCount } = await supabase
-            .from('tax_invoices')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'issued')
+            // Issued 통계
+            const { count: issuedCount } = await supabase
+                .from('tax_invoices')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'issued')
 
-        // Failed 통계
-        const { count: failedCount } = await supabase
-            .from('tax_invoices')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'failed')
+            // Failed 통계
+            const { count: failedCount } = await supabase
+                .from('tax_invoices')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'failed')
 
-        return {
-            draftCount: draftCount || 0,
-            draftAmount,
-            issuedCount: issuedCount || 0,
-            failedCount: failedCount || 0
+            return {
+                draftCount: draftCount || 0,
+                draftAmount,
+                issuedCount: issuedCount || 0,
+                failedCount: failedCount || 0
+            }
+        } catch (error) {
+            console.warn('getStats: DB 연결 실패, 기본값 반환')
+            return DEFAULT_TAX_INVOICE_STATS
         }
     },
 
