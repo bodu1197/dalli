@@ -44,13 +44,13 @@ export async function getAdminStats(): Promise<AdminStats> {
         .select('*', { count: 'exact', head: true })
         .eq('role', 'rider')
 
-    // 4. 입점 대기 식당
-    const { count: pendingStores } = await supabase
+    // 4. 입점 대기 식당 (status 컬럼 부재로 전체 식당 수로 대체하거나 로직 변경)
+    // 일단 전체 식당 수를 반환
+    const { count: totalStores } = await supabase
         .from('restaurants')
         .select('*', { count: 'exact', head: true })
-        .eq('registration_status', 'pending')
 
-    // 5. 분쟁/클레임 (취소 요청 등)
+    // 5. 분쟁/클레임
     const { count: pendingDisputes } = await supabase
         .from('order_cancellations')
         .select('*', { count: 'exact', head: true })
@@ -61,7 +61,110 @@ export async function getAdminStats(): Promise<AdminStats> {
         todaySales,
         activeUsers: activeUsers ?? 0,
         activeRiders: activeRiders ?? 0,
-        pendingStores: pendingStores ?? 0,
+        pendingStores: totalStores ?? 0, // 대기 중인 식당 대신 전체 식당 수 표시
         pendingDisputes: pendingDisputes ?? 0,
     }
 }
+
+export type AdminStoreFilter = {
+    page?: number
+    limit?: number
+    search?: string
+    status?: string
+}
+
+export async function getStores(filter: AdminStoreFilter) {
+    const supabase = await createClient()
+    const { page = 1, limit = 20, search } = filter
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    let query = supabase
+        .from('restaurants')
+        .select('*, owner:users!restaurants_owner_id_fkey(name)', { count: 'exact' })
+        .range(from, to)
+        .order('created_at', { ascending: false })
+
+    if (search) {
+        // 가게명, 주소 검색
+        query = query.or(`name.ilike.%${search}%,address.ilike.%${search}%`)
+    }
+
+    // status 필터링 불가 (컬럼 부재)
+
+    const { data, error, count } = await query
+
+    if (error) {
+        console.error('Error fetching stores:', error)
+        throw new Error('가게 목록을 불러오지 못했습니다.')
+    }
+
+    return {
+        data,
+        count: count ?? 0,
+        page,
+        limit,
+        totalPages: count ? Math.ceil(count / limit) : 0
+    }
+}
+
+export type AdminUserFilter = {
+    page?: number
+    limit?: number
+    search?: string
+    role?: string
+    status?: string
+}
+
+export async function getUsers(filter: AdminUserFilter) {
+    const supabase = await createClient()
+    const { page = 1, limit = 20, search, role, status } = filter
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    let query = supabase
+        .from('users')
+        .select('*', { count: 'exact' })
+        .range(from, to)
+        .order('created_at', { ascending: false })
+
+    if (search) {
+        // 검색: 이름, 이메일, 전화번호 (Supabase doesn't support OR across columns easily without RPC or specific syntax, 
+        // using 'or' filter string)
+        query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`)
+    }
+
+    if (role && role !== 'all') {
+        query = query.eq('role', role)
+    }
+
+    const { data, error, count } = await query
+
+    if (error) {
+        console.error('Error fetching users:', error)
+        throw new Error('회원 목록을 불러오지 못했습니다.')
+    }
+
+    return {
+        data,
+        count: count ?? 0,
+        page,
+        limit,
+        totalPages: count ? Math.ceil(count / limit) : 0
+    }
+}
+
+// status 컬럼이 없으므로 일시적으로 주석 처리 또는 제거
+// 추후 DB 스키마 업데이트 후 재구현 필요
+/*
+export async function updateUserStatus(userId: string, status: string) {
+  const supabase = await createClient()
+  
+  const { error } = await supabase
+    .from('users')
+    .update({ status })
+    .eq('id', userId)
+
+  if (error) throw new Error('회원 상태 변경 실패')
+}
+*/
