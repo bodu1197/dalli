@@ -17,6 +17,7 @@ import {
     ChevronRight,
     ShoppingBag,
     Bike,
+    FileText,
 } from 'lucide-react'
 import type { AdminStats } from '@/lib/services/admin.service'
 
@@ -49,11 +50,12 @@ export default function AdminDashboardClient({ initialStats }: AdminDashboardCli
         { icon: <Store className="w-6 h-6" />, label: '가게 관리', href: '/admin/stores', badge: stats.pendingStores },
         { icon: <Package className="w-6 h-6" />, label: '주문 관리', href: '/admin/orders' },
         { icon: <Bike className="w-6 h-6" />, label: '라이더 관리', href: '/admin/riders' },
+        { icon: <FileText className="w-6 h-6" />, label: '세금계산서', href: '/admin/tax-invoices' },
         { icon: <CreditCard className="w-6 h-6" />, label: '정산 관리', href: '/admin/settlements' },
         { icon: <BarChart3 className="w-6 h-6" />, label: '통계/분석', href: '/admin/analytics' },
-        { icon: <AlertCircle className="w-6 h-6" />, label: '분쟁 처리', href: '/admin/disputes', badge: stats.pendingDisputes },
         { icon: <Settings className="w-6 h-6" />, label: '설정', href: '/admin/settings' },
     ]
+
 
     const getActivityIcon = (type: string) => {
         switch (type) {

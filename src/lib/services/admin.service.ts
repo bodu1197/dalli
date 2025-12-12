@@ -251,3 +251,188 @@ export async function cancelOrder(orderId: string, reason: string, adminUserId: 
         throw new Error(error.message || '주문 취소 실패')
     }
 }
+
+export async function getStoreDetail(storeId: string) {
+    const supabase = await createClient()
+
+    const { data: store, error } = await supabase
+        .from('restaurants')
+        .select(`
+      *,
+      owner:users!restaurants_owner_id_fkey(name, phone, email),
+      category:categories(name)
+    `)
+        .eq('id', storeId)
+        .single()
+
+    if (error) {
+        console.error('Error fetching store detail:', error)
+        return null
+    }
+
+    const { count: orderCount } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .eq('restaurant_id', storeId)
+
+    return {
+        ...store,
+        orderCount: orderCount ?? 0,
+        totalRevenue: 0
+    }
+}
+
+export async function getUserDetail(userId: string) {
+    const supabase = await createClient()
+
+    const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+    if (error) {
+        console.error('Error fetching user detail:', error)
+        return null
+    }
+
+    // 주문 통계
+    const { count: orderCount, data: orders } = await supabase
+        .from('orders')
+        .select('total_amount, status, created_at', { count: 'exact' })
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+
+    const totalSpent = orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0
+
+    // 쿠폰 수
+    const { count: couponCount } = await supabase
+        .from('user_coupons')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .is('used_at', null)
+
+    // 최근 주문 5개
+    const { data: recentOrders } = await supabase
+        .from('orders')
+        .select('id, order_number, created_at, status, total_amount, restaurant_name')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(5)
+
+    return {
+        ...user,
+        orderCount: orderCount || 0,
+        totalSpent,
+        couponCount: couponCount || 0,
+        recentOrders: recentOrders || []
+    }
+}
+
+export async function getOwnerDetail(userId: string) {
+    const supabase = await createClient()
+
+    // 1. 점주 기본 정보
+    const { data: user, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+    if (error) {
+        console.error('Error fetching owner detail:', error)
+        return null
+    }
+
+    // 2. 보유 가게 목록 + 가게별 주문 수 (count)
+    const { data: stores } = await supabase
+        .from('restaurants')
+        .select('*, category:categories(name)')
+        .eq('owner_id', userId)
+
+    const storesWithStats = await Promise.all(
+        (stores || []).map(async (store) => {
+            const { count } = await supabase
+                .from('orders')
+                .select('*', { count: 'exact', head: true })
+                .eq('restaurant_id', store.id)
+
+            return {
+                ...store,
+                orderCount: count || 0,
+                revenue: 0
+            }
+        })
+    )
+
+    return {
+        ...user,
+        stores: storesWithStats,
+        totalRevenue: 0,
+        totalSettlement: 0,
+        pendingSettlement: 0,
+        bankName: '-',
+        accountNumber: '-',
+        accountHolder: '-'
+    }
+}
+
+export async function getRiderDetail(userId: string) {
+    const supabase = await createClient()
+
+    // 1. 기본 정보 + 라이더 프로필
+    const { data: user, error } = await supabase
+        .from('users')
+        .select(`
+      *,
+      rider_profile:riders(*)
+    `)
+        .eq('id', userId)
+        .single()
+
+    if (error) {
+        console.error('Error fetching rider detail:', error)
+        return null
+    }
+
+    // 2. 최근 배달 내역 (rider_id 기준)
+    const riderId = user.rider_profile?.id
+
+    let recentDeliveries: any[] = []
+
+    if (riderId) {
+        const { data: orders } = await supabase
+            .from('orders')
+            .select(`
+            id, 
+            order_number, 
+            created_at, 
+            total_amount, 
+            status, 
+            restaurant_name, 
+            delivery_fee
+        `)
+            .eq('rider_id', riderId)
+            .order('created_at', { ascending: false })
+            .limit(10)
+
+        recentDeliveries = orders || []
+    }
+
+    return {
+        ...user,
+        ...user.rider_profile,
+        recentDeliveries,
+        totalDeliveries: user.rider_profile?.total_deliveries ?? 0,
+        avgRating: user.rider_profile?.rating ?? 0,
+        totalEarnings: 0,
+        pendingEarnings: 0,
+        bankName: '-',
+        accountNumber: '-',
+        accountHolder: '-'
+    }
+}
+
+
+
+
