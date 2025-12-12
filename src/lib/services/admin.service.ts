@@ -212,3 +212,42 @@ export async function getOrders(filter: AdminOrderFilter) {
         totalPages: count ? Math.ceil(count / limit) : 0
     }
 }
+
+export async function getOrderDetail(orderId: string) {
+    const supabase = await createClient()
+
+    const { data: order, error } = await supabase
+        .from('orders')
+        .select(`
+      *,
+      customer:users!orders_user_id_fkey(name, phone, email),
+      restaurant:restaurants!orders_restaurant_id_fkey(name, phone, address),
+      items:order_items(*),
+      timeline:order_status_history(*)
+    `)
+        .eq('id', orderId)
+        .single()
+
+    if (error) {
+        console.error('Error fetching order detail:', error)
+        return null
+    }
+
+    return order
+}
+
+export async function cancelOrder(orderId: string, reason: string, adminUserId: string) {
+    const supabase = await createClient()
+
+    const { error } = await supabase.rpc('process_order_cancellation', {
+        p_order_id: orderId,
+        p_reason: 'admin_cancelled',
+        p_reason_detail: reason,
+        p_user_id: adminUserId,
+    })
+
+    if (error) {
+        console.error('Error cancelling order:', error)
+        throw new Error(error.message || '주문 취소 실패')
+    }
+}
