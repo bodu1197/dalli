@@ -168,3 +168,47 @@ export async function updateUserStatus(userId: string, status: string) {
   if (error) throw new Error('회원 상태 변경 실패')
 }
 */
+
+export type AdminOrderFilter = {
+    page?: number
+    limit?: number
+    search?: string
+    status?: string
+}
+
+export async function getOrders(filter: AdminOrderFilter) {
+    const supabase = await createClient()
+    const { page = 1, limit = 20, search, status } = filter
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    let query = supabase
+        .from('orders')
+        .select('*, customer:users!orders_user_id_fkey(name)', { count: 'exact' })
+        .range(from, to)
+        .order('created_at', { ascending: false })
+
+    if (search) {
+        // 주문번호, 가게명 검색
+        query = query.or(`order_number.ilike.%${search}%,restaurant_name.ilike.%${search}%`)
+    }
+
+    if (status && status !== 'all') {
+        query = query.eq('status', status)
+    }
+
+    const { data, error, count } = await query
+
+    if (error) {
+        console.error('Error fetching orders:', error)
+        throw new Error('주문 목록을 불러오지 못했습니다.')
+    }
+
+    return {
+        data,
+        count: count ?? 0,
+        page,
+        limit,
+        totalPages: count ? Math.ceil(count / limit) : 0
+    }
+}
