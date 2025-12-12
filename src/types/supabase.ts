@@ -1875,6 +1875,275 @@ export type Database = {
         }
         Relationships: []
       }
+      faq_categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          id: string
+          category_id: string | null
+          question: string
+          answer: string
+          search_keywords: string | null
+          is_pinned: boolean
+          is_active: boolean
+          view_count: number
+          helpful_count: number
+          not_helpful_count: number
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          category_id?: string | null
+          question: string
+          answer: string
+          search_keywords?: string | null
+          is_pinned?: boolean
+          is_active?: boolean
+          view_count?: number
+          helpful_count?: number
+          not_helpful_count?: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          category_id?: string | null
+          question?: string
+          answer?: string
+          search_keywords?: string | null
+          is_pinned?: boolean
+          is_active?: boolean
+          view_count?: number
+          helpful_count?: number
+          not_helpful_count?: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faqs_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "faq_categories"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      inquiries: {
+        Row: {
+          id: string
+          user_id: string
+          order_id: string | null
+          category: string
+          title: string
+          content: string
+          images: string[] | null
+          status: string
+          priority: string
+          admin_id: string | null
+          answer: string | null
+          answered_at: string | null
+          answered_by: string | null
+          satisfaction_rating: number | null
+          satisfaction_comment: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          order_id?: string | null
+          category: string
+          title: string
+          content: string
+          images?: string[] | null
+          status?: string
+          priority?: string
+          admin_id?: string | null
+          answer?: string | null
+          answered_at?: string | null
+          answered_by?: string | null
+          satisfaction_rating?: number | null
+          satisfaction_comment?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          order_id?: string | null
+          category?: string
+          title?: string
+          content?: string
+          images?: string[] | null
+          status?: string
+          priority?: string
+          admin_id?: string | null
+          answer?: string | null
+          answered_at?: string | null
+          answered_by?: string | null
+          satisfaction_rating?: number | null
+          satisfaction_comment?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inquiries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inquiries_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      recent_views: {
+        Row: {
+          id: string
+          user_id: string
+          restaurant_id: string
+          viewed_at: string
+          view_count: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          restaurant_id: string
+          viewed_at?: string
+          view_count?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          restaurant_id?: string
+          viewed_at?: string
+          view_count?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recent_views_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recent_views_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      payment_methods: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          nickname: string | null
+          is_default: boolean
+          is_verified: boolean
+          is_active: boolean
+          card_company: string | null
+          card_number_last4: string | null
+          card_type: string | null
+          easy_pay_account: string | null
+          billing_key: string | null
+          color: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: string
+          nickname?: string | null
+          is_default?: boolean
+          is_verified?: boolean
+          is_active?: boolean
+          card_company?: string | null
+          card_number_last4?: string | null
+          card_type?: string | null
+          easy_pay_account?: string | null
+          billing_key?: string | null
+          color?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: string
+          nickname?: string | null
+          is_default?: boolean
+          is_verified?: boolean
+          is_active?: boolean
+          card_company?: string | null
+          card_number_last4?: string | null
+          card_type?: string | null
+          easy_pay_account?: string | null
+          billing_key?: string | null
+          color?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1971,6 +2240,22 @@ export type Database = {
           p_order_id: string
           p_user_id: string
         }
+        Returns: undefined
+      }
+      increment_faq_view: {
+        Args: { p_faq_id: string }
+        Returns: undefined
+      }
+      faq_feedback: {
+        Args: { p_faq_id: string; p_helpful: boolean }
+        Returns: undefined
+      }
+      set_default_payment_method: {
+        Args: { p_user_id: string; p_payment_id: string }
+        Returns: boolean
+      }
+      upsert_recent_view: {
+        Args: { p_restaurant_id: string; p_user_id: string }
         Returns: undefined
       }
     }

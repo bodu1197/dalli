@@ -241,7 +241,7 @@ export function useFAQFeedback() {
           .single()
 
         if (currentFaq) {
-          const currentValue = currentFaq[column] as number
+          const currentValue = (currentFaq as Record<string, number>)[column]
           const { error } = await supabase
             .from('faqs')
             .update({ [column]: currentValue + 1 })

@@ -24,6 +24,7 @@ export type Database = {
           role: 'customer' | 'owner' | 'rider' | 'admin'
           avatar_url: string | null
           default_address_id: string | null
+          point_balance: number
           created_at: string
           updated_at: string
         }
@@ -35,6 +36,7 @@ export type Database = {
           role?: 'customer' | 'owner' | 'rider' | 'admin'
           avatar_url?: string | null
           default_address_id?: string | null
+          point_balance?: number
           created_at?: string
           updated_at?: string
         }
@@ -46,6 +48,7 @@ export type Database = {
           role?: 'customer' | 'owner' | 'rider' | 'admin'
           avatar_url?: string | null
           default_address_id?: string | null
+          point_balance?: number
           created_at?: string
           updated_at?: string
         }
@@ -819,6 +822,57 @@ export type Database = {
           }
         ]
       }
+      point_transactions: {
+        Row: {
+          id: string
+          user_id: string
+          order_id: string | null
+          type: 'earn' | 'use' | 'admin_add' | 'admin_deduct' | 'expire'
+          amount: number
+          balance_after: number
+          description: string | null
+          expires_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          order_id?: string | null
+          type: 'earn' | 'use' | 'admin_add' | 'admin_deduct' | 'expire'
+          amount: number
+          balance_after: number
+          description?: string | null
+          expires_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          order_id?: string | null
+          type?: 'earn' | 'use' | 'admin_add' | 'admin_deduct' | 'expire'
+          amount?: number
+          balance_after?: number
+          description?: string | null
+          expires_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'point_transactions_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'point_transactions_order_id_fkey'
+            columns: ['order_id']
+            isOneToOne: false
+            referencedRelation: 'orders'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -852,6 +906,7 @@ export type PaymentMethod = Tables<'payment_methods'>
 export type FAQCategory = Tables<'faq_categories'>
 export type FAQ = Tables<'faqs'>
 export type Inquiry = Tables<'inquiries'>
+export type PointTransaction = Tables<'point_transactions'>
 
 // 주문 상태 타입
 export type OrderStatus = Order['status']
@@ -860,4 +915,4 @@ export type OrderStatus = Order['status']
 export type CancelType = OrderCancellation['cancel_type']
 export type CancelStatus = OrderCancellation['status']
 export type RefundStatus = Refund['status']
-export type PaymentMethod = NonNullable<Order['payment_method']>
+export type OrderPaymentMethod = NonNullable<Order['payment_method']>
