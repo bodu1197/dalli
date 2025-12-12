@@ -30,8 +30,8 @@ export default function ProfileSettingsPage() {
         phone: profile.phone || '',
         email: profile.email || '',
       })
-      if (profile.avatar_url) {
-        setAvatarPreview(profile.avatar_url)
+      if (profile.avatarUrl) {
+        setAvatarPreview(profile.avatarUrl)
       }
     }
   }, [profile])
@@ -69,7 +69,7 @@ export default function ProfileSettingsPage() {
     } catch (error) {
       alert(error instanceof Error ? error.message : '이미지 업로드에 실패했습니다')
       // 업로드 실패 시 이전 이미지로 복원
-      setAvatarPreview(profile?.avatar_url || null)
+      setAvatarPreview(profile?.avatarUrl || null)
     }
 
     // input 초기화
@@ -97,7 +97,7 @@ export default function ProfileSettingsPage() {
           phone: formData.phone.trim() || null,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', user?.id)
+        .eq('id', user?.id ?? '')
 
       if (error) {
         throw error

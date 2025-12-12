@@ -241,7 +241,7 @@ export function useUploadProfileImage() {
 
         // 로컬 상태 업데이트
         if (profile) {
-          setProfile({ ...profile, avatar_url: result.url })
+          setProfile({ ...profile, avatarUrl: result.url })
         }
       }
 
