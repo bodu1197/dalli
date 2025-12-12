@@ -29,11 +29,10 @@ interface FAQFilters {
  * FAQ 카테고리 목록 조회 훅
  */
 export function useFAQCategories() {
-  const supabase = createClient()
-
   return useQuery({
     queryKey: faqKeys.categories(),
     queryFn: async (): Promise<FAQCategory[]> => {
+      const supabase = createClient()
       const { data, error } = await supabase
         .from('faq_categories')
         .select('*')
@@ -55,11 +54,10 @@ export function useFAQCategories() {
  * FAQ 목록 조회 훅 (필터링 지원)
  */
 export function useFAQList(filters?: FAQFilters) {
-  const supabase = createClient()
-
   return useQuery({
     queryKey: faqKeys.list(filters),
     queryFn: async (): Promise<FAQWithCategory[]> => {
+      const supabase = createClient()
       let query = supabase
         .from('faqs')
         .select(`
@@ -106,11 +104,10 @@ export function useFAQList(filters?: FAQFilters) {
  * 상단 고정 FAQ 조회 훅
  */
 export function usePinnedFAQs() {
-  const supabase = createClient()
-
   return useQuery({
     queryKey: faqKeys.pinned(),
     queryFn: async (): Promise<FAQWithCategory[]> => {
+      const supabase = createClient()
       const { data, error } = await supabase
         .from('faqs')
         .select(`
@@ -136,8 +133,6 @@ export function usePinnedFAQs() {
  * FAQ 검색 훅 (실시간 검색용)
  */
 export function useSearchFAQ(query: string) {
-  const supabase = createClient()
-
   return useQuery({
     queryKey: faqKeys.search(query),
     queryFn: async (): Promise<FAQWithCategory[]> => {
@@ -145,6 +140,7 @@ export function useSearchFAQ(query: string) {
         return []
       }
 
+      const supabase = createClient()
       const searchTerm = `%${query}%`
 
       const { data, error } = await supabase
@@ -173,11 +169,11 @@ export function useSearchFAQ(query: string) {
  * FAQ 조회수 증가 훅
  */
 export function useIncrementFAQView() {
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (faqId: string): Promise<void> => {
+      const supabase = createClient()
       // RPC 함수 사용 시도
       const { error: rpcError } = await supabase.rpc('increment_faq_view', {
         p_faq_id: faqId,
@@ -207,7 +203,6 @@ export function useIncrementFAQView() {
  * FAQ 도움됨/안됨 피드백 훅
  */
 export function useFAQFeedback() {
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -224,6 +219,7 @@ export function useFAQFeedback() {
         throw new Error('이미 피드백을 제출하셨습니다')
       }
 
+      const supabase = createClient()
       // RPC 함수 사용 시도
       const { error: rpcError } = await supabase.rpc('faq_feedback', {
         p_faq_id: faqId,

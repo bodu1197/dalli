@@ -27,7 +27,6 @@ export const paymentMethodsKeys = {
  */
 export function usePaymentMethods() {
   const { user } = useAuthStore()
-  const supabase = createClient()
 
   return useQuery({
     queryKey: paymentMethodsKeys.list(),
@@ -36,6 +35,7 @@ export function usePaymentMethods() {
         return []
       }
 
+      const supabase = createClient()
       const { data, error } = await supabase
         .from('payment_methods')
         .select('*')
@@ -61,7 +61,6 @@ export function usePaymentMethods() {
  */
 export function useDefaultPaymentMethod() {
   const { user } = useAuthStore()
-  const supabase = createClient()
 
   return useQuery({
     queryKey: paymentMethodsKeys.default(),
@@ -70,6 +69,7 @@ export function useDefaultPaymentMethod() {
         return null
       }
 
+      const supabase = createClient()
       const { data, error } = await supabase
         .from('payment_methods')
         .select('*')
@@ -97,7 +97,6 @@ export function useDefaultPaymentMethod() {
  */
 export function useAddPaymentMethod() {
   const { user } = useAuthStore()
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -106,6 +105,7 @@ export function useAddPaymentMethod() {
         throw new Error('로그인이 필요합니다')
       }
 
+      const supabase = createClient()
       // 첫 번째 결제 수단이면 자동으로 기본으로 설정
       const { count } = await supabase
         .from('payment_methods')
@@ -144,7 +144,6 @@ export function useAddPaymentMethod() {
  */
 export function useUpdatePaymentMethod() {
   const { user } = useAuthStore()
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -159,6 +158,7 @@ export function useUpdatePaymentMethod() {
         throw new Error('로그인이 필요합니다')
       }
 
+      const supabase = createClient()
       const { data, error } = await supabase
         .from('payment_methods')
         .update(input)
@@ -184,7 +184,6 @@ export function useUpdatePaymentMethod() {
  */
 export function useSetDefaultPaymentMethod() {
   const { user } = useAuthStore()
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -193,6 +192,7 @@ export function useSetDefaultPaymentMethod() {
         throw new Error('로그인이 필요합니다')
       }
 
+      const supabase = createClient()
       // RPC 함수 사용 시도
       const { data: rpcResult, error: rpcError } = await supabase.rpc(
         'set_default_payment_method',
@@ -238,7 +238,6 @@ export function useSetDefaultPaymentMethod() {
  */
 export function useDeletePaymentMethod() {
   const { user } = useAuthStore()
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -247,6 +246,7 @@ export function useDeletePaymentMethod() {
         throw new Error('로그인이 필요합니다')
       }
 
+      const supabase = createClient()
       // 기본 결제 수단인지 확인
       const { data: paymentMethod } = await supabase
         .from('payment_methods')
@@ -281,7 +281,6 @@ export function useDeletePaymentMethod() {
  */
 export function useHardDeletePaymentMethod() {
   const { user } = useAuthStore()
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -290,6 +289,7 @@ export function useHardDeletePaymentMethod() {
         throw new Error('로그인이 필요합니다')
       }
 
+      const supabase = createClient()
       const { error } = await supabase
         .from('payment_methods')
         .delete()

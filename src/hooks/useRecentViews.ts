@@ -41,7 +41,6 @@ function calculateDistance(
  */
 export function useRecentViews(userLat?: number, userLng?: number) {
   const { user } = useAuthStore()
-  const supabase = createClient()
 
   return useQuery({
     queryKey: recentViewsKeys.list(),
@@ -50,6 +49,7 @@ export function useRecentViews(userLat?: number, userLng?: number) {
         return []
       }
 
+      const supabase = createClient()
       const { data, error } = await supabase
         .from('recent_views')
         .select(`
@@ -107,7 +107,6 @@ export function useRecentViews(userLat?: number, userLng?: number) {
  */
 export function useAddRecentView() {
   const { user } = useAuthStore()
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -116,6 +115,7 @@ export function useAddRecentView() {
         throw new Error('로그인이 필요합니다')
       }
 
+      const supabase = createClient()
       // UPSERT: 이미 있으면 viewed_at 업데이트, 없으면 생성
       const { error } = await supabase.rpc('upsert_recent_view', {
         p_user_id: user.id,
@@ -154,7 +154,6 @@ export function useAddRecentView() {
  */
 export function useDeleteRecentView() {
   const { user } = useAuthStore()
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -163,6 +162,7 @@ export function useDeleteRecentView() {
         throw new Error('로그인이 필요합니다')
       }
 
+      const supabase = createClient()
       const { error } = await supabase
         .from('recent_views')
         .delete()
@@ -184,7 +184,6 @@ export function useDeleteRecentView() {
  */
 export function useClearAllRecentViews() {
   const { user } = useAuthStore()
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -193,6 +192,7 @@ export function useClearAllRecentViews() {
         throw new Error('로그인이 필요합니다')
       }
 
+      const supabase = createClient()
       const { data, error } = await supabase
         .from('recent_views')
         .delete()

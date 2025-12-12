@@ -51,9 +51,9 @@ export function usePointBalance(): UsePointBalanceReturn {
     setError(null)
 
     try {
-      // 세션 확인 - RLS 정책이 올바르게 작동하려면 인증된 세션이 필요
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      // getUser()로 서버에서 실제 세션 검증 (getSession은 캐시만 반환)
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      if (authError || !authUser) {
         setError('로그인이 필요합니다')
         return
       }
@@ -61,7 +61,7 @@ export function usePointBalance(): UsePointBalanceReturn {
       const { data, error: fetchError } = await supabase
         .from('users')
         .select('point_balance')
-        .eq('id', user.id)
+        .eq('id', authUser.id)
         .single()
 
       if (fetchError) throw fetchError
@@ -119,9 +119,9 @@ export function usePointInfo(): UsePointInfoReturn {
     setError(null)
 
     try {
-      // 세션 확인 - RLS 정책이 올바르게 작동하려면 인증된 세션이 필요
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+      // getUser()로 서버에서 실제 세션 검증 (getSession은 캐시만 반환)
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+      if (authError || !authUser) {
         setError('로그인이 필요합니다')
         return
       }
@@ -130,7 +130,7 @@ export function usePointInfo(): UsePointInfoReturn {
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('point_balance')
-        .eq('id', user.id)
+        .eq('id', authUser.id)
         .single()
 
       if (userError) throw userError
@@ -139,7 +139,7 @@ export function usePointInfo(): UsePointInfoReturn {
       const { data: earnData } = await supabase
         .from('point_transactions')
         .select('amount')
-        .eq('user_id', user.id)
+        .eq('user_id', authUser.id)
         .in('type', ['earn', 'admin_add'])
 
       const totalEarned = (earnData ?? []).reduce((sum, item) => sum + item.amount, 0)
@@ -148,7 +148,7 @@ export function usePointInfo(): UsePointInfoReturn {
       const { data: useData } = await supabase
         .from('point_transactions')
         .select('amount')
-        .eq('user_id', user.id)
+        .eq('user_id', authUser.id)
         .in('type', ['use', 'admin_deduct', 'expire'])
 
       const totalUsed = Math.abs(
@@ -162,7 +162,7 @@ export function usePointInfo(): UsePointInfoReturn {
       const { data: expiringData } = await supabase
         .from('point_transactions')
         .select('amount, balance_after')
-        .eq('user_id', user.id)
+        .eq('user_id', authUser.id)
         .eq('type', 'earn')
         .gte('expires_at', now.toISOString())
         .lte('expires_at', endOfMonth.toISOString())
@@ -238,9 +238,9 @@ export function usePointTransactions(limit: number = 20): UsePointTransactionsRe
       const currentOffset = reset ? 0 : offset
 
       try {
-        // 세션 확인 - RLS 정책이 올바르게 작동하려면 인증된 세션이 필요
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
+        // getUser()로 서버에서 실제 세션 검증 (getSession은 캐시만 반환)
+        const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
+        if (authError || !authUser) {
           setError('로그인이 필요합니다')
           return
         }
@@ -248,7 +248,7 @@ export function usePointTransactions(limit: number = 20): UsePointTransactionsRe
         const { data, error: fetchError } = await supabase
           .from('point_transactions')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('user_id', authUser.id)
           .order('created_at', { ascending: false })
           .range(currentOffset, currentOffset + limit - 1)
 
