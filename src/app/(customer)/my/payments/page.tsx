@@ -10,85 +10,66 @@ import {
   Trash2,
   Star,
   Check,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-interface PaymentMethod {
-  id: string
-  type: 'card' | 'kakaopay' | 'naverpay' | 'tosspay'
-  name: string
-  cardNumber?: string
-  cardCompany?: string
-  isDefault: boolean
-  createdAt: string
-}
-
-// Mock 결제 수단 데이터
-const MOCK_PAYMENTS: PaymentMethod[] = [
-  {
-    id: '1',
-    type: 'card',
-    name: '신한카드',
-    cardNumber: '9411',
-    cardCompany: '신한',
-    isDefault: true,
-    createdAt: '2024-10-15T10:00:00',
-  },
-  {
-    id: '2',
-    type: 'card',
-    name: '삼성카드',
-    cardNumber: '1234',
-    cardCompany: '삼성',
-    isDefault: false,
-    createdAt: '2024-11-01T14:30:00',
-  },
-  {
-    id: '3',
-    type: 'kakaopay',
-    name: '카카오페이',
-    isDefault: false,
-    createdAt: '2024-09-20T09:00:00',
-  },
-]
-
-const PAYMENT_ICONS: Record<string, string> = {
-  card: '💳',
-  kakaopay: '🟡',
-  naverpay: '🟢',
-  tosspay: '🔵',
-}
+import {
+  usePaymentMethods,
+  useSetDefaultPaymentMethod,
+  useDeletePaymentMethod,
+} from '@/hooks/usePaymentMethods'
+import {
+  PAYMENT_TYPE_LABELS,
+  PAYMENT_TYPE_ICONS,
+  type PaymentMethod,
+} from '@/types/user-features.types'
 
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState(MOCK_PAYMENTS)
-  const [activeMenu, setActiveMenu] = useState<string | null>(null)
+  const { data: payments, isLoading, error } = usePaymentMethods()
+  const setDefaultPaymentMethod = useSetDefaultPaymentMethod()
+  const deletePaymentMethod = useDeletePaymentMethod()
 
-  const handleSetDefault = (id: string) => {
-    setPayments((prev) =>
-      prev.map((p) => ({
-        ...p,
-        isDefault: p.id === id,
-      }))
-    )
-    setActiveMenu(null)
+  const [activeMenu, setActiveMenu] = useState<string | null>(null)
+  const [processingId, setProcessingId] = useState<string | null>(null)
+
+  const handleSetDefault = async (id: string) => {
+    setProcessingId(id)
+    try {
+      await setDefaultPaymentMethod.mutateAsync(id)
+    } finally {
+      setProcessingId(null)
+      setActiveMenu(null)
+    }
   }
 
-  const handleDelete = (id: string) => {
-    const payment = payments.find((p) => p.id === id)
-    if (payment?.isDefault) {
+  const handleDelete = async (id: string) => {
+    const payment = payments?.find((p) => p.id === id)
+    if (payment?.is_default) {
       alert('기본 결제 수단은 삭제할 수 없습니다.')
       return
     }
 
     if (confirm('이 결제 수단을 삭제하시겠습니까?')) {
-      setPayments((prev) => prev.filter((p) => p.id !== id))
+      setProcessingId(id)
+      try {
+        await deletePaymentMethod.mutateAsync(id)
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '삭제에 실패했습니다'
+        alert(errorMessage)
+      } finally {
+        setProcessingId(null)
+        setActiveMenu(null)
+      }
     }
-    setActiveMenu(null)
   }
 
   const toggleMenu = (id: string) => {
     setActiveMenu(activeMenu === id ? null : id)
   }
+
+  const cardPayments = payments?.filter((p) => p.type === 'card') ?? []
+  const easyPayments = payments?.filter((p) => p.type !== 'card') ?? []
 
   return (
     <div className="min-h-screen bg-[var(--color-neutral-50)] flex flex-col">
@@ -109,7 +90,24 @@ export default function PaymentsPage() {
       </header>
 
       <main className="flex-1 pb-24">
-        {payments.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary-500)]" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <AlertCircle className="w-12 h-12 text-[var(--color-error-500)] mb-4" />
+            <p className="text-[var(--color-neutral-500)] text-center mb-4">
+              결제 수단을 불러오는데 실패했습니다
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-[var(--color-neutral-100)] rounded-lg text-sm"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : !payments || payments.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
             <div className="w-16 h-16 rounded-full bg-[var(--color-neutral-100)] flex items-center justify-center mb-4">
               <CreditCard className="w-8 h-8 text-[var(--color-neutral-400)]" />
@@ -123,30 +121,31 @@ export default function PaymentsPage() {
         ) : (
           <div className="p-4 space-y-3">
             {/* 카드 목록 */}
-            <div className="bg-white rounded-2xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-[var(--color-neutral-100)]">
-                <h2 className="font-semibold text-[var(--color-neutral-900)]">
-                  등록된 카드
-                </h2>
-              </div>
-              <div className="divide-y divide-[var(--color-neutral-100)]">
-                {payments
-                  .filter((p) => p.type === 'card')
-                  .map((payment) => (
+            {cardPayments.length > 0 && (
+              <div className="bg-white rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-[var(--color-neutral-100)]">
+                  <h2 className="font-semibold text-[var(--color-neutral-900)]">
+                    등록된 카드
+                  </h2>
+                </div>
+                <div className="divide-y divide-[var(--color-neutral-100)]">
+                  {cardPayments.map((payment) => (
                     <PaymentItem
                       key={payment.id}
                       payment={payment}
                       isMenuOpen={activeMenu === payment.id}
+                      isProcessing={processingId === payment.id}
                       onToggleMenu={() => toggleMenu(payment.id)}
                       onSetDefault={() => handleSetDefault(payment.id)}
                       onDelete={() => handleDelete(payment.id)}
                     />
                   ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* 간편결제 목록 */}
-            {payments.filter((p) => p.type !== 'card').length > 0 && (
+            {easyPayments.length > 0 && (
               <div className="bg-white rounded-2xl overflow-hidden">
                 <div className="px-4 py-3 border-b border-[var(--color-neutral-100)]">
                   <h2 className="font-semibold text-[var(--color-neutral-900)]">
@@ -154,18 +153,17 @@ export default function PaymentsPage() {
                   </h2>
                 </div>
                 <div className="divide-y divide-[var(--color-neutral-100)]">
-                  {payments
-                    .filter((p) => p.type !== 'card')
-                    .map((payment) => (
-                      <PaymentItem
-                        key={payment.id}
-                        payment={payment}
-                        isMenuOpen={activeMenu === payment.id}
-                        onToggleMenu={() => toggleMenu(payment.id)}
-                        onSetDefault={() => handleSetDefault(payment.id)}
-                        onDelete={() => handleDelete(payment.id)}
-                      />
-                    ))}
+                  {easyPayments.map((payment) => (
+                    <PaymentItem
+                      key={payment.id}
+                      payment={payment}
+                      isMenuOpen={activeMenu === payment.id}
+                      isProcessing={processingId === payment.id}
+                      onToggleMenu={() => toggleMenu(payment.id)}
+                      onSetDefault={() => handleSetDefault(payment.id)}
+                      onDelete={() => handleDelete(payment.id)}
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -207,6 +205,7 @@ export default function PaymentsPage() {
 interface PaymentItemProps {
   readonly payment: PaymentMethod
   readonly isMenuOpen: boolean
+  readonly isProcessing: boolean
   readonly onToggleMenu: () => void
   readonly onSetDefault: () => void
   readonly onDelete: () => void
@@ -215,10 +214,16 @@ interface PaymentItemProps {
 function PaymentItem({
   payment,
   isMenuOpen,
+  isProcessing,
   onToggleMenu,
   onSetDefault,
   onDelete,
 }: Readonly<PaymentItemProps>) {
+  const displayName = payment.nickname ||
+    (payment.type === 'card'
+      ? `${payment.card_company || '카드'} •••• ${payment.card_number_last4 || '****'}`
+      : PAYMENT_TYPE_LABELS[payment.type])
+
   return (
     <div className="relative px-4 py-4">
       <div className="flex items-center gap-3">
@@ -226,30 +231,41 @@ function PaymentItem({
         <div
           className={cn(
             'w-12 h-12 rounded-xl flex items-center justify-center text-2xl',
-            payment.isDefault
+            payment.is_default
               ? 'bg-[var(--color-primary-100)]'
               : 'bg-[var(--color-neutral-100)]'
           )}
+          style={payment.color ? { backgroundColor: payment.color } : undefined}
         >
-          {PAYMENT_ICONS[payment.type]}
+          {PAYMENT_TYPE_ICONS[payment.type]}
         </div>
 
         {/* 정보 */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium text-[var(--color-neutral-900)]">
-              {payment.name}
+              {displayName}
             </span>
-            {payment.isDefault && (
+            {payment.is_default && (
               <span className="px-2 py-0.5 text-xs font-medium bg-[var(--color-primary-100)] text-[var(--color-primary-700)] rounded-full flex items-center gap-0.5">
                 <Check className="w-3 h-3" />
                 기본
               </span>
             )}
           </div>
-          {payment.cardNumber && (
+          {payment.type === 'card' && payment.card_company && (
             <p className="text-sm text-[var(--color-neutral-500)]">
-              {payment.cardCompany} •••• {payment.cardNumber}
+              {payment.card_company} {payment.card_type === 'credit' ? '신용' : payment.card_type === 'debit' ? '체크' : ''}카드
+            </p>
+          )}
+          {payment.type !== 'card' && payment.easy_pay_account && (
+            <p className="text-sm text-[var(--color-neutral-500)]">
+              {payment.easy_pay_account}
+            </p>
+          )}
+          {!payment.is_verified && (
+            <p className="text-xs text-[var(--color-warning-500)] mt-1">
+              인증 필요
             </p>
           )}
         </div>
@@ -257,16 +273,21 @@ function PaymentItem({
         {/* 더보기 버튼 */}
         <button
           onClick={onToggleMenu}
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)]"
+          disabled={isProcessing}
+          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[var(--color-neutral-100)] disabled:opacity-50"
         >
-          <MoreVertical className="w-5 h-5 text-[var(--color-neutral-400)]" />
+          {isProcessing ? (
+            <Loader2 className="w-5 h-5 text-[var(--color-neutral-400)] animate-spin" />
+          ) : (
+            <MoreVertical className="w-5 h-5 text-[var(--color-neutral-400)]" />
+          )}
         </button>
       </div>
 
       {/* 드롭다운 메뉴 */}
       {isMenuOpen && (
         <div className="absolute right-4 top-14 z-20 bg-white rounded-xl shadow-lg border border-[var(--color-neutral-100)] py-1 min-w-[140px]">
-          {!payment.isDefault && (
+          {!payment.is_default && (
             <button
               onClick={onSetDefault}
               className="w-full flex items-center gap-2 px-4 py-3 text-sm hover:bg-[var(--color-neutral-50)]"
@@ -275,7 +296,7 @@ function PaymentItem({
               기본으로 설정
             </button>
           )}
-          {!payment.isDefault && (
+          {!payment.is_default && (
             <button
               onClick={onDelete}
               className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-500 hover:bg-red-50"
@@ -284,7 +305,7 @@ function PaymentItem({
               삭제
             </button>
           )}
-          {payment.isDefault && (
+          {payment.is_default && (
             <p className="px-4 py-3 text-sm text-[var(--color-neutral-400)]">
               기본 결제 수단입니다
             </p>

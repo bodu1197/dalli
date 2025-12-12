@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   ArrowLeft,
@@ -14,82 +14,49 @@ import {
   FileText,
   HelpCircle,
   Search,
+  ThumbsUp,
+  ThumbsDown,
+  Loader2,
+  Pin,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
-interface FAQItem {
-  id: string
-  question: string
-  answer: string
-  category: string
-}
-
-// Mock FAQ 데이터
-const MOCK_FAQ: FAQItem[] = [
-  {
-    id: '1',
-    question: '주문 취소는 어떻게 하나요?',
-    answer:
-      '주문 취소는 가게에서 주문을 접수하기 전까지 가능합니다. 주문내역 > 해당 주문 > 주문 취소 버튼을 눌러주세요. 가게에서 이미 조리를 시작한 경우에는 취소가 불가능할 수 있습니다.',
-    category: '주문/결제',
-  },
-  {
-    id: '2',
-    question: '배달이 늦어지면 어떻게 하나요?',
-    answer:
-      '예상 배달 시간보다 늦어지는 경우, 주문 상세 페이지에서 라이더 위치를 확인하실 수 있습니다. 30분 이상 늦어지는 경우 고객센터로 문의해 주세요.',
-    category: '배달',
-  },
-  {
-    id: '3',
-    question: '결제 수단을 변경하고 싶어요',
-    answer:
-      '마이페이지 > 결제 수단 관리에서 결제 수단을 추가하거나 삭제할 수 있습니다. 기본 결제 수단도 변경 가능합니다.',
-    category: '주문/결제',
-  },
-  {
-    id: '4',
-    question: '포인트는 어떻게 사용하나요?',
-    answer:
-      '주문 시 결제 단계에서 보유 포인트를 사용하실 수 있습니다. 최소 1,000포인트 이상부터 사용 가능하며, 결제 금액의 최대 30%까지 사용할 수 있습니다.',
-    category: '포인트/쿠폰',
-  },
-  {
-    id: '5',
-    question: '쿠폰 사용 조건이 궁금해요',
-    answer:
-      '쿠폰마다 사용 조건이 다릅니다. 쿠폰함에서 해당 쿠폰을 클릭하시면 최소 주문금액, 사용 가능 가게, 유효기간 등 상세 조건을 확인하실 수 있습니다.',
-    category: '포인트/쿠폰',
-  },
-  {
-    id: '6',
-    question: '회원 탈퇴는 어떻게 하나요?',
-    answer:
-      '설정 > 회원탈퇴에서 탈퇴하실 수 있습니다. 탈퇴 시 보유 포인트, 쿠폰, 주문내역 등 모든 정보가 삭제되며 복구가 불가능합니다.',
-    category: '계정',
-  },
-]
-
-const FAQ_CATEGORIES = ['전체', '주문/결제', '배달', '포인트/쿠폰', '계정']
+import {
+  useFAQCategories,
+  useFAQList,
+  usePinnedFAQs,
+  useIncrementFAQView,
+  useFAQFeedback,
+  getFAQFeedbackStatus,
+} from '@/hooks/useFAQ'
+import type { FAQWithCategory } from '@/types/user-features.types'
 
 export default function SupportPage() {
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('전체')
+  const [selectedCategory, setSelectedCategory] = useState('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  const filteredFAQ = MOCK_FAQ.filter((item) => {
-    const matchesCategory =
-      selectedCategory === '전체' || item.category === selectedCategory
-    const matchesSearch =
-      searchQuery === '' ||
-      item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.answer.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
+  const { data: categories, isLoading: categoriesLoading } = useFAQCategories()
+  const { data: pinnedFAQs } = usePinnedFAQs()
+  const { data: faqList, isLoading: faqLoading } = useFAQList({
+    categorySlug: selectedCategory,
+    searchQuery: searchQuery.length >= 2 ? searchQuery : undefined,
   })
+  const incrementView = useIncrementFAQView()
+  const submitFeedback = useFAQFeedback()
 
   const toggleExpand = (id: string) => {
+    if (expandedId !== id) {
+      // 새로운 FAQ를 열 때 조회수 증가
+      incrementView.mutate(id)
+    }
     setExpandedId(expandedId === id ? null : id)
   }
+
+  // 카테고리 목록에 '전체' 추가
+  const categoryOptions = [
+    { id: 'all', name: '전체', slug: 'all' },
+    ...(categories || []),
+  ]
 
   return (
     <div className="min-h-screen bg-[var(--color-neutral-50)]">
@@ -170,70 +137,90 @@ export default function SupportPage() {
           </div>
         </div>
 
+        {/* 고정 FAQ (상단 고정) */}
+        {pinnedFAQs && pinnedFAQs.length > 0 && !searchQuery && selectedCategory === 'all' && (
+          <div className="px-4 mt-2">
+            <div className="flex items-center gap-2 mb-3">
+              <Pin className="w-4 h-4 text-[var(--color-primary-500)]" />
+              <h2 className="font-semibold text-[var(--color-neutral-900)]">
+                자주 찾는 질문
+              </h2>
+            </div>
+            <div className="bg-white rounded-2xl overflow-hidden mb-4">
+              <div className="divide-y divide-[var(--color-neutral-100)]">
+                {pinnedFAQs.map((item) => (
+                  <FAQItem
+                    key={item.id}
+                    faq={item}
+                    isExpanded={expandedId === item.id}
+                    onToggle={() => toggleExpand(item.id)}
+                    onFeedback={submitFeedback.mutate}
+                    isPinned
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* FAQ 카테고리 */}
         <div className="px-4 mt-2">
           <h2 className="font-semibold text-[var(--color-neutral-900)] mb-3">
             자주 묻는 질문
           </h2>
-          <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
-            {FAQ_CATEGORIES.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
-                  selectedCategory === category
-                    ? 'bg-[var(--color-neutral-900)] text-white'
-                    : 'bg-white text-[var(--color-neutral-600)] hover:bg-[var(--color-neutral-100)]'
-                )}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
+          {categoriesLoading ? (
+            <div className="flex items-center gap-2 pb-2">
+              <Loader2 className="w-5 h-5 animate-spin text-[var(--color-neutral-400)]" />
+            </div>
+          ) : (
+            <div className="flex gap-2 overflow-x-auto pb-2 hide-scrollbar">
+              {categoryOptions.map((category) => (
+                <button
+                  key={category.slug}
+                  onClick={() => setSelectedCategory(category.slug)}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+                    selectedCategory === category.slug
+                      ? 'bg-[var(--color-neutral-900)] text-white'
+                      : 'bg-white text-[var(--color-neutral-600)] hover:bg-[var(--color-neutral-100)]'
+                  )}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* FAQ 목록 */}
         <div className="p-4">
           <div className="bg-white rounded-2xl overflow-hidden">
-            {filteredFAQ.length === 0 ? (
+            {faqLoading ? (
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary-500)]" />
+              </div>
+            ) : !faqList || faqList.length === 0 ? (
               <div className="p-8 text-center">
                 <HelpCircle className="w-12 h-12 text-[var(--color-neutral-300)] mx-auto mb-3" />
                 <p className="text-[var(--color-neutral-500)]">
-                  검색 결과가 없습니다
+                  {searchQuery
+                    ? '검색 결과가 없습니다'
+                    : '등록된 FAQ가 없습니다'}
                 </p>
               </div>
             ) : (
               <div className="divide-y divide-[var(--color-neutral-100)]">
-                {filteredFAQ.map((item) => (
-                  <div key={item.id}>
-                    <button
-                      onClick={() => toggleExpand(item.id)}
-                      className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-[var(--color-neutral-50)] transition-colors"
-                    >
-                      <div className="flex-1 pr-4">
-                        <span className="text-xs text-[var(--color-primary-600)] font-medium">
-                          {item.category}
-                        </span>
-                        <p className="mt-1 font-medium text-[var(--color-neutral-900)]">
-                          {item.question}
-                        </p>
-                      </div>
-                      {expandedId === item.id ? (
-                        <ChevronUp className="w-5 h-5 text-[var(--color-neutral-400)] flex-shrink-0" />
-                      ) : (
-                        <ChevronDown className="w-5 h-5 text-[var(--color-neutral-400)] flex-shrink-0" />
-                      )}
-                    </button>
-                    {expandedId === item.id && (
-                      <div className="px-4 pb-4">
-                        <p className="p-4 bg-[var(--color-neutral-50)] rounded-xl text-sm text-[var(--color-neutral-700)] leading-relaxed">
-                          {item.answer}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                {faqList
+                  .filter((item) => !item.is_pinned || searchQuery || selectedCategory !== 'all')
+                  .map((item) => (
+                    <FAQItem
+                      key={item.id}
+                      faq={item}
+                      isExpanded={expandedId === item.id}
+                      onToggle={() => toggleExpand(item.id)}
+                      onFeedback={submitFeedback.mutate}
+                    />
+                  ))}
               </div>
             )}
           </div>
@@ -283,6 +270,124 @@ export default function SupportPage() {
           </div>
         </div>
       </main>
+    </div>
+  )
+}
+
+interface FAQItemProps {
+  readonly faq: FAQWithCategory
+  readonly isExpanded: boolean
+  readonly onToggle: () => void
+  readonly onFeedback: (params: { faqId: string; helpful: boolean }) => void
+  readonly isPinned?: boolean
+}
+
+function FAQItem({ faq, isExpanded, onToggle, onFeedback, isPinned }: FAQItemProps) {
+  const [feedbackStatus, setFeedbackStatus] = useState<'helpful' | 'not_helpful' | null>(null)
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+
+  // 클라이언트에서만 localStorage 확인
+  useEffect(() => {
+    setFeedbackStatus(getFAQFeedbackStatus(faq.id))
+  }, [faq.id])
+
+  const handleFeedback = async (helpful: boolean) => {
+    if (feedbackStatus) return // 이미 피드백 제출함
+
+    setFeedbackSubmitting(true)
+    try {
+      onFeedback({ faqId: faq.id, helpful })
+      setFeedbackStatus(helpful ? 'helpful' : 'not_helpful')
+    } catch {
+      // 에러 처리 (이미 피드백 제출한 경우 등)
+    } finally {
+      setFeedbackSubmitting(false)
+    }
+  }
+
+  return (
+    <div>
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-4 py-4 text-left hover:bg-[var(--color-neutral-50)] transition-colors"
+      >
+        <div className="flex-1 pr-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-[var(--color-primary-600)] font-medium">
+              {faq.category?.name || '기타'}
+            </span>
+            {isPinned && (
+              <Pin className="w-3 h-3 text-[var(--color-primary-500)]" />
+            )}
+          </div>
+          <p className="mt-1 font-medium text-[var(--color-neutral-900)]">
+            {faq.question}
+          </p>
+          {faq.view_count > 0 && (
+            <p className="mt-1 text-xs text-[var(--color-neutral-400)]">
+              조회 {faq.view_count}
+            </p>
+          )}
+        </div>
+        {isExpanded ? (
+          <ChevronUp className="w-5 h-5 text-[var(--color-neutral-400)] flex-shrink-0" />
+        ) : (
+          <ChevronDown className="w-5 h-5 text-[var(--color-neutral-400)] flex-shrink-0" />
+        )}
+      </button>
+      {isExpanded && (
+        <div className="px-4 pb-4">
+          <div className="p-4 bg-[var(--color-neutral-50)] rounded-xl">
+            <p className="text-sm text-[var(--color-neutral-700)] leading-relaxed whitespace-pre-wrap">
+              {faq.answer}
+            </p>
+
+            {/* 도움됨 피드백 */}
+            <div className="mt-4 pt-4 border-t border-[var(--color-neutral-200)]">
+              <p className="text-sm text-[var(--color-neutral-500)] mb-2">
+                이 답변이 도움이 되었나요?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleFeedback(true)}
+                  disabled={!!feedbackStatus || feedbackSubmitting}
+                  className={cn(
+                    'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                    feedbackStatus === 'helpful'
+                      ? 'bg-[var(--color-primary-100)] text-[var(--color-primary-700)]'
+                      : 'bg-white border border-[var(--color-neutral-200)] text-[var(--color-neutral-600)] hover:bg-[var(--color-neutral-100)]',
+                    (feedbackStatus && feedbackStatus !== 'helpful') && 'opacity-50',
+                    feedbackSubmitting && 'opacity-50'
+                  )}
+                >
+                  <ThumbsUp className="w-4 h-4" />
+                  도움됨 {faq.helpful_count > 0 && `(${faq.helpful_count})`}
+                </button>
+                <button
+                  onClick={() => handleFeedback(false)}
+                  disabled={!!feedbackStatus || feedbackSubmitting}
+                  className={cn(
+                    'flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                    feedbackStatus === 'not_helpful'
+                      ? 'bg-red-100 text-red-700'
+                      : 'bg-white border border-[var(--color-neutral-200)] text-[var(--color-neutral-600)] hover:bg-[var(--color-neutral-100)]',
+                    (feedbackStatus && feedbackStatus !== 'not_helpful') && 'opacity-50',
+                    feedbackSubmitting && 'opacity-50'
+                  )}
+                >
+                  <ThumbsDown className="w-4 h-4" />
+                  아니요 {faq.not_helpful_count > 0 && `(${faq.not_helpful_count})`}
+                </button>
+              </div>
+              {feedbackStatus && (
+                <p className="mt-2 text-xs text-[var(--color-neutral-400)]">
+                  피드백이 전달되었습니다. 감사합니다!
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

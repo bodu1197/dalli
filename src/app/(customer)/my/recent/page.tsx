@@ -2,77 +2,15 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Clock, Star, MapPin, X } from 'lucide-react'
-
-interface RecentRestaurant {
-  id: string
-  name: string
-  imageUrl: string
-  category: string
-  rating: number
-  reviewCount: number
-  deliveryTime: string
-  deliveryFee: number
-  distance: string
-  isOpen: boolean
-  viewedAt: string
-}
-
-// Mock 최근 본 가게 데이터
-const MOCK_RECENT: RecentRestaurant[] = [
-  {
-    id: '1',
-    name: '굽네치킨 강남역점',
-    imageUrl: '/images/restaurants/goobne.jpg',
-    category: '치킨',
-    rating: 4.7,
-    reviewCount: 892,
-    deliveryTime: '25~40분',
-    deliveryFee: 2500,
-    distance: '1.0km',
-    isOpen: true,
-    viewedAt: '2024-12-12T14:30:00',
-  },
-  {
-    id: '2',
-    name: '피자헛 역삼점',
-    imageUrl: '/images/restaurants/pizzahut.jpg',
-    category: '피자',
-    rating: 4.4,
-    reviewCount: 567,
-    deliveryTime: '30~45분',
-    deliveryFee: 3000,
-    distance: '1.5km',
-    isOpen: true,
-    viewedAt: '2024-12-12T12:00:00',
-  },
-  {
-    id: '3',
-    name: '명동교자 강남점',
-    imageUrl: '/images/restaurants/myungdong.jpg',
-    category: '한식',
-    rating: 4.6,
-    reviewCount: 1234,
-    deliveryTime: '20~35분',
-    deliveryFee: 2000,
-    distance: '0.8km',
-    isOpen: false,
-    viewedAt: '2024-12-11T19:00:00',
-  },
-  {
-    id: '4',
-    name: '스시히로바 선릉점',
-    imageUrl: '/images/restaurants/sushihiroba.jpg',
-    category: '일식',
-    rating: 4.8,
-    reviewCount: 445,
-    deliveryTime: '35~50분',
-    deliveryFee: 4000,
-    distance: '2.0km',
-    isOpen: true,
-    viewedAt: '2024-12-10T20:30:00',
-  },
-]
+import Image from 'next/image'
+import { ArrowLeft, Clock, Star, MapPin, X, Loader2, Trash2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
+  useRecentViews,
+  useDeleteRecentView,
+  useClearAllRecentViews,
+} from '@/hooks/useRecentViews'
+import type { RecentViewWithRestaurant } from '@/types/user-features.types'
 
 function formatViewedTime(dateString: string): string {
   const date = new Date(dateString)
@@ -92,16 +30,38 @@ function formatViewedTime(dateString: string): string {
   }
 }
 
-export default function RecentPage() {
-  const [recentList, setRecentList] = useState(MOCK_RECENT)
+function formatDistance(distanceKm: number | undefined): string {
+  if (!distanceKm) return ''
+  if (distanceKm < 1) {
+    return `${Math.round(distanceKm * 1000)}m`
+  }
+  return `${distanceKm.toFixed(1)}km`
+}
 
-  const handleRemove = (id: string) => {
-    setRecentList((prev) => prev.filter((item) => item.id !== id))
+function formatDeliveryTime(minutes: number): string {
+  const minTime = Math.max(15, minutes - 10)
+  const maxTime = minutes + 10
+  return `${minTime}~${maxTime}분`
+}
+
+export default function RecentPage() {
+  const { data: recentList, isLoading, error } = useRecentViews()
+  const deleteRecentView = useDeleteRecentView()
+  const clearAllRecentViews = useClearAllRecentViews()
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  const handleRemove = async (id: string) => {
+    setDeletingId(id)
+    try {
+      await deleteRecentView.mutateAsync(id)
+    } finally {
+      setDeletingId(null)
+    }
   }
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (confirm('최근 본 가게 목록을 모두 삭제하시겠습니까?')) {
-      setRecentList([])
+      await clearAllRecentViews.mutateAsync()
     }
   }
 
@@ -119,11 +79,17 @@ export default function RecentPage() {
           <h1 className="flex-1 text-center font-bold text-[var(--color-neutral-900)]">
             최근 본 가게
           </h1>
-          {recentList.length > 0 ? (
+          {recentList && recentList.length > 0 ? (
             <button
               onClick={handleClearAll}
-              className="text-sm text-[var(--color-neutral-500)] hover:text-[var(--color-neutral-700)]"
+              disabled={clearAllRecentViews.isPending}
+              className="text-sm text-[var(--color-neutral-500)] hover:text-[var(--color-neutral-700)] disabled:opacity-50 flex items-center gap-1"
             >
+              {clearAllRecentViews.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
               전체삭제
             </button>
           ) : (
@@ -134,7 +100,23 @@ export default function RecentPage() {
 
       {/* 최근 본 목록 */}
       <main className="pb-20">
-        {recentList.length === 0 ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary-500)]" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center min-h-[60vh]">
+            <p className="text-[var(--color-error-500)] mb-4">
+              데이터를 불러오는데 실패했습니다
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-[var(--color-neutral-100)] rounded-lg text-sm"
+            >
+              다시 시도
+            </button>
+          </div>
+        ) : !recentList || recentList.length === 0 ? (
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
             <Clock className="w-16 h-16 text-[var(--color-neutral-300)] mb-4" />
             <p className="text-[var(--color-neutral-500)] mb-6">
@@ -149,11 +131,12 @@ export default function RecentPage() {
           </div>
         ) : (
           <div className="p-4 space-y-3">
-            {recentList.map((restaurant) => (
+            {recentList.map((item) => (
               <RecentCard
-                key={restaurant.id}
-                restaurant={restaurant}
-                onRemove={() => handleRemove(restaurant.id)}
+                key={item.id}
+                recentView={item}
+                onRemove={() => handleRemove(item.id)}
+                isDeleting={deletingId === item.id}
               />
             ))}
           </div>
@@ -163,13 +146,15 @@ export default function RecentPage() {
   )
 }
 
-function RecentCard({
-  restaurant,
-  onRemove,
-}: Readonly<{
-  restaurant: RecentRestaurant
-  onRemove: () => void
-}>) {
+interface RecentCardProps {
+  readonly recentView: RecentViewWithRestaurant
+  readonly onRemove: () => void
+  readonly isDeleting: boolean
+}
+
+function RecentCard({ recentView, onRemove, isDeleting }: RecentCardProps) {
+  const { restaurant, viewed_at } = recentView
+
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm relative">
       {/* 삭제 버튼 */}
@@ -179,20 +164,34 @@ function RecentCard({
           e.stopPropagation()
           onRemove()
         }}
-        className="absolute top-2 right-2 z-10 w-7 h-7 bg-black/40 rounded-full flex items-center justify-center"
+        disabled={isDeleting}
+        className="absolute top-2 right-2 z-10 w-7 h-7 bg-black/40 rounded-full flex items-center justify-center disabled:opacity-50"
       >
-        <X className="w-4 h-4 text-white" />
+        {isDeleting ? (
+          <Loader2 className="w-4 h-4 text-white animate-spin" />
+        ) : (
+          <X className="w-4 h-4 text-white" />
+        )}
       </button>
 
       <Link href={`/restaurant/${restaurant.id}`} className="flex">
         {/* 이미지 */}
         <div className="relative w-28 h-28 flex-shrink-0">
-          <div className="absolute inset-0 bg-[var(--color-neutral-200)]">
-            <div className="w-full h-full flex items-center justify-center text-4xl">
-              🍽️
+          {restaurant.image_url ? (
+            <Image
+              src={restaurant.image_url}
+              alt={restaurant.name}
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-[var(--color-neutral-200)]">
+              <div className="w-full h-full flex items-center justify-center text-4xl">
+                🍽️
+              </div>
             </div>
-          </div>
-          {!restaurant.isOpen && (
+          )}
+          {!restaurant.is_open && (
             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
               <span className="text-white text-sm font-medium">영업 종료</span>
             </div>
@@ -207,7 +206,7 @@ function RecentCard({
                 {restaurant.name}
               </h3>
               <p className="text-sm text-[var(--color-neutral-500)]">
-                {restaurant.category}
+                {restaurant.category?.name || '기타'}
               </p>
             </div>
           </div>
@@ -216,10 +215,10 @@ function RecentCard({
           <div className="flex items-center gap-1 mt-2">
             <Star className="w-4 h-4 fill-[var(--color-warning-400)] text-[var(--color-warning-400)]" />
             <span className="text-sm font-medium text-[var(--color-neutral-700)]">
-              {restaurant.rating}
+              {restaurant.rating.toFixed(1)}
             </span>
             <span className="text-sm text-[var(--color-neutral-400)]">
-              ({restaurant.reviewCount})
+              ({restaurant.review_count})
             </span>
           </div>
 
@@ -227,17 +226,36 @@ function RecentCard({
           <div className="flex items-center gap-3 mt-2 text-xs text-[var(--color-neutral-500)]">
             <div className="flex items-center gap-1">
               <Clock className="w-3.5 h-3.5" />
-              <span>{restaurant.deliveryTime}</span>
+              <span>{formatDeliveryTime(restaurant.estimated_delivery_time)}</span>
             </div>
-            <div className="flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5" />
-              <span>{restaurant.distance}</span>
-            </div>
+            {(restaurant as RecentViewWithRestaurant['restaurant'] & { distance?: number }).distance && (
+              <div className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5" />
+                <span>
+                  {formatDistance(
+                    (restaurant as RecentViewWithRestaurant['restaurant'] & { distance?: number }).distance
+                  )}
+                </span>
+              </div>
+            )}
+            {restaurant.delivery_fee > 0 && (
+              <span className="text-[var(--color-neutral-400)]">
+                배달비 {restaurant.delivery_fee.toLocaleString()}원
+              </span>
+            )}
+            {restaurant.delivery_fee === 0 && (
+              <span className={cn(
+                'px-1.5 py-0.5 rounded text-xs font-medium',
+                'bg-[var(--color-primary-100)] text-[var(--color-primary-700)]'
+              )}>
+                무료배달
+              </span>
+            )}
           </div>
 
           {/* 본 시간 */}
           <p className="mt-2 text-xs text-[var(--color-neutral-400)]">
-            {formatViewedTime(restaurant.viewedAt)}에 봄
+            {formatViewedTime(viewed_at)}에 봄
           </p>
         </div>
       </Link>
