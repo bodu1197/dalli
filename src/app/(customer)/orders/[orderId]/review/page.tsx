@@ -77,14 +77,14 @@ export default function ReviewWritePage({ params }: Readonly<PageProps>) {
           confirmedAt: orderData.confirmed_at,
           preparedAt: orderData.prepared_at,
           pickedUpAt: orderData.picked_up_at,
-          deliveredAt: (orderData as any).delivered_at,
+          deliveredAt: orderData.actual_delivery_time,
           rejectionReason: orderData.rejection_reason as OrderRejectionReason | null,
           rejectionDetail: orderData.rejection_detail,
           cancelledReason: orderData.cancelled_reason,
           cancelledAt: orderData.cancelled_at,
           cancelledBy: orderData.cancelled_by as 'customer' | 'owner' | 'system' | null,
           paymentMethod: orderData.payment_method as PaymentMethod,
-          paymentId: (orderData as any).payment_id,
+          paymentId: orderData.payment_key,
           couponId: orderData.coupon_id,
           couponName: orderData.coupon_name,
           items: [], // Not needed for this page
@@ -94,8 +94,9 @@ export default function ReviewWritePage({ params }: Readonly<PageProps>) {
 
         setOrder(formattedOrder)
 
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : '오류가 발생했습니다.'
+        setError(errorMessage)
       } finally {
         setLoading(false)
       }
@@ -146,7 +147,13 @@ export default function ReviewWritePage({ params }: Readonly<PageProps>) {
       if (reviewError) throw reviewError
 
       // Add points for review
-      await supabase.rpc('increment_user_points' as any, { user_id: user.id, amount: 100 })
+      // 포인트 적립 (RPC 함수 호출)
+      await supabase.rpc('earn_points', {
+        p_user_id: user.id,
+        p_amount: 100,
+        p_description: '리뷰 작성 적립',
+        p_order_id: order.id,
+      })
 
       alert('리뷰가 등록되었습니다')
       router.push(`/orders/${orderId}`)

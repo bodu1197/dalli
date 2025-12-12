@@ -10,7 +10,10 @@ import {
   ORDER_STATUS_COLORS,
 } from '@/types/order.types'
 import type { Order, PaymentMethod, OrderStatus, OrderRejectionReason } from '@/types/order.types'
+import type { Database } from '@/types/supabase'
 import { useAuthStore } from '@/stores/auth.store'
+
+type OrderItemRow = Database['public']['Tables']['order_items']['Row']
 
 type TabType = 'active' | 'completed'
 
@@ -74,17 +77,17 @@ export default function OrdersPage() {
           confirmedAt: order.confirmed_at,
           preparedAt: order.prepared_at,
           pickedUpAt: order.picked_up_at,
-          deliveredAt: (order as any).delivered_at,
+          deliveredAt: order.actual_delivery_time,
           rejectionReason: order.rejection_reason as OrderRejectionReason | null,
           rejectionDetail: order.rejection_detail,
           cancelledReason: order.cancelled_reason,
           cancelledAt: order.cancelled_at,
           cancelledBy: order.cancelled_by as 'customer' | 'owner' | 'system' | null,
           paymentMethod: order.payment_method as PaymentMethod,
-          paymentId: (order as any).payment_id,
+          paymentId: order.payment_key,
           couponId: order.coupon_id,
           couponName: order.coupon_name,
-          items: order.order_items.map((item: any) => ({
+          items: order.order_items.map((item: Pick<OrderItemRow, 'menu_name'>) => ({
             id: '',
             orderId: order.id,
             menuId: '',
@@ -141,17 +144,17 @@ export default function OrdersPage() {
           confirmedAt: order.confirmed_at,
           preparedAt: order.prepared_at,
           pickedUpAt: order.picked_up_at,
-          deliveredAt: (order as any).delivered_at,
+          deliveredAt: order.actual_delivery_time,
           rejectionReason: order.rejection_reason as OrderRejectionReason | null,
           rejectionDetail: order.rejection_detail,
           cancelledReason: order.cancelled_reason,
           cancelledAt: order.cancelled_at,
           cancelledBy: order.cancelled_by as 'customer' | 'owner' | 'system' | null,
           paymentMethod: order.payment_method as PaymentMethod,
-          paymentId: (order as any).payment_id,
+          paymentId: order.payment_key,
           couponId: order.coupon_id,
           couponName: order.coupon_name,
-          items: order.order_items.map((item: any) => ({
+          items: order.order_items.map((item: Pick<OrderItemRow, 'menu_name'>) => ({
             id: '',
             orderId: order.id,
             menuId: '',
@@ -167,8 +170,9 @@ export default function OrdersPage() {
         }))
         setCompletedOrders(formattedCompletedOrders)
 
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : '오류가 발생했습니다.'
+        setError(errorMessage)
       } finally {
         setLoading(false)
       }

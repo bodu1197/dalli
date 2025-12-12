@@ -191,7 +191,14 @@ export const taxInvoiceService = {
             if (!s.restaurant_id || !s.restaurant) continue
             if (existingRestaurantIds.has(s.restaurant_id)) continue // 이미 생성됨
 
-            const rest = s.restaurant as any
+            const rest = s.restaurant as {
+                id: string
+                name: string
+                phone: string
+                address: string
+                business_number: string | null
+                owner: { name: string; email: string } | null
+            }
             const existing = aggregated.get(s.restaurant_id)
 
             if (existing) {

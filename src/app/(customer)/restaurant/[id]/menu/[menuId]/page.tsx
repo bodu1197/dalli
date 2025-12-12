@@ -7,8 +7,10 @@ import { ArrowLeft, Minus, Plus } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { createClient } from '@/lib/supabase/client'
-import type { Restaurant } from '@/types/restaurant.types'
-import type { Menu, MenuOption } from '@/types/restaurant.types'
+import type { Restaurant, BusinessHours, Menu, MenuOption } from '@/types/restaurant.types'
+import type { Database } from '@/types/supabase'
+
+type MenuOptionRow = Database['public']['Tables']['menu_options']['Row']
 
 interface MenuDetailPageProps {
   readonly params: Promise<{ id: string; menuId: string }>
@@ -52,7 +54,7 @@ export default function MenuDetailPage({ params }: Readonly<MenuDetailPageProps>
           minOrderAmount: restaurantData.min_order_amount ?? 0,
           deliveryFee: restaurantData.delivery_fee ?? 0,
           estimatedDeliveryTime: restaurantData.estimated_delivery_time ?? 0,
-          businessHours: restaurantData.business_hours as any,
+          businessHours: restaurantData.business_hours as BusinessHours | null,
           isOpen: restaurantData.is_open ?? false,
           rating: restaurantData.rating ?? 0,
           reviewCount: restaurantData.review_count ?? 0,
@@ -96,17 +98,18 @@ export default function MenuDetailPage({ params }: Readonly<MenuDetailPageProps>
 
         if (optionsError) throw new Error('메뉴 옵션을 불러오는데 실패했습니다.')
 
-        const allOptions = optionsData.flatMap(group => group.menu_options.map((opt: any) => ({
+        const allOptions = optionsData.flatMap(group => group.menu_options.map((opt: MenuOptionRow) => ({
           id: opt.id,
-          menuId: opt.menu_id,
+          menuId: menuId,
           name: opt.name,
           price: opt.price ?? 0,
-          isRequired: opt.is_required ?? false,
+          isRequired: group.is_required ?? false,
         })))
         setOptions(allOptions)
 
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : '오류가 발생했습니다.'
+        setError(errorMessage)
       } finally {
         setLoading(false)
       }

@@ -4,7 +4,21 @@
  */
 
 import { createClient } from '@/lib/supabase/server'
-import { Database } from '@/types/supabase'
+import type { Database } from '@/types/supabase'
+
+// DB 타입 추출
+type RestaurantRow = Database['public']['Tables']['restaurants']['Row']
+type OrderRow = Database['public']['Tables']['orders']['Row']
+type UserRow = Database['public']['Tables']['users']['Row']
+
+// Join된 타입 정의
+export type RestaurantWithOwner = RestaurantRow & {
+    owner: { name: string | null } | null
+}
+
+export type OrderWithCustomer = OrderRow & {
+    customer: { name: string } | null
+}
 
 export type AdminStats = {
     todayOrders: number
@@ -89,7 +103,13 @@ export type AdminStoreFilter = {
     status?: string
 }
 
-export async function getStores(filter: AdminStoreFilter) {
+export async function getStores(filter: AdminStoreFilter): Promise<{
+    data: RestaurantWithOwner[]
+    count: number
+    page: number
+    limit: number
+    totalPages: number
+}> {
     try {
         const supabase = await createClient()
         const { page = 1, limit = 20, search } = filter
@@ -117,7 +137,7 @@ export async function getStores(filter: AdminStoreFilter) {
         }
 
         return {
-            data,
+            data: (data ?? []) as RestaurantWithOwner[],
             count: count ?? 0,
             page,
             limit,
@@ -202,7 +222,13 @@ export type AdminOrderFilter = {
     status?: string
 }
 
-export async function getOrders(filter: AdminOrderFilter) {
+export async function getOrders(filter: AdminOrderFilter): Promise<{
+    data: OrderWithCustomer[]
+    count: number
+    page: number
+    limit: number
+    totalPages: number
+}> {
     try {
         const supabase = await createClient()
         const { page = 1, limit = 20, search, status } = filter
@@ -232,7 +258,7 @@ export async function getOrders(filter: AdminOrderFilter) {
         }
 
         return {
-            data,
+            data: (data ?? []) as OrderWithCustomer[],
             count: count ?? 0,
             page,
             limit,

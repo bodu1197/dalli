@@ -90,14 +90,14 @@ export default function OrderTrackingPage({ params }: Readonly<PageProps>) {
           confirmedAt: orderData.confirmed_at,
           preparedAt: orderData.prepared_at,
           pickedUpAt: orderData.picked_up_at,
-          deliveredAt: (orderData as any).delivered_at,
+          deliveredAt: orderData.actual_delivery_time,
           rejectionReason: orderData.rejection_reason as OrderRejectionReason | null,
           rejectionDetail: orderData.rejection_detail,
           cancelledReason: orderData.cancelled_reason,
           cancelledAt: orderData.cancelled_at,
           cancelledBy: orderData.cancelled_by as 'customer' | 'owner' | 'system' | null,
           paymentMethod: orderData.payment_method as PaymentMethod,
-          paymentId: (orderData as any).payment_id,
+          paymentId: orderData.payment_key,
           couponId: orderData.coupon_id,
           couponName: orderData.coupon_name,
           items: [],
@@ -107,8 +107,9 @@ export default function OrderTrackingPage({ params }: Readonly<PageProps>) {
 
         setOrder(formattedOrder)
 
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : '오류가 발생했습니다.'
+        setError(errorMessage)
       } finally {
         setLoading(false)
       }

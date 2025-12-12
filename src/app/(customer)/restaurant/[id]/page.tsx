@@ -19,8 +19,10 @@ import { Badge } from '@/components/ui/Badge'
 import { MenuList } from '@/components/features/menu/MenuList'
 import { BottomNavBar } from '@/components/layouts/BottomNavBar'
 import { createClient } from '@/lib/supabase/client'
-import type { Restaurant } from '@/types/restaurant.types'
-import type { Menu, MenuOption } from '@/types/restaurant.types'
+import type { Restaurant, BusinessHours, Menu } from '@/types/restaurant.types'
+import type { Database } from '@/types/supabase'
+
+type MenuRow = Database['public']['Tables']['menus']['Row']
 
 interface RestaurantDetailPageProps {
   readonly params: Promise<{ id: string }>
@@ -68,7 +70,7 @@ export default function RestaurantDetailPage({
           minOrderAmount: restaurantData.min_order_amount ?? 0,
           deliveryFee: restaurantData.delivery_fee ?? 0,
           estimatedDeliveryTime: restaurantData.estimated_delivery_time ?? 0,
-          businessHours: restaurantData.business_hours as any,
+          businessHours: restaurantData.business_hours as BusinessHours | null,
           isOpen: restaurantData.is_open ?? false,
           rating: restaurantData.rating ?? 0,
           reviewCount: restaurantData.review_count ?? 0,
@@ -91,7 +93,7 @@ export default function RestaurantDetailPage({
 
         if (allMenusError) throw new Error('메뉴 정보를 불러오는데 실패했습니다.')
 
-        const formattedMenus: Menu[] = allMenusData.map((menu: any) => ({
+        const formattedMenus: Menu[] = allMenusData.map((menu: MenuRow) => ({
           id: menu.id,
           restaurantId: menu.restaurant_id,
           name: menu.name,
@@ -109,8 +111,9 @@ export default function RestaurantDetailPage({
         const popularMenusData = formattedMenus.filter(menu => menu.isPopular)
         setPopularMenus(popularMenusData)
 
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : '오류가 발생했습니다.'
+        setError(errorMessage)
       } finally {
         setLoading(false)
       }

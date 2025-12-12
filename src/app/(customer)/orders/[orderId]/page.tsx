@@ -15,11 +15,24 @@ import {
 } from 'lucide-react'
 
 import { createClient } from '@/lib/supabase/client'
-import type { Order, OrderItem, OrderStatus, PaymentMethod, OrderRejectionReason } from '@/types/order.types'
+import type { Order, OrderStatus, PaymentMethod, OrderRejectionReason, OrderItemOption } from '@/types/order.types'
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 } from '@/types/order.types'
+import type { Database } from '@/types/supabase'
+
+type OrderItemRow = Database['public']['Tables']['order_items']['Row']
+type MenuOptionGroupRow = Database['public']['Tables']['menu_option_groups']['Row']
+type MenuOptionRow = Database['public']['Tables']['menu_options']['Row']
+
+interface OrderItemWithMenu extends OrderItemRow {
+  menus: {
+    menu_option_groups: Array<MenuOptionGroupRow & {
+      menu_options: MenuOptionRow[]
+    }>
+  }
+}
 import { CancelOrderButton } from '@/components/features/order'
 import { CANCEL_REASON_LABELS } from '@/lib/constants/order-cancellation'
 import type { CancelReasonCategory } from '@/types/order-cancellation.types'
@@ -81,17 +94,17 @@ export default function OrderDetailPage({ params }: Readonly<PageProps>) {
           confirmedAt: orderData.confirmed_at,
           preparedAt: orderData.prepared_at,
           pickedUpAt: orderData.picked_up_at,
-          deliveredAt: (orderData as any).delivered_at,
+          deliveredAt: orderData.actual_delivery_time,
           rejectionReason: orderData.rejection_reason as OrderRejectionReason | null,
           rejectionDetail: orderData.rejection_detail,
           cancelledReason: orderData.cancelled_reason,
           cancelledAt: orderData.cancelled_at,
           cancelledBy: orderData.cancelled_by as 'customer' | 'owner' | 'system' | null,
           paymentMethod: orderData.payment_method as PaymentMethod,
-          paymentId: (orderData as any).payment_id,
+          paymentId: orderData.payment_key,
           couponId: orderData.coupon_id,
           couponName: orderData.coupon_name,
-          items: orderData.order_items.map((item: any) => ({
+          items: orderData.order_items.map((item: OrderItemWithMenu) => ({
             id: item.id,
             orderId: item.order_id,
             menuId: item.menu_id,
@@ -100,10 +113,12 @@ export default function OrderDetailPage({ params }: Readonly<PageProps>) {
             quantity: item.quantity,
             price: item.price,
             specialInstructions: item.special_instructions,
-            options: item.menus.menu_option_groups.flatMap((group: any) => group.menu_options).map((option: any) => ({
+            options: item.menus.menu_option_groups.flatMap(
+              (group: MenuOptionGroupRow & { menu_options: MenuOptionRow[] }) => group.menu_options
+            ).map((option: MenuOptionRow): OrderItemOption => ({
               id: option.id,
               name: option.name,
-              price: option.price,
+              price: option.price ?? 0,
             }))
           })),
           createdAt: orderData.created_at ?? '',
@@ -112,8 +127,9 @@ export default function OrderDetailPage({ params }: Readonly<PageProps>) {
 
         setOrder(formattedOrder)
 
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : '오류가 발생했습니다.'
+        setError(errorMessage)
       } finally {
         setLoading(false)
       }

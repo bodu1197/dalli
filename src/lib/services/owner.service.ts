@@ -282,8 +282,8 @@ export const ownerService = {
             content: review.content,
             images: review.images,
             createdAt: review.created_at || '',
-            customerName: (review.user as any)?.name || '고객',
-            orderNumber: (review.order as any)?.order_number || null,
+            customerName: (review.user as { name: string } | null)?.name || '고객',
+            orderNumber: (review.order as { order_number: string } | null)?.order_number || null,
             reply: review.owner_reply,
             replyAt: review.owner_reply_at
         }))

@@ -24,12 +24,9 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
     status,
   })
 
-  // admin.service.ts에서 'customer' 관계를 join했지만,
-  // TypeScript는 이를 자동으로 인지하지 못할 수 있으므로 any 캐스팅 후 전달.
-
   return (
     <AdminOrdersClient
-      initialOrders={(orders as any) || []}
+      initialOrders={orders}
       totalCount={count}
       currentPage={page}
       searchQuery={search}
