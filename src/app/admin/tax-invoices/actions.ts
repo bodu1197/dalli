@@ -21,7 +21,7 @@ export async function issueInvoicesAction(invoiceIds: string[]) {
     try {
         const result = await taxInvoiceService.issueInvoices(invoiceIds)
         revalidatePath('/admin/tax-invoices')
-        return { success: true, ...result }
+        return result
     } catch (error) {
         console.error('Issue invoices action error:', error)
         return {
