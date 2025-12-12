@@ -58,124 +58,153 @@ export interface OwnerMenuItem {
     sortOrder: number | null
 }
 
+// 기본값 (빌드 시 DB 연결 실패 대비)
+const DEFAULT_OWNER_STATS: OwnerDashboardStats = {
+    todaySales: 0,
+    todayOrders: 0,
+    avgRating: 0,
+    pendingOrders: 0,
+    newReviews: 0,
+}
+
 export const ownerService = {
     // 점주의 가게 ID 조회
     async getMyRestaurantId(userId: string): Promise<string | null> {
-        const supabase = await createClient()
-        const { data } = await supabase
-            .from('restaurants')
-            .select('id')
-            .eq('owner_id', userId)
-            .single()
-        return data?.id || null
+        try {
+            const supabase = await createClient()
+            const { data } = await supabase
+                .from('restaurants')
+                .select('id')
+                .eq('owner_id', userId)
+                .single()
+            return data?.id || null
+        } catch (error) {
+            console.warn('getMyRestaurantId: DB 연결 실패')
+            return null
+        }
     },
 
     // 대시보드 통계
     async getDashboardStats(restaurantId: string): Promise<OwnerDashboardStats> {
-        const supabase = await createClient()
-        const today = new Date().toISOString().split('T')[0]
+        try {
+            const supabase = await createClient()
+            const today = new Date().toISOString().split('T')[0]
 
-        // 오늘 주문 통계
-        const { data: todayOrders } = await supabase
-            .from('orders')
-            .select('id, total_amount, status')
-            .eq('restaurant_id', restaurantId)
-            .gte('created_at', `${today}T00:00:00`)
-            .lte('created_at', `${today}T23:59:59`)
+            // 오늘 주문 통계
+            const { data: todayOrders } = await supabase
+                .from('orders')
+                .select('id, total_amount, status')
+                .eq('restaurant_id', restaurantId)
+                .gte('created_at', `${today}T00:00:00`)
+                .lte('created_at', `${today}T23:59:59`)
 
-        const todaySales = todayOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0
-        const todayOrderCount = todayOrders?.length || 0
+            const todaySales = todayOrders?.reduce((sum, o) => sum + (o.total_amount || 0), 0) || 0
+            const todayOrderCount = todayOrders?.length || 0
 
-        // 대기 중 주문
-        const { count: pendingCount } = await supabase
-            .from('orders')
-            .select('*', { count: 'exact', head: true })
-            .eq('restaurant_id', restaurantId)
-            .in('status', ['pending', 'confirmed'])
+            // 대기 중 주문
+            const { count: pendingCount } = await supabase
+                .from('orders')
+                .select('*', { count: 'exact', head: true })
+                .eq('restaurant_id', restaurantId)
+                .in('status', ['pending', 'confirmed'])
 
-        // 가게 평점
-        const { data: restaurant } = await supabase
-            .from('restaurants')
-            .select('rating, review_count')
-            .eq('id', restaurantId)
-            .single()
+            // 가게 평점
+            const { data: restaurant } = await supabase
+                .from('restaurants')
+                .select('rating, review_count')
+                .eq('id', restaurantId)
+                .single()
 
-        // 새 리뷰 (오늘)
-        const { count: newReviewCount } = await supabase
-            .from('reviews')
-            .select('*', { count: 'exact', head: true })
-            .eq('restaurant_id', restaurantId)
-            .gte('created_at', `${today}T00:00:00`)
+            // 새 리뷰 (오늘)
+            const { count: newReviewCount } = await supabase
+                .from('reviews')
+                .select('*', { count: 'exact', head: true })
+                .eq('restaurant_id', restaurantId)
+                .gte('created_at', `${today}T00:00:00`)
 
-        return {
-            todaySales,
-            todayOrders: todayOrderCount,
-            avgRating: restaurant?.rating || 0,
-            pendingOrders: pendingCount || 0,
-            newReviews: newReviewCount || 0
+            return {
+                todaySales,
+                todayOrders: todayOrderCount,
+                avgRating: restaurant?.rating || 0,
+                pendingOrders: pendingCount || 0,
+                newReviews: newReviewCount || 0
+            }
+        } catch (error) {
+            console.warn('getDashboardStats: DB 연결 실패, 기본값 반환')
+            return DEFAULT_OWNER_STATS
         }
     },
 
     // 최근 주문 목록
     async getRecentOrders(restaurantId: string, limit = 10): Promise<OwnerOrder[]> {
-        const supabase = await createClient()
+        try {
+            const supabase = await createClient()
 
-        const { data } = await supabase
-            .from('orders')
-            .select(`
-        id,
-        order_number,
-        status,
-        total_amount,
-        created_at,
-        user:users(name),
-        order_items(menu_name, quantity)
-      `)
-            .eq('restaurant_id', restaurantId)
-            .order('created_at', { ascending: false })
-            .limit(limit)
+            const { data } = await supabase
+                .from('orders')
+                .select(`
+            id,
+            order_number,
+            status,
+            total_amount,
+            created_at,
+            user:users(name),
+            order_items(menu_name, quantity)
+          `)
+                .eq('restaurant_id', restaurantId)
+                .order('created_at', { ascending: false })
+                .limit(limit)
 
-        return (data || []).map(order => ({
-            id: order.id,
-            orderNumber: order.order_number || '',
-            status: order.status || 'pending',
-            customerName: (order.user as { name: string } | null)?.name || '고객',
-            items: (order.order_items as { menu_name: string; quantity: number }[])?.map(i => `${i.menu_name} x${i.quantity}`).join(', ') || '',
-            totalAmount: order.total_amount || 0,
-            createdAt: order.created_at || ''
-        }))
+            return (data || []).map(order => ({
+                id: order.id,
+                orderNumber: order.order_number || '',
+                status: order.status || 'pending',
+                customerName: (order.user as { name: string } | null)?.name || '고객',
+                items: (order.order_items as { menu_name: string; quantity: number }[])?.map(i => `${i.menu_name} x${i.quantity}`).join(', ') || '',
+                totalAmount: order.total_amount || 0,
+                createdAt: order.created_at || ''
+            }))
+        } catch (error) {
+            console.warn('getRecentOrders: DB 연결 실패')
+            return []
+        }
     },
 
     // 가게 정보
     async getStoreInfo(restaurantId: string): Promise<OwnerStore | null> {
-        const supabase = await createClient()
+        try {
+            const supabase = await createClient()
 
-        const { data, error } = await supabase
-            .from('restaurants')
-            .select(`
-        *,
-        category:categories(name)
-      `)
-            .eq('id', restaurantId)
-            .single()
+            const { data, error } = await supabase
+                .from('restaurants')
+                .select(`
+            *,
+            category:categories(name)
+          `)
+                .eq('id', restaurantId)
+                .single()
 
-        if (error || !data) return null
+            if (error || !data) return null
 
-        return {
-            id: data.id,
-            name: data.name,
-            address: data.address,
-            phone: data.phone,
-            description: data.description,
-            imageUrl: data.image_url,
-            isOpen: data.is_open ?? false,
-            rating: data.rating,
-            reviewCount: data.review_count,
-            deliveryFee: data.delivery_fee,
-            minOrderAmount: data.min_order_amount,
-            estimatedDeliveryTime: data.estimated_delivery_time,
-            businessHours: data.business_hours,
-            categoryName: (data.category as any)?.name || null
+            return {
+                id: data.id,
+                name: data.name,
+                address: data.address,
+                phone: data.phone,
+                description: data.description,
+                imageUrl: data.image_url,
+                isOpen: data.is_open ?? false,
+                rating: data.rating,
+                reviewCount: data.review_count,
+                deliveryFee: data.delivery_fee,
+                minOrderAmount: data.min_order_amount,
+                estimatedDeliveryTime: data.estimated_delivery_time,
+                businessHours: data.business_hours,
+                categoryName: (data.category as unknown as { name: string } | null)?.name || null
+            }
+        } catch (error) {
+            console.warn('getStoreInfo: DB 연결 실패')
+            return null
         }
     },
 
