@@ -559,6 +559,266 @@ export type Database = {
           }
         ]
       }
+      recent_views: {
+        Row: {
+          id: string
+          user_id: string
+          restaurant_id: string
+          viewed_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          restaurant_id: string
+          viewed_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          restaurant_id?: string
+          viewed_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'recent_views_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'recent_views_restaurant_id_fkey'
+            columns: ['restaurant_id']
+            isOneToOne: false
+            referencedRelation: 'restaurants'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      payment_methods: {
+        Row: {
+          id: string
+          user_id: string
+          type: 'card' | 'kakaopay' | 'naverpay' | 'tosspay' | 'samsungpay' | 'payco'
+          nickname: string | null
+          is_default: boolean
+          is_verified: boolean
+          is_active: boolean
+          card_company: string | null
+          card_number_last4: string | null
+          card_type: 'credit' | 'debit' | null
+          easy_pay_account: string | null
+          billing_key: string | null
+          color: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          type: 'card' | 'kakaopay' | 'naverpay' | 'tosspay' | 'samsungpay' | 'payco'
+          nickname?: string | null
+          is_default?: boolean
+          is_verified?: boolean
+          is_active?: boolean
+          card_company?: string | null
+          card_number_last4?: string | null
+          card_type?: 'credit' | 'debit' | null
+          easy_pay_account?: string | null
+          billing_key?: string | null
+          color?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          type?: 'card' | 'kakaopay' | 'naverpay' | 'tosspay' | 'samsungpay' | 'payco'
+          nickname?: string | null
+          is_default?: boolean
+          is_verified?: boolean
+          is_active?: boolean
+          card_company?: string | null
+          card_number_last4?: string | null
+          card_type?: 'credit' | 'debit' | null
+          easy_pay_account?: string | null
+          billing_key?: string | null
+          color?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'payment_methods_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      faq_categories: {
+        Row: {
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          is_active?: boolean
+          created_at?: string
+        }
+        Relationships: []
+      }
+      faqs: {
+        Row: {
+          id: string
+          category_id: string | null
+          question: string
+          answer: string
+          is_pinned: boolean
+          is_active: boolean
+          view_count: number
+          helpful_count: number
+          not_helpful_count: number
+          sort_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          category_id?: string | null
+          question: string
+          answer: string
+          is_pinned?: boolean
+          is_active?: boolean
+          view_count?: number
+          helpful_count?: number
+          not_helpful_count?: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          category_id?: string | null
+          question?: string
+          answer?: string
+          is_pinned?: boolean
+          is_active?: boolean
+          view_count?: number
+          helpful_count?: number
+          not_helpful_count?: number
+          sort_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'faqs_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'faq_categories'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+      inquiries: {
+        Row: {
+          id: string
+          user_id: string
+          order_id: string | null
+          category: 'order' | 'delivery' | 'payment' | 'refund' | 'account' | 'app' | 'other'
+          title: string
+          content: string
+          images: string[] | null
+          status: 'pending' | 'in_progress' | 'answered' | 'closed'
+          priority: 'low' | 'normal' | 'high' | 'urgent'
+          admin_id: string | null
+          answer: string | null
+          answered_at: string | null
+          satisfaction_rating: number | null
+          satisfaction_comment: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          order_id?: string | null
+          category: 'order' | 'delivery' | 'payment' | 'refund' | 'account' | 'app' | 'other'
+          title: string
+          content: string
+          images?: string[] | null
+          status?: 'pending' | 'in_progress' | 'answered' | 'closed'
+          priority?: 'low' | 'normal' | 'high' | 'urgent'
+          admin_id?: string | null
+          answer?: string | null
+          answered_at?: string | null
+          satisfaction_rating?: number | null
+          satisfaction_comment?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          order_id?: string | null
+          category?: 'order' | 'delivery' | 'payment' | 'refund' | 'account' | 'app' | 'other'
+          title?: string
+          content?: string
+          images?: string[] | null
+          status?: 'pending' | 'in_progress' | 'answered' | 'closed'
+          priority?: 'low' | 'normal' | 'high' | 'urgent'
+          admin_id?: string | null
+          answer?: string | null
+          answered_at?: string | null
+          satisfaction_rating?: number | null
+          satisfaction_comment?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'inquiries_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'inquiries_order_id_fkey'
+            columns: ['order_id']
+            isOneToOne: false
+            referencedRelation: 'orders'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'inquiries_admin_id_fkey'
+            columns: ['admin_id']
+            isOneToOne: false
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -587,6 +847,11 @@ export type Order = Tables<'orders'>
 export type Review = Tables<'reviews'>
 export type OrderCancellation = Tables<'order_cancellations'>
 export type Refund = Tables<'refunds'>
+export type RecentView = Tables<'recent_views'>
+export type PaymentMethod = Tables<'payment_methods'>
+export type FAQCategory = Tables<'faq_categories'>
+export type FAQ = Tables<'faqs'>
+export type Inquiry = Tables<'inquiries'>
 
 // 주문 상태 타입
 export type OrderStatus = Order['status']
