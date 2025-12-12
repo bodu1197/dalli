@@ -83,11 +83,13 @@ export default function AdminTaxInvoicesClient({
         setIsGenerating(true)
         try {
             const result = await generateInvoicesAction(year, month)
-            if (result.success) {
+            if (result.success && 'message' in result) {
                 alert(result.message)
                 startTransition(() => router.refresh())
-            } else {
+            } else if (!result.success && 'error' in result) {
                 alert(result.error || '생성 실패')
+            } else {
+                alert('생성 실패')
             }
         } finally {
             setIsGenerating(false)
@@ -102,12 +104,14 @@ export default function AdminTaxInvoicesClient({
         setIsIssuing(true)
         try {
             const result = await issueInvoicesAction(Array.from(selectedIds))
-            if (result.success) {
+            if (result.success && 'message' in result) {
                 alert(result.message)
                 setSelectedIds(new Set())
                 startTransition(() => router.refresh())
-            } else {
+            } else if (!result.success && 'error' in result) {
                 alert(result.error || '발급 실패')
+            } else {
+                alert('발급 실패')
             }
         } finally {
             setIsIssuing(false)

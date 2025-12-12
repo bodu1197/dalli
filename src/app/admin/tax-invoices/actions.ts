@@ -7,7 +7,7 @@ export async function generateInvoicesAction(year: number, month: number) {
     try {
         const result = await taxInvoiceService.generateMonthlyInvoices(year, month)
         revalidatePath('/admin/tax-invoices')
-        return { success: true, ...result }
+        return { ...result, success: true }
     } catch (error) {
         console.error('Generate invoices action error:', error)
         return {
@@ -35,7 +35,7 @@ export async function cancelInvoiceAction(invoiceId: string, reason: string) {
     try {
         const result = await taxInvoiceService.cancelInvoice(invoiceId, reason)
         revalidatePath('/admin/tax-invoices')
-        return { success: true, ...result }
+        return result
     } catch (error) {
         console.error('Cancel invoice action error:', error)
         return {

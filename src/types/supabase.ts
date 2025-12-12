@@ -1310,6 +1310,7 @@ export type Database = {
           ad_priority: number | null
           address: string
           business_hours: Json | null
+          business_number: string | null
           category_id: string | null
           created_at: string | null
           delivery_fee: number | null
@@ -1334,6 +1335,7 @@ export type Database = {
           ad_priority?: number | null
           address: string
           business_hours?: Json | null
+          business_number?: string | null
           category_id?: string | null
           created_at?: string | null
           delivery_fee?: number | null
@@ -1358,6 +1360,7 @@ export type Database = {
           ad_priority?: number | null
           address?: string
           business_hours?: Json | null
+          business_number?: string | null
           category_id?: string | null
           created_at?: string | null
           delivery_fee?: number | null
@@ -1624,6 +1627,98 @@ export type Database = {
             columns: ["rider_id"]
             isOneToOne: false
             referencedRelation: "riders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tax_invoices: {
+        Row: {
+          buyer_address: string | null
+          buyer_biz_number: string
+          buyer_ceo_name: string | null
+          buyer_email: string | null
+          buyer_name: string
+          created_at: string | null
+          failed_reason: string | null
+          id: string
+          issue_id: string | null
+          issue_type: string | null
+          issued_at: string | null
+          period_end: string | null
+          period_start: string | null
+          remark: string | null
+          restaurant_id: string | null
+          status: string
+          supplier_address: string | null
+          supplier_biz_number: string
+          supplier_ceo_name: string
+          supplier_name: string
+          supply_cost: number
+          tax: number
+          total_amount: number
+          updated_at: string | null
+          write_date: string
+        }
+        Insert: {
+          buyer_address?: string | null
+          buyer_biz_number: string
+          buyer_ceo_name?: string | null
+          buyer_email?: string | null
+          buyer_name: string
+          created_at?: string | null
+          failed_reason?: string | null
+          id?: string
+          issue_id?: string | null
+          issue_type?: string | null
+          issued_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          remark?: string | null
+          restaurant_id?: string | null
+          status?: string
+          supplier_address?: string | null
+          supplier_biz_number: string
+          supplier_ceo_name: string
+          supplier_name: string
+          supply_cost?: number
+          tax?: number
+          total_amount?: number
+          updated_at?: string | null
+          write_date: string
+        }
+        Update: {
+          buyer_address?: string | null
+          buyer_biz_number?: string
+          buyer_ceo_name?: string | null
+          buyer_email?: string | null
+          buyer_name?: string
+          created_at?: string | null
+          failed_reason?: string | null
+          id?: string
+          issue_id?: string | null
+          issue_type?: string | null
+          issued_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          remark?: string | null
+          restaurant_id?: string | null
+          status?: string
+          supplier_address?: string | null
+          supplier_biz_number?: string
+          supplier_ceo_name?: string
+          supplier_name?: string
+          supply_cost?: number
+          tax?: number
+          total_amount?: number
+          updated_at?: string | null
+          write_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_invoices_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
         ]
