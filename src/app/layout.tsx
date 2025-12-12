@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { type PropsWithChildren } from "react";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,7 +12,9 @@ export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="ko">
       <body className="font-['Pretendard',-apple-system,BlinkMacSystemFont,system-ui,sans-serif] antialiased">
-        {children}
+        <QueryProvider>
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );
