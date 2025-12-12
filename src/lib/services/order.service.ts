@@ -237,6 +237,7 @@ export async function createOrder(
     // 12. 주문 항목 생성
     const orderItems = input.items.map((item) => ({
       order_id: orderData.id,
+      restaurant_id: input.restaurantId,
       menu_id: item.menuId,
       menu_name: item.menuName,
       menu_image: item.menuImage,
@@ -267,7 +268,7 @@ export async function createOrder(
         .update({
           is_used: true,
           used_at: new Date().toISOString(),
-          used_order_id: orderData.id,
+          order_id: orderData.id,
         })
         .eq('id', input.couponId)
     }

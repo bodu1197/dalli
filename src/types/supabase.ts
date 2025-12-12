@@ -397,6 +397,47 @@ export type Database = {
           },
         ]
       }
+      menu_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          restaurant_id: string
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          restaurant_id: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          restaurant_id?: string
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_categories_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_option_groups: {
         Row: {
           created_at: string | null
@@ -476,6 +517,7 @@ export type Database = {
       menus: {
         Row: {
           category: string | null
+          category_id: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -489,6 +531,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -502,6 +545,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          category_id?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -514,6 +558,13 @@ export type Database = {
           sort_order?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "menus_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "menu_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "menus_restaurant_id_fkey"
             columns: ["restaurant_id"]
@@ -856,6 +907,7 @@ export type Database = {
           order_id: string
           price: number
           quantity: number
+          restaurant_id: string | null
           special_instructions: string | null
         }
         Insert: {
@@ -868,6 +920,7 @@ export type Database = {
           order_id: string
           price: number
           quantity: number
+          restaurant_id?: string | null
           special_instructions?: string | null
         }
         Update: {
@@ -880,6 +933,7 @@ export type Database = {
           order_id?: string
           price?: number
           quantity?: number
+          restaurant_id?: string | null
           special_instructions?: string | null
         }
         Relationships: [
@@ -895,6 +949,13 @@ export type Database = {
             columns: ["order_id"]
             isOneToOne: false
             referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
         ]
@@ -1728,6 +1789,7 @@ export type Database = {
           coupon_id: string
           created_at: string | null
           id: string
+          is_used: boolean | null
           order_id: string | null
           used_at: string | null
           user_id: string
@@ -1736,6 +1798,7 @@ export type Database = {
           coupon_id: string
           created_at?: string | null
           id?: string
+          is_used?: boolean | null
           order_id?: string | null
           used_at?: string | null
           user_id: string
@@ -1744,6 +1807,7 @@ export type Database = {
           coupon_id?: string
           created_at?: string | null
           id?: string
+          is_used?: boolean | null
           order_id?: string | null
           used_at?: string | null
           user_id?: string

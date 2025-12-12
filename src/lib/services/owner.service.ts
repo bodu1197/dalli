@@ -282,15 +282,16 @@ export const ownerService = {
         const { data } = await supabase
             .from('menus')
             .select(`
-        id,
-        name,
-        description,
-        price,
-        image_url,
-        is_available,
-        sort_order,
-        category:menu_categories(name)
-      `)
+                id,
+                name,
+                description,
+                price,
+                image_url,
+                is_available,
+                sort_order,
+                category_id,
+                category:menu_categories!menus_category_id_fkey(id, name)
+            `)
             .eq('restaurant_id', restaurantId)
             .order('sort_order', { ascending: true })
 
@@ -301,7 +302,7 @@ export const ownerService = {
             price: menu.price,
             imageUrl: menu.image_url,
             isAvailable: menu.is_available ?? true,
-            categoryName: (menu.category as any)?.name || null,
+            categoryName: (menu.category as { id: string; name: string } | null)?.name || null,
             sortOrder: menu.sort_order
         }))
     },
