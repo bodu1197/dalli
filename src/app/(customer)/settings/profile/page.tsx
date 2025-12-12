@@ -1,21 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Camera, User } from 'lucide-react'
+import { ArrowLeft, Camera, User, Loader2 } from 'lucide-react'
 
 import { useAuthStore } from '@/stores/auth.store'
+import { useUploadProfileImage } from '@/hooks/useImageUpload'
+import { createClient } from '@/lib/supabase/client'
 
 export default function ProfileSettingsPage() {
   const router = useRouter()
-  const { profile, isAuthenticated, isLoading } = useAuthStore()
+  const { profile, isAuthenticated, isLoading, setProfile, user } = useAuthStore()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const uploadProfileImage = useUploadProfileImage()
 
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     email: '',
   })
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
@@ -25,6 +30,9 @@ export default function ProfileSettingsPage() {
         phone: profile.phone || '',
         email: profile.email || '',
       })
+      if (profile.avatar_url) {
+        setAvatarPreview(profile.avatar_url)
+      }
     }
   }, [profile])
 
@@ -39,6 +47,35 @@ export default function ProfileSettingsPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const handleImageClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // 미리보기 생성
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      setAvatarPreview(event.target?.result as string)
+    }
+    reader.readAsDataURL(file)
+
+    // Supabase Storage에 업로드
+    try {
+      const url = await uploadProfileImage.mutateAsync(file)
+      setAvatarPreview(url)
+    } catch (error) {
+      alert(error instanceof Error ? error.message : '이미지 업로드에 실패했습니다')
+      // 업로드 실패 시 이전 이미지로 복원
+      setAvatarPreview(profile?.avatar_url || null)
+    }
+
+    // input 초기화
+    e.target.value = ''
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -50,8 +87,31 @@ export default function ProfileSettingsPage() {
     setIsSaving(true)
 
     try {
-      // Note: 프로필 업데이트 API 호출 (현재 목업 데이터 사용)
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      const supabase = createClient()
+
+      // users 테이블 업데이트
+      const { error } = await supabase
+        .from('users')
+        .update({
+          name: formData.name.trim(),
+          phone: formData.phone.trim() || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user?.id)
+
+      if (error) {
+        throw error
+      }
+
+      // 로컬 상태 업데이트
+      if (profile) {
+        setProfile({
+          ...profile,
+          name: formData.name.trim(),
+          phone: formData.phone.trim() || null,
+        })
+      }
+
       alert('프로필이 저장되었습니다')
       router.push('/settings')
     } catch (error) {
@@ -73,6 +133,8 @@ export default function ProfileSettingsPage() {
   if (!isAuthenticated) {
     return null
   }
+
+  const isUploading = uploadProfileImage.isPending
 
   return (
     <div className="min-h-screen bg-[var(--color-neutral-50)]">
@@ -97,29 +159,47 @@ export default function ProfileSettingsPage() {
         <section className="bg-white py-8 flex flex-col items-center">
           <div className="relative">
             <div className="w-24 h-24 bg-[var(--color-neutral-100)] rounded-full flex items-center justify-center overflow-hidden">
-              {profile?.avatarUrl ? (
+              {avatarPreview ? (
                 <img
-                  src={profile.avatarUrl}
+                  src={avatarPreview}
                   alt="프로필"
                   className="w-full h-full object-cover"
                 />
               ) : (
                 <User className="w-12 h-12 text-[var(--color-neutral-400)]" />
               )}
+              {isUploading && (
+                <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-white animate-spin" />
+                </div>
+              )}
             </div>
             <button
               type="button"
-              className="absolute bottom-0 right-0 w-8 h-8 bg-[var(--color-primary-500)] rounded-full flex items-center justify-center shadow-lg"
+              onClick={handleImageClick}
+              disabled={isUploading}
+              className="absolute bottom-0 right-0 w-8 h-8 bg-[var(--color-primary-500)] rounded-full flex items-center justify-center shadow-lg disabled:opacity-50"
             >
               <Camera className="w-4 h-4 text-white" />
             </button>
           </div>
           <button
             type="button"
-            className="mt-3 text-sm font-medium text-[var(--color-primary-500)]"
+            onClick={handleImageClick}
+            disabled={isUploading}
+            className="mt-3 text-sm font-medium text-[var(--color-primary-500)] disabled:opacity-50"
           >
-            사진 변경
+            {isUploading ? '업로드 중...' : '사진 변경'}
           </button>
+
+          {/* 숨겨진 파일 입력 */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            onChange={handleImageChange}
+            className="hidden"
+          />
         </section>
 
         {/* 정보 입력 */}
@@ -179,7 +259,7 @@ export default function ProfileSettingsPage() {
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[var(--color-neutral-100)]">
           <button
             type="submit"
-            disabled={isSaving}
+            disabled={isSaving || isUploading}
             className="w-full py-4 bg-[var(--color-primary-500)] text-white font-semibold rounded-xl disabled:opacity-50"
           >
             {isSaving ? '저장 중...' : '저장하기'}

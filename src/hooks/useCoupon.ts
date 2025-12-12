@@ -38,7 +38,7 @@ export function useUserCoupons(): UseUserCouponsReturn {
 
   const { user } = useAuthStore()
   const [coupons, setCoupons] = useState<UserCouponListItem[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchCoupons = useCallback(async () => {
@@ -119,8 +119,12 @@ export function useUserCoupons(): UseUserCouponsReturn {
   }, [user])
 
   useEffect(() => {
-    if (isClientReady && user) {
-      fetchCoupons()
+    if (isClientReady) {
+      if (user) {
+        fetchCoupons()
+      } else {
+        setIsLoading(false)
+      }
     }
   }, [isClientReady, user, fetchCoupons])
 

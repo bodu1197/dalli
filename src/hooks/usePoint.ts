@@ -108,7 +108,7 @@ export function usePointInfo(): UsePointInfoReturn {
 
   const { user } = useAuthStore()
   const [pointInfo, setPointInfo] = useState<UserPointInfo | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetchPointInfo = useCallback(async () => {
@@ -187,8 +187,12 @@ export function usePointInfo(): UsePointInfoReturn {
   }, [user])
 
   useEffect(() => {
-    if (isClientReady && user) {
-      fetchPointInfo()
+    if (isClientReady) {
+      if (user) {
+        fetchPointInfo()
+      } else {
+        setIsLoading(false)
+      }
     }
   }, [isClientReady, user, fetchPointInfo])
 
@@ -222,7 +226,7 @@ export function usePointTransactions(limit: number = 20): UsePointTransactionsRe
 
   const { user } = useAuthStore()
   const [transactions, setTransactions] = useState<PointTransaction[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
@@ -285,8 +289,12 @@ export function usePointTransactions(limit: number = 20): UsePointTransactionsRe
   )
 
   useEffect(() => {
-    if (isClientReady && user) {
-      fetchTransactions(true)
+    if (isClientReady) {
+      if (user) {
+        fetchTransactions(true)
+      } else {
+        setIsLoading(false)
+      }
     }
   }, [isClientReady, user])
 

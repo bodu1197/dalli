@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState, useEffect } from 'react'
+import { use, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
@@ -8,12 +8,14 @@ import {
   Star,
   Camera,
   X,
+  Loader2,
 } from 'lucide-react'
 
 import { Button } from '@/components/ui/Button'
 import { createClient } from '@/lib/supabase/client'
 import type { Order, PaymentMethod, OrderStatus, OrderRejectionReason } from '@/types/order.types'
 import { useAuthStore } from '@/stores/auth.store'
+import { useUploadReviewImages } from '@/hooks/useImageUpload'
 
 interface PageProps {
   readonly params: Promise<{ orderId: string }>
