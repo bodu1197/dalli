@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { Search, MapPin, Bell, ShoppingCart, ChevronDown, SlidersHorizontal } from 'lucide-react'
 
 import { BottomNavBar } from '@/components/layouts/BottomNavBar'
-import { KakaoMap } from '@/components/features/map/KakaoMap'
 import { PickupStoreList } from '@/components/features/pickup/PickupStoreList'
 import { PickupFilters } from '@/components/features/pickup/PickupFilters'
 import { useLocationStore } from '@/stores/location.store'
@@ -108,45 +107,32 @@ export default function HomePage() {
 
             <button
               onClick={() => setShowDiscountOnly(!showDiscountOnly)}
-              className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                showDiscountOnly
+              className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${showDiscountOnly
                   ? 'bg-[#df0012] text-white border border-[#df0012]'
                   : 'bg-white text-gray-700 border border-gray-300'
-              }`}
+                }`}
             >
               픽업 할인
             </button>
 
             <button
               onClick={() => setPickupSortBy('distance')}
-              className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                pickupSortBy === 'distance'
+              className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${pickupSortBy === 'distance'
                   ? 'bg-gray-900 text-white border border-gray-900'
                   : 'bg-white text-gray-700 border border-gray-300'
-              }`}
+                }`}
             >
               가까운 순
             </button>
 
             <button
               onClick={() => setPickupSortBy('rating')}
-              className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                pickupSortBy === 'rating'
+              className={`px-3 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${pickupSortBy === 'rating'
                   ? 'bg-gray-900 text-white border border-gray-900'
                   : 'bg-white text-gray-700 border border-gray-300'
-              }`}
+                }`}
             >
               평점순
-            </button>
-          </section>
-
-          {/* 지도 */}
-          <section className="h-[300px] bg-gray-100 relative">
-            <KakaoMap />
-
-            {/* 현재 위치 버튼 */}
-            <button className="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50">
-              <MapPin className="w-5 h-5 text-gray-700" />
             </button>
           </section>
 
