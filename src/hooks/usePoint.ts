@@ -51,6 +51,13 @@ export function usePointBalance(): UsePointBalanceReturn {
     setError(null)
 
     try {
+      // 세션 확인 - RLS 정책이 올바르게 작동하려면 인증된 세션이 필요
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setError('로그인이 필요합니다')
+        return
+      }
+
       const { data, error: fetchError } = await supabase
         .from('users')
         .select('point_balance')
@@ -112,6 +119,13 @@ export function usePointInfo(): UsePointInfoReturn {
     setError(null)
 
     try {
+      // 세션 확인 - RLS 정책이 올바르게 작동하려면 인증된 세션이 필요
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setError('로그인이 필요합니다')
+        return
+      }
+
       // 1. 현재 잔액 조회
       const { data: userData, error: userError } = await supabase
         .from('users')
@@ -224,6 +238,13 @@ export function usePointTransactions(limit: number = 20): UsePointTransactionsRe
       const currentOffset = reset ? 0 : offset
 
       try {
+        // 세션 확인 - RLS 정책이 올바르게 작동하려면 인증된 세션이 필요
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          setError('로그인이 필요합니다')
+          return
+        }
+
         const { data, error: fetchError } = await supabase
           .from('point_transactions')
           .select('*')
